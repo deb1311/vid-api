@@ -1,0 +1,63 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Energetic electronic music suitable for tech/startup content",
+  "watermark": "@techstartup",
+  "clips": [
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "High-quality animated sequence showing character interaction and movement",
+      "start": 10,
+      "duration": 4,
+      "volume": 80
+    },
+    {
+      "imageurl": "https://picsum.photos/1920/1080?random=30",
+      "description": "Modern office workspace with laptops and coffee, representing productivity",
+      "duration": 3
+    },
+    {
+      "imageurl": "https://picsum.photos/1080/1920?random=31",
+      "description": "Vertical smartphone mockup showing app interface design",
+      "duration": 3
+    },
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Another animated sequence with different characters and scenery",
+      "start": 30,
+      "duration": 4,
+      "volume": 60
+    },
+    {
+      "imageurl": "https://picsum.photos/1200/1200?random=32",
+      "description": "Square format image of team collaboration in modern workspace",
+      "duration": 2
+    }
+  ],
+  "captions": [
+    {
+      "text": "Building the future of technology",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Innovation meets creativity",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "Designing user experiences",
+      "start": 6,
+      "duration": 3
+    },
+    {
+      "text": "Bringing ideas to life",
+      "start": 9,
+      "duration": 3
+    },
+    {
+      "text": "Your startup journey starts here",
+      "start": 12,
+      "duration": 4
+    }
+  ]
+}

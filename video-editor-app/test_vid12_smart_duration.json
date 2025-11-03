@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Smart Duration Test",
+  "author": "Calculated from Next Clip",
+  "watermark": "@smartduration",
+  "clips": [
+    {
+      "videoUrl": "temp/test_video1.mp4",
+      "start": 0
+    },
+    {
+      "videoUrl": "temp/test-image.jpg",
+      "start": 6
+    },
+    {
+      "videoUrl": "temp/test_video2.mp4",
+      "start": 10
+    },
+    {
+      "videoUrl": "temp/test_video3.mp4",
+      "start": 15,
+      "duration": 3
+    }
+  ]
+}

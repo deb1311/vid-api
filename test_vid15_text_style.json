@@ -1,0 +1,22 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@vid15test",
+  "clips": [
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=60",
+      "duration": 8
+    }
+  ],
+  "captions": [
+    {
+      "text": "This is a longer caption text that should demonstrate the improved text layout system with proper line wrapping and positioning",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "text": "Second caption with consistent styling and proper font sizing",
+      "start": 4,
+      "duration": 4
+    }
+  ]
+}

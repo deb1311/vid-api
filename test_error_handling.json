@@ -1,0 +1,18 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@errortest",
+  "clips": [
+    {
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "This should fail",
+      "start": 0,
+      "duration": 3
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Clear visibility test",
+  "author": "Visibility Expert",
+  "watermark": "@cleartest",
+  "overlay": 30,
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0,
+      "duration": 5,
+      "transition": "cut"
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 0,
+      "duration": 5,
+      "transition": "fade"
+    },
+    {
+      "videoUrl": "temp/long_video3.mp4",
+      "start": 0,
+      "duration": 3,
+      "transition": "cut"
+    },
+    {
+      "videoUrl": "temp/long_video4.mp4",
+      "start": 0,
+      "duration": 1,
+      "transition": "cut"
+    }
+  ]
+}

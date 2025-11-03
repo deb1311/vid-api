@@ -1,0 +1,13 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Rewritten Smart AR Test",
+  "author": "Tall Clip Test",
+  "watermark": "@rewritten",
+  "clips": [
+    {
+      "videoUrl": "temp/test-image.jpg",
+      "start": 0,
+      "duration": 4
+    }
+  ]
+}

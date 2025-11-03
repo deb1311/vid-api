@@ -1,0 +1,50 @@
+{
+  "quote": "Understanding CORS in Video Preview",
+  "author": "Video Editor Demo",
+  "watermark": "@VideoEditor",
+  "duration": 15,
+  "overlay": false,
+  "clips": [
+    {
+      "imageurl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1920&fit=crop&crop=center",
+      "description": "✅ Working image - Unsplash allows CORS",
+      "start": 0.0,
+      "duration": 3.0
+    },
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "✅ Working video - Google storage allows CORS",
+      "start": 3.0,
+      "duration": 4.0
+    },
+    {
+      "videourl": "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4",
+      "description": "⚠️ CORS blocked video - Works in edit modal, blocked in canvas",
+      "start": 7.0,
+      "duration": 4.0
+    },
+    {
+      "imageurl": "https://images.pexels.com/photos/1851415/pexels-photo-1851415.jpeg?auto=compress&cs=tinysrgb&w=1080&h=1920&fit=crop",
+      "description": "✅ Working image - Pexels images usually allow CORS",
+      "start": 11.0,
+      "duration": 4.0
+    }
+  ],
+  "captions": [
+    {
+      "text": "Some videos work in canvas",
+      "start": 1.0,
+      "duration": 2.0
+    },
+    {
+      "text": "Others are CORS blocked",
+      "start": 8.0,
+      "duration": 2.0
+    },
+    {
+      "text": "But edit modal always works",
+      "start": 12.0,
+      "duration": 2.0
+    }
+  ]
+}

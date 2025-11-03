@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title-section">
+                <input type="text" id="videoTitle" class="video-title-input" placeholder="Untitled Video" value="Untitled Video">
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="loadBtn">
+                    <i class="fas fa-folder-open"></i> Load JSON
+                </button>
+                <button class="btn btn-secondary" id="saveBtn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn btn-primary" id="confirmBtn">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Video Preview -->
+            <div class="preview-panel">
+                <div class="preview-controls">
+                    <button class="preview-btn" id="playPauseBtn" disabled>
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <div class="preview-time">
+                        <span id="currentTime">0:00</span>
+                        <input type="range" id="previewSeeker" min="0" max="100" value="0" disabled>
+                        <span id="totalTime">0:00</span>
+                    </div>
+                    <button class="preview-btn" id="muteBtn" disabled>
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        <i class="fas fa-video"></i>
+                        <p>Video Preview</p>
+                        <small>9:16 (1080x1920)</small>
+                    </div>
+                    <canvas id="previewCanvas" style="display: none;"></canvas>
+                    <video id="previewVideo" style="display: none;" crossorigin="anonymous"></video>
+                    <img id="previewImage" style="display: none;" crossorigin="anonymous">
+                    <div class="preview-overlay" id="previewOverlay">
+                        <div class="preview-text" id="previewQuote"></div>
+                        <div class="preview-author" id="previewAuthor"></div>
+                        <div class="preview-watermark" id="previewWatermark"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Properties -->
+            <div class="properties-panel">
+                <h2 class="panel-title">Properties</h2>
+                
+                <div class="properties-content" id="propertiesContent">
+                    <!-- Dynamic content will be loaded here -->
+                    <div class="empty-state">
+                        <i class="fas fa-file-import"></i>
+                        <p>Load a JSON file to start editing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <div class="timeline-controls">
+                <button class="timeline-btn" id="zoomIn" title="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="timeline-btn" id="zoomOut" title="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <span class="timeline-zoom-label">Zoom: <span id="zoomLevel">100</span>%</span>
+                <div class="timeline-playhead-indicator">
+                    <i class="fas fa-caret-down"></i>
+                    <span id="playheadTime">0:00</span>
+                </div>
+            </div>
+            
+            <!-- Video Timeline -->
+            <div class="timeline-track">
+                <div class="timeline-header">
+                    <i class="fas fa-film"></i>
+                    <span>Video</span>
+                </div>
+                <div class="timeline-wrapper">
+                    <div class="timeline-ruler" id="timelineRuler"></div>
+                    <div class="timeline-content" id="videoTimeline">
+                        <!-- Video clips will be rendered here -->
+                    </div>
+                    <div class="timeline-playhead" id="videoPlayhead"></div>
+                </div>
+            </div>
+
+            <!-- Text/Captions Timeline -->
+            <div class="timeline-track">
+                <div class="timeline-header">
+                    <i class="fas fa-closed-captioning"></i>
+                    <span>Text</span>
+                </div>
+                <div class="timeline-wrapper">
+                    <div class="timeline-content" id="textTimeline">
+                        <!-- Caption clips will be rendered here -->
+                    </div>
+                    <div class="timeline-playhead" id="textPlayhead"></div>
+                </div>
+            </div>
+
+            <!-- Audio Timeline -->
+            <div class="timeline-track">
+                <div class="timeline-header">
+                    <i class="fas fa-music"></i>
+                    <span>Audio</span>
+                </div>
+                <div class="timeline-wrapper">
+                    <div class="timeline-content" id="audioTimeline">
+                        <!-- Audio clips will be rendered here -->
+                    </div>
+                    <div class="timeline-playhead" id="audioPlayhead"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <!-- Modal for JSON selection -->
+    <div id="jsonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select a Test JSON File</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="jsonFileList">
+                <!-- JSON files will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

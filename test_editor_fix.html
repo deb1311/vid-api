@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Video Editor Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Video Editor Fix Test</h1>
+    <p>This page tests if the video editor is working correctly after fixing the duplicate modal issue.</p>
+
+    <div class="test-section">
+        <h3>1. Test Editor Loading</h3>
+        <button onclick="testEditor()">Open Video Editor</button>
+        <div id="editorResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Editor Preview</h3>
+        <iframe src="video-editor-app/index.html" id="editorFrame"></iframe>
+    </div>
+
+    <script>
+        function testEditor() {
+            const resultDiv = document.getElementById('editorResult');
+            
+            try {
+                // Open editor in new window
+                const editorWindow = window.open('video-editor-app/index.html', '_blank', 'width=1200,height=800');
+                
+                if (editorWindow) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Editor Opened Successfully</h4>
+                            <p>Video editor opened in new window. Check for:</p>
+                            <ul>
+                                <li>No JavaScript errors in console</li>
+                                <li>All buttons are clickable</li>
+                                <li>Load JSON button works</li>
+                                <li>Confirm button functionality works</li>
+                                <li>No duplicate modals</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Popup blocked or failed to open');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Editor Failed to Open</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test iframe loading
+        document.getElementById('editorFrame').onload = function() {
+            console.log('✅ Editor iframe loaded successfully');
+        };
+
+        document.getElementById('editorFrame').onerror = function() {
+            console.error('❌ Editor iframe failed to load');
+        };
+    </script>
+</body>
+</html>

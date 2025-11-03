@@ -1,0 +1,7 @@
+{
+  "quote": "Testing centered watermark",
+  "author": "Kiro Test",
+  "watermark": "@centeredtest",
+  "imageUrl": "https://picsum.photos/1200/800?random=30",
+  "audioUrl": "temp/test_instagram_audio.mp3"
+}

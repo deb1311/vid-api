@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor Diagnostic</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .diagnostic-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            background: white;
+        }
+        .success { 
+            background-color: #d4edda; 
+            border-color: #c3e6cb; 
+            color: #155724;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb; 
+            color: #721c24;
+        }
+        .warning { 
+            background-color: #fff3cd; 
+            border-color: #ffeaa7; 
+            color: #856404;
+        }
+        button { 
+            padding: 10px 15px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+        }
+        button:hover { background: #0056b3; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 3px; 
+            overflow-x: auto; 
+            font-size: 12px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Video Editor Diagnostic Tool</h1>
+    <p>This tool will help identify what's broken with the video editor.</p>
+
+    <div class="diagnostic-section">
+        <h3>1. File Accessibility Test</h3>
+        <button onclick="testFiles()">Test Required Files</button>
+        <div id="fileResults"></div>
+    </div>
+
+    <div class="diagnostic-section">
+        <h3>2. HTML Structure Test</h3>
+        <button onclick="testHtmlStructure()">Test HTML Elements</button>
+        <div id="htmlResults"></div>
+    </div>
+
+    <div class="diagnostic-section">
+        <h3>3. JavaScript Loading Test</h3>
+        <button onclick="testJavaScript()">Test JavaScript</button>
+        <div id="jsResults"></div>
+    </div>
+
+    <div class="diagnostic-section">
+        <h3>4. CSS Loading Test</h3>
+        <button onclick="testCSS()">Test CSS Styles</button>
+        <div id="cssResults"></div>
+    </div>
+
+    <div class="diagnostic-section">
+        <h3>5. Live Editor Test</h3>
+        <button onclick="openEditor()">Open Editor</button>
+        <button onclick="testEditorInFrame()">Test in Frame</button>
+        <div id="editorResults"></div>
+        <iframe id="editorFrame" style="width: 100%; height: 400px; border: 1px solid #ddd; margin-top: 10px; display: none;"></iframe>
+    </div>
+
+    <script>
+        async function testFiles() {
+            const resultDiv = document.getElementById('fileResults');
+            const files = [
+                'index.html',
+                'app.js',
+                'styles.css'
+            ];
+
+            let results = '<h4>📁 File Accessibility Results:</h4>';
+            let allGood = true;
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        results += `<div class="test-result success">✅ ${file} - Accessible (${response.status})</div>`;
+                    } else {
+                        results += `<div class="test-result error">❌ ${file} - ${response.status} ${response.statusText}</div>`;
+                        allGood = false;
+                    }
+                } catch (error) {
+                    results += `<div class="test-result error">❌ ${file} - ${error.message}</div>`;
+                    allGood = false;
+                }
+            }
+            
+            resultDiv.innerHTML = results;
+            resultDiv.className = `diagnostic-section ${allGood ? 'success' : 'error'}`;
+        }
+
+        async function testHtmlStructure() {
+            const resultDiv = document.getElementById('htmlResults');
+            
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                const requiredElements = [
+                    'playPauseBtn',
+                    'previewCanvas',
+                    'globalPlayhead',
+                    'videoTimeline',
+                    'textTimeline',
+                    'audioTimeline',
+                    'propertiesContent',
+                    'jsonModal'
+                ];
+                
+                let results = '<h4>🏗️ HTML Structure Results:</h4>';
+                let allGood = true;
+                
+                requiredElements.forEach(id => {
+                    if (html.includes(`id="${id}"`)) {
+                        results += `<div class="test-result success">✅ Element #${id} found</div>`;
+                    } else {
+                        results += `<div class="test-result error">❌ Element #${id} missing</div>`;
+                        allGood = false;
+                    }
+                });
+                
+                resultDiv.innerHTML = results;
+                resultDiv.className = `diagnostic-section ${allGood ? 'success' : 'error'}`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-result error">❌ Failed to load HTML: ${error.message}</div>`;
+                resultDiv.className = 'diagnostic-section error';
+            }
+        }
+
+        async function testJavaScript() {
+            const resultDiv = document.getElementById('jsResults');
+            
+            try {
+                const response = await fetch('app.js');
+                const js = await response.text();
+                
+                let results = '<h4>📜 JavaScript Analysis:</h4>';
+                let issues = [];
+                
+                // Check for common issues
+                if (!js.includes('class VideoEditor')) {
+                    issues.push('VideoEditor class not found');
+                }
+                
+                if (!js.includes('new VideoEditor()')) {
+                    issues.push('VideoEditor not instantiated');
+                }
+                
+                if (js.includes('console.error')) {
+                    results += `<div class="test-result warning">⚠️ Contains error logging (normal)</div>`;
+                }
+                
+                // Check file size
+                const sizeKB = Math.round(js.length / 1024);
+                results += `<div class="test-result success">📊 File size: ${sizeKB}KB</div>`;
+                
+                if (issues.length === 0) {
+                    results += `<div class="test-result success">✅ JavaScript structure looks good</div>`;
+                    resultDiv.className = 'diagnostic-section success';
+                } else {
+                    issues.forEach(issue => {
+                        results += `<div class="test-result error">❌ ${issue}</div>`;
+                    });
+                    resultDiv.className = 'diagnostic-section error';
+                }
+                
+                resultDiv.innerHTML = results;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-result error">❌ Failed to load JavaScript: ${error.message}</div>`;
+                resultDiv.className = 'diagnostic-section error';
+            }
+        }
+
+        async function testCSS() {
+            const resultDiv = document.getElementById('cssResults');
+            
+            try {
+                const response = await fetch('styles.css');
+                const css = await response.text();
+                
+                let results = '<h4>🎨 CSS Analysis:</h4>';
+                
+                const requiredClasses = [
+                    '.app-container',
+                    '.top-header',
+                    '.preview-section',
+                    '.timeline-area',
+                    '.btn'
+                ];
+                
+                let allGood = true;
+                
+                requiredClasses.forEach(className => {
+                    if (css.includes(className)) {
+                        results += `<div class="test-result success">✅ Style ${className} found</div>`;
+                    } else {
+                        results += `<div class="test-result error">❌ Style ${className} missing</div>`;
+                        allGood = false;
+                    }
+                });
+                
+                const sizeKB = Math.round(css.length / 1024);
+                results += `<div class="test-result success">📊 CSS size: ${sizeKB}KB</div>`;
+                
+                resultDiv.innerHTML = results;
+                resultDiv.className = `diagnostic-section ${allGood ? 'success' : 'error'}`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-result error">❌ Failed to load CSS: ${error.message}</div>`;
+                resultDiv.className = 'diagnostic-section error';
+            }
+        }
+
+        function openEditor() {
+            const resultDiv = document.getElementById('editorResults');
+            
+            try {
+                const editorWindow = window.open('index.html', '_blank', 'width=1200,height=800');
+                
+                if (editorWindow) {
+                    resultDiv.innerHTML = `
+                        <div class="test-result success">
+                            <h4>✅ Editor Opened in New Window</h4>
+                            <p>Check the new window for:</p>
+                            <ul>
+                                <li>Any error messages in the console (F12)</li>
+                                <li>Whether buttons are clickable</li>
+                                <li>If the layout looks correct</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="test-result error">❌ Failed to open editor (popup blocked?)</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function testEditorInFrame() {
+            const frame = document.getElementById('editorFrame');
+            const resultDiv = document.getElementById('editorResults');
+            
+            frame.style.display = 'block';
+            frame.src = 'index.html';
+            
+            frame.onload = () => {
+                resultDiv.innerHTML = `<div class="test-result success">✅ Editor loaded in frame below</div>`;
+            };
+            
+            frame.onerror = () => {
+                resultDiv.innerHTML = `<div class="test-result error">❌ Editor failed to load in frame</div>`;
+            };
+        }
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            console.log('🔍 Video Editor Diagnostic Tool loaded');
+            console.log('💡 Click the test buttons to diagnose issues');
+        });
+    </script>
+</body>
+</html>

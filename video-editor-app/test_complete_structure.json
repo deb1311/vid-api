@@ -1,0 +1,55 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Background music for complete structure demonstration",
+  "watermark": "@completetest",
+  "clips": [
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Animated short film featuring Big Buck Bunny character in a forest setting with various woodland creatures",
+      "start": 0,
+      "duration": 4,
+      "volume": 100
+    },
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=30",
+      "description": "High-resolution landscape image showcasing natural scenery in 1200x800 format for wide aspect ratio testing",
+      "start": 4,
+      "duration": 3
+    },
+    {
+      "imageurl": "https://picsum.photos/800/1200?random=31",
+      "description": "Portrait-oriented image in 800x1200 format demonstrating vertical aspect ratio handling and layout optimization",
+      "start": 7,
+      "duration": 3
+    },
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "description": "Elephants Dream animated short film featuring surreal environments and creative visual storytelling",
+      "start": 10,
+      "duration": 4,
+      "volume": 80
+    }
+  ],
+  "captions": [
+    {
+      "text": "Big Buck Bunny Animation",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Landscape Photography",
+      "start": 4,
+      "duration": 2.5
+    },
+    {
+      "text": "Portrait Format Image",
+      "start": 7,
+      "duration": 2.5
+    },
+    {
+      "text": "Elephants Dream Sequence",
+      "start": 10,
+      "duration": 3
+    }
+  ]
+}

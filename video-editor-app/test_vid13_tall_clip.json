@@ -1,0 +1,13 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Tall Clip Smart AR Test",
+  "author": "9:16 Aspect Ratio",
+  "watermark": "@tall",
+  "clips": [
+    {
+      "videoUrl": "temp/0ff87256-8e7a-455d-913a-d654dcc56111-video.mp4",
+      "start": 0,
+      "duration": 5
+    }
+  ]
+}

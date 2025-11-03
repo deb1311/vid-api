@@ -1,0 +1,34 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "captions": [
+    {
+      "text": "Testing Vid-1.5 with Overlay",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Multiply blend mode applied",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "Text remains unaffected",
+      "start": 6,
+      "duration": 3
+    }
+  ],
+  "watermark": "@vid15test",
+  "overlay": true,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/1851415/pexels-photo-1851415.jpeg",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "start": 0,
+      "duration": 5
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "quote": "This is a test video",
+  "author": "Test Author",
+  "watermark": "@test",
+  "audioUrl": "https://example.com/audio.mp3",
+  "clips": [
+    {
+      "videoUrl": "https://example.com/video1.mp4",
+      "start": 0,
+      "duration": 5,
+      "description": "First test clip"
+    },
+    {
+      "videoUrl": "https://example.com/video2.mp4",
+      "start": 5,
+      "duration": 5,
+      "description": "Second test clip"
+    }
+  ],
+  "captions": [
+    {
+      "text": "First caption",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Second caption",
+      "start": 3,
+      "duration": 4
+    }
+  ]
+}

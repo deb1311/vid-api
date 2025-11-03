@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Editor Access</title>
+</head>
+<body>
+    <h1>Testing Video Editor Access</h1>
+    <p>Click the link below to test the video editor:</p>
+    <a href="https://video-editor-api-519298355551.us-central1.run.app/editor/" target="_blank">
+        Open Video Editor
+    </a>
+    
+    <script>
+        // Test if the editor loads properly
+        fetch('https://video-editor-api-519298355551.us-central1.run.app/editor/')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Editor is accessible');
+                    document.body.innerHTML += '<p style="color: green;">✅ Editor is accessible and responding</p>';
+                } else {
+                    console.error('❌ Editor returned error:', response.status);
+                    document.body.innerHTML += '<p style="color: red;">❌ Editor returned error: ' + response.status + '</p>';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Failed to reach editor:', error);
+                document.body.innerHTML += '<p style="color: red;">❌ Failed to reach editor: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Test background music for new structure demonstration",
+  "watermark": "@newstructure",
+  "clips": [
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Animated short film featuring Big Buck Bunny character in forest setting",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=20",
+      "description": "Random landscape image in 1200x800 resolution for testing mixed media",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "imageurl": "https://picsum.photos/800/1200?random=21",
+      "description": "Random portrait-oriented image in 800x1200 resolution for aspect ratio testing",
+      "start": 6,
+      "duration": 3
+    }
+  ],
+  "captions": [
+    {
+      "text": "Video Clip with videourl",
+      "start": 0,
+      "duration": 2.5
+    },
+    {
+      "text": "Image Clip with imageurl",
+      "start": 3,
+      "duration": 2.5
+    },
+    {
+      "text": "Portrait Image with imageurl",
+      "start": 6,
+      "duration": 2.5
+    }
+  ]
+}

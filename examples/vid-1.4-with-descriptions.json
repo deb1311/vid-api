@@ -1,0 +1,46 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Upbeat background music for motivational content",
+  "watermark": "@example",
+  "clips": [
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Animated short film featuring Big Buck Bunny character in a forest setting",
+      "start": 15,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=10",
+      "description": "Landscape photograph with mountains and blue sky, random image #10",
+      "duration": 3
+    },
+    {
+      "imageurl": "https://picsum.photos/800/1200?random=11", 
+      "description": "Portrait-oriented nature photograph with trees and foliage, random image #11",
+      "duration": 3
+    }
+  ],
+  "captions": [
+    {
+      "text": "Video clip from Big Buck Bunny",
+      "start": 0,
+      "duration": 2.5
+    },
+    {
+      "text": "Beautiful landscape imagery",
+      "start": 2.5,
+      "duration": 2.5
+    },
+    {
+      "text": "Nature photography showcase",
+      "start": 5,
+      "duration": 2.5
+    },
+    {
+      "text": "Mixed media presentation complete!",
+      "start": 7.5,
+      "duration": 1.5
+    }
+  ]
+}

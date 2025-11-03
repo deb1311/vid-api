@@ -1,0 +1,33 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Four very distinct clips test",
+  "author": "Clip Counter",
+  "watermark": "@4clips",
+  "overlay": 40,
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0,
+      "duration": 4,
+      "transition": "cut"
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 0,
+      "duration": 4,
+      "transition": "fade"
+    },
+    {
+      "videoUrl": "temp/long_video3.mp4",
+      "start": 0,
+      "duration": 4,
+      "transition": "wipeleft"
+    },
+    {
+      "videoUrl": "temp/long_video4.mp4",
+      "start": 0,
+      "duration": 2,
+      "transition": "slideup"
+    }
+  ]
+}

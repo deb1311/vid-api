@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test JSON Cleaning</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>JSON Cleaning Test</h1>
+    
+    <h2>Original JSON (with non-breaking spaces):</h2>
+    <pre id="originalJson"></pre>
+    
+    <h2>Cleaned JSON:</h2>
+    <pre id="cleanedJson"></pre>
+    
+    <h2>Test Results:</h2>
+    <div id="results"></div>
+
+    <script>
+        // Simulate the problematic JSON from Notion
+        const problematicJson = `{Â  "quote": "GFGEG",Â  "author": "",Â  "watermark": "@TheSuccessFormula",Â  "audioUrl": "f9024664-0f30-42a0-b8d3-06207775b2d1-instagram-audio.mp3",Â  "duration": 10,Â  "clips": [Â  Â  {Â  Â  Â  "start": 0,Â  Â  Â  "duration": 1,Â  Â  Â  "description": "dhdghgh",Â  Â  Â  "begin": 8.6,Â  Â  Â  "volume": 100,Â  Â  Â  "videourl": "https://www.pexels.com/download/video/30763731/"Â  Â  }Â  ],Â  "overlay": false}`;
+        
+        document.getElementById('originalJson').textContent = problematicJson;
+        
+        const resultsDiv = document.getElementById('results');
+        
+        // Test 1: Try to parse original JSON (should fail)
+        try {
+            JSON.parse(problematicJson);
+            resultsDiv.innerHTML += '<div class="test-result error">❌ Test 1 FAILED: Original JSON should not parse</div>';
+        } catch (error) {
+            resultsDiv.innerHTML += '<div class="test-result success">✅ Test 1 PASSED: Original JSON correctly fails to parse</div>';
+            resultsDiv.innerHTML += `<div class="test-result">Error: ${error.message}</div>`;
+        }
+        
+        // Test 2: Clean and parse JSON (should succeed)
+        try {
+            const cleanedJson = problematicJson
+                .replace(/Â/g, ' ')  // Replace non-breaking spaces
+                .replace(/\u00A0/g, ' ')  // Replace other non-breaking space variants
+                .replace(/\s+/g, ' ')  // Normalize multiple spaces
+                .trim();
+            
+            document.getElementById('cleanedJson').textContent = cleanedJson;
+            
+            const parsed = JSON.parse(cleanedJson);
+            resultsDiv.innerHTML += '<div class="test-result success">✅ Test 2 PASSED: Cleaned JSON parses successfully</div>';
+            resultsDiv.innerHTML += `<div class="test-result">Parsed object has ${Object.keys(parsed).length} properties</div>`;
+            resultsDiv.innerHTML += `<div class="test-result">Quote: "${parsed.quote}"</div>`;
+            resultsDiv.innerHTML += `<div class="test-result">Clips count: ${parsed.clips ? parsed.clips.length : 0}</div>`;
+        } catch (error) {
+            resultsDiv.innerHTML += '<div class="test-result error">❌ Test 2 FAILED: Cleaned JSON should parse</div>';
+            resultsDiv.innerHTML += `<div class="test-result">Error: ${error.message}</div>`;
+        }
+    </script>
+</body>
+</html>

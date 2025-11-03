@@ -1,0 +1,59 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "duration": 45,
+  "quote": "Testing Long Audio Duration - No 10s Limit",
+  "author": "Extended Audio Test",
+  "watermark": "@longaudiotest",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "start": 0,
+      "duration": 15,
+      "volume": 80
+    },
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "start": 15,
+      "duration": 15,
+      "volume": 60
+    },
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "start": 30,
+      "duration": 15,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "First 15 seconds",
+      "start": 0,
+      "duration": 5
+    },
+    {
+      "text": "Audio continues playing...",
+      "start": 10,
+      "duration": 5
+    },
+    {
+      "text": "Second clip at 15s",
+      "start": 15,
+      "duration": 5
+    },
+    {
+      "text": "Still going strong...",
+      "start": 25,
+      "duration": 5
+    },
+    {
+      "text": "Third clip at 30s",
+      "start": 30,
+      "duration": 5
+    },
+    {
+      "text": "45 seconds total!",
+      "start": 40,
+      "duration": 5
+    }
+  ]
+}

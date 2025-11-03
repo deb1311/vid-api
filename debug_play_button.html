@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Play Button</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 15px 30px; margin: 10px; cursor: pointer; font-size: 16px; }
+        .primary { background-color: #4a90e2; color: white; border: none; border-radius: 5px; }
+        .success { background-color: #5cb85c; color: white; border: none; border-radius: 5px; }
+        .error { background-color: #dc3545; color: white; border: none; border-radius: 5px; }
+        .info { background-color: #d1ecf1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug Play Button Issue</h1>
+    <p>This will help debug why the play button isn't responding.</p>
+
+    <div class="test-section">
+        <h3>Step 1: Load Test Data</h3>
+        <button class="primary" onclick="loadDebugTestData()">Load Debug Test Data</button>
+        <div id="loadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 2: Open Editor with Debug Console</h3>
+        <button class="success" onclick="openEditorWithDebug()">Open Editor with Debug</button>
+        <div id="debugInstructions"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 3: Manual Debug Commands</h3>
+        <p>If the editor opens, paste these commands in the browser console:</p>
+        <pre id="debugCommands">
+// Check if play button exists
+console.log('Play button element:', document.getElementById('playPauseBtn'));
+
+// Check if button is disabled
+const btn = document.getElementById('playPauseBtn');
+console.log('Button disabled:', btn ? btn.disabled : 'Button not found');
+
+// Check if VideoEditor instance exists
+console.log('VideoEditor instance:', window.videoEditor || 'Not found');
+
+// Try to manually enable the button
+if (btn) {
+    btn.disabled = false;
+    console.log('Button manually enabled');
+}
+
+// Check if event listener is working
+if (btn) {
+    btn.addEventListener('click', () => {
+        console.log('🎬 Play button clicked!');
+        alert('Play button is working!');
+    });
+    console.log('Test event listener added');
+}
+
+// Check if togglePlayPause function exists
+if (window.videoEditor) {
+    console.log('togglePlayPause function:', typeof window.videoEditor.togglePlayPause);
+}
+        </pre>
+        <button onclick="copyDebugCommands()">Copy Debug Commands</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 4: Force Enable Play Button</h3>
+        <p>If the button is disabled, try this command in console:</p>
+        <pre>
+// Force enable and test
+const btn = document.getElementById('playPauseBtn');
+if (btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    console.log('Play button force enabled');
+}
+        </pre>
+        <button onclick="copyForceEnable()">Copy Force Enable Command</button>
+    </div>
+
+    <script>
+        function loadDebugTestData() {
+            const resultDiv = document.getElementById('loadResult');
+            
+            try {
+                const testData = {
+                    clips: [
+                        {
+                            imageurl: "https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg",
+                            begin: 0,
+                            duration: 5,
+                            description: "Test clip for play button debug"
+                        }
+                    ],
+                    captions: [
+                        {
+                            text: "Debug Test",
+                            begin: 1,
+                            duration: 3,
+                            style: {
+                                fontSize: 48,
+                                fontWeight: "bold",
+                                color: "#ffffff",
+                                backgroundColor: "rgba(0,0,0,0.7)",
+                                textAlign: "center"
+                            }
+                        }
+                    ],
+                    audioUrl: "",
+                    duration: 5
+                };
+                
+                const project = {
+                    data: testData,
+                    fileName: 'debug-play-button.json',
+                    title: 'Debug Play Button Test'
+                };
+                
+                localStorage.setItem('videoEditorProject', JSON.stringify(project));
+                
+                resultDiv.innerHTML = `
+                    <div style="background-color: #d4edda; padding: 15px; border-radius: 5px;">
+                        <h4>✅ Debug Test Data Loaded</h4>
+                        <p>Simple 5-second test with one image and one caption.</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px;">
+                        <h4>❌ Error: ${error.message}</h4>
+                    </div>
+                `;
+            }
+        }
+
+        function openEditorWithDebug() {
+            const instructionsDiv = document.getElementById('debugInstructions');
+            
+            // Open editor
+            const editorWindow = window.open('video-editor-app/index.html', '_blank', 'width=1400,height=900');
+            
+            instructionsDiv.innerHTML = `
+                <div class="info">
+                    <h4>🔍 Debug Instructions:</h4>
+                    <ol>
+                        <li><strong>Wait for editor to load</strong> (should show test image)</li>
+                        <li><strong>Open browser console</strong> (F12 → Console tab)</li>
+                        <li><strong>Look for any red errors</strong> in the console</li>
+                        <li><strong>Check if play button is enabled</strong> (should not be grayed out)</li>
+                        <li><strong>Try clicking the play button</strong></li>
+                        <li><strong>If it doesn't work, paste the debug commands</strong> from Step 3</li>
+                    </ol>
+                    
+                    <h4>🎯 Expected Behavior:</h4>
+                    <ul>
+                        <li>Play button should be enabled (not grayed out)</li>
+                        <li>Clicking it should start playback</li>
+                        <li>Icon should change from ▶️ to ⏸️</li>
+                        <li>Time should advance and playhead should move</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function copyDebugCommands() {
+            const commands = document.getElementById('debugCommands').textContent;
+            navigator.clipboard.writeText(commands).then(() => {
+                alert('Debug commands copied to clipboard!');
+            });
+        }
+
+        function copyForceEnable() {
+            const command = `
+const btn = document.getElementById('playPauseBtn');
+if (btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    console.log('Play button force enabled');
+}`;
+            navigator.clipboard.writeText(command).then(() => {
+                alert('Force enable command copied to clipboard!');
+            });
+        }
+
+        // Auto-load test data
+        window.onload = function() {
+            console.log('🐛 Debug play button page loaded');
+        };
+    </script>
+</body>
+</html>

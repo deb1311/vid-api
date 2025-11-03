@@ -1,0 +1,28 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Testing mixed media with videos and images",
+  "author": "Mixed Media Expert",
+  "watermark": "@mixedmedia",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "videoUrl": "temp/test-image.jpg",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 1,
+      "duration": 3
+    },
+    {
+      "videoUrl": "temp/test-image.jpg",
+      "start": 0,
+      "duration": 2
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Worker Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        input[type="text"] {
+            width: 400px;
+        }
+
+        button {
+            background: #007cba;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005a87;
+        }
+
+        .result {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007cba;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Notion Database Reader - Test Page</h1>
+
+    <div class="instructions">
+        <h3>How to get your Database ID:</h3>
+        <ol>
+            <li>Open your Notion database in a web browser</li>
+            <li>Copy the URL from the address bar</li>
+            <li>The Database ID is the 32-character string in the URL</li>
+            <li>Example: <code>https://notion.so/workspace/abc123def456...?v=...</code></li>
+            <li>The Database ID would be: <code>abc123def456...</code></li>
+        </ol>
+    </div>
+
+    <div class="container">
+        <h3>Read Data (GET Request)</h3>
+        <p><strong>Worker URL:</strong> https://notion-reader.debabratamaitra898.workers.dev</p>
+        <p><em>Database ID is now hardcoded in the worker</em></p>
+
+        <div>
+            <button onclick="testGetWorker()">Get All Records</button>
+        </div>
+
+        <div id="getResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h3>Add New Record (POST Request)</h3>
+
+        <div>
+            <label for="caption">Caption:</label><br>
+            <input type="text" id="caption" placeholder="Enter caption text">
+        </div>
+
+        <div>
+            <label for="jsonData">JSON Data:</label><br>
+            <textarea id="jsonData" rows="4" style="width: 400px;" placeholder='{"key": "value"}'></textarea>
+        </div>
+
+        <div>
+            <label for="status">Status:</label><br>
+            <select id="status">
+                <option value="">Select status...</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Failed">Failed</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="output_url">Output URL:</label><br>
+            <input type="url" id="output_url" placeholder="https://output-url.com">
+        </div>
+
+        <div>
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" placeholder="Username">
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button onclick="testPostWorker()">Add New Record</button>
+        </div>
+
+        <div id="postResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testGetWorker() {
+            const resultDiv = document.getElementById('getResult');
+
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Loading...';
+
+            try {
+                const response = await fetch('https://notion-reader.debabratamaitra898.workers.dev/');
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                    resultDiv.style.color = 'black';
+                } else {
+                    resultDiv.textContent = `Error ${response.status}: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.style.color = 'red';
+                }
+            } catch (error) {
+                resultDiv.textContent = `Network Error: ${error.message}`;
+                resultDiv.style.color = 'red';
+            }
+        }
+
+        async function testPostWorker() {
+            const caption = document.getElementById('caption').value.trim();
+            const jsonData = document.getElementById('jsonData').value.trim();
+            const status = document.getElementById('status').value;
+            const output_url = document.getElementById('output_url').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const resultDiv = document.getElementById('postResult');
+
+            if (!caption && !jsonData && !status && !output_url && !username) {
+                alert('Please fill in at least one field');
+                return;
+            }
+
+            const requestBody = {};
+            if (caption) requestBody.caption = caption;
+            if (jsonData) {
+                try {
+                    // Try to parse as JSON, if it fails, treat as string
+                    requestBody.json = JSON.parse(jsonData);
+                } catch {
+                    requestBody.json = jsonData;
+                }
+            }
+            if (status) requestBody.status = status;
+            if (output_url) requestBody.output_url = output_url;
+            if (username) requestBody.username = username;
+
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Creating record...';
+
+            try {
+                const response = await fetch('https://notion-reader.debabratamaitra898.workers.dev/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                    resultDiv.style.color = 'green';
+
+                    // Clear form on success
+                    document.getElementById('caption').value = '';
+                    document.getElementById('jsonData').value = '';
+                    document.getElementById('status').value = '';
+                    document.getElementById('output_url').value = '';
+                    document.getElementById('username').value = '';
+                } else {
+                    resultDiv.textContent = `Error ${response.status}: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.style.color = 'red';
+                }
+            } catch (error) {
+                resultDiv.textContent = `Network Error: ${error.message}`;
+                resultDiv.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+
+</html>

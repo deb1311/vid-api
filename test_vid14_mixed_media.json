@@ -1,0 +1,50 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Test background music for mixed media demonstration",
+  "watermark": "@mixedmediatest",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Animated short film featuring Big Buck Bunny character in forest setting",
+      "start": 15,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "https://picsum.photos/1200/800?random=10",
+      "description": "Random landscape image in 1200x800 resolution for testing",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "https://picsum.photos/800/1200?random=11",
+      "description": "Random portrait-oriented image in 800x1200 resolution for testing",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Video Clip from Big Buck Bunny",
+      "start": 0,
+      "duration": 2.5
+    },
+    {
+      "text": "Landscape Image Display",
+      "start": 2.5,
+      "duration": 2.5
+    },
+    {
+      "text": "Portrait Image Display",
+      "start": 5,
+      "duration": 2.5
+    },
+    {
+      "text": "Mixed Media Complete!",
+      "start": 7.5,
+      "duration": 1.5
+    }
+  ]
+}

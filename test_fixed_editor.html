@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fixed Video Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 15px 30px; margin: 10px; cursor: pointer; font-size: 16px; }
+        .primary { background-color: #4a90e2; color: white; border: none; border-radius: 5px; }
+        .secondary { background-color: #5cb85c; color: white; border: none; border-radius: 5px; }
+        .info { background-color: #d1ecf1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Fixed Video Editor</h1>
+    <p>This will test all the fixes for playhead, timeline positioning, and play button functionality.</p>
+
+    <div class="test-section">
+        <h3>Step 1: Load Test Data</h3>
+        <p>First, load comprehensive test data with proper 'begin' properties:</p>
+        <button class="primary" onclick="loadFixedTestData()">Load Fixed Test Data</button>
+        <div id="loadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 2: Open Fixed Editor</h3>
+        <p>Open the editor with all fixes applied:</p>
+        <button class="secondary" onclick="openFixedEditor()">Open Fixed Editor</button>
+        
+        <div class="info">
+            <h4>🔍 What to Test:</h4>
+            <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+                <li><strong>Timeline Clips:</strong> Should be positioned correctly based on 'begin' time</li>
+                <li><strong>Playhead:</strong> Should be positioned correctly and move smoothly</li>
+                <li><strong>Play Button:</strong> Should start/stop playback and update icon</li>
+                <li><strong>Click Clips:</strong> Should jump playhead to clip start time</li>
+                <li><strong>Dragging:</strong> Playhead should be draggable along timeline</li>
+                <li><strong>Timeline Rendering:</strong> All tracks should show clips properly</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 3: Clear Data (if needed)</h3>
+        <p>If you need to start fresh:</p>
+        <button onclick="clearAllData()" style="background-color: #dc3545; color: white; border: none; border-radius: 5px; padding: 10px 20px;">Clear All Data</button>
+    </div>
+
+    <script>
+        function loadFixedTestData() {
+            const resultDiv = document.getElementById('loadResult');
+            
+            try {
+                // Create test data with proper 'begin' properties
+                const testData = {
+                    clips: [
+                        {
+                            imageurl: "https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg",
+                            begin: 0,      // Using 'begin' instead of 'start'
+                            duration: 3,
+                            description: "Mountain landscape"
+                        },
+                        {
+                            imageurl: "https://images.pexels.com/photos/1563356/pexels-photo-1563356.jpeg", 
+                            begin: 3,      // Starts at 3 seconds
+                            duration: 4,
+                            description: "City skyline at sunset"
+                        },
+                        {
+                            imageurl: "https://images.pexels.com/photos/1366919/pexels-photo-1366919.jpeg",
+                            begin: 7,      // Starts at 7 seconds
+                            duration: 3,
+                            description: "Ocean waves"
+                        }
+                    ],
+                    captions: [
+                        {
+                            text: "Welcome to our journey",
+                            begin: 0.5,    // Using 'begin' for captions too
+                            duration: 2.5,
+                            style: {
+                                fontSize: 48,
+                                fontWeight: "bold",
+                                color: "#ffffff",
+                                backgroundColor: "rgba(0,0,0,0.7)",
+                                textAlign: "center"
+                            }
+                        },
+                        {
+                            text: "Exploring beautiful places",
+                            begin: 3.5,
+                            duration: 3,
+                            style: {
+                                fontSize: 42,
+                                fontWeight: "bold", 
+                                color: "#ffff00",
+                                backgroundColor: "rgba(0,0,0,0.5)",
+                                textAlign: "center"
+                            }
+                        },
+                        {
+                            text: "Thanks for watching!",
+                            begin: 7.5,
+                            duration: 2.5,
+                            style: {
+                                fontSize: 44,
+                                fontWeight: "bold",
+                                color: "#00ff00", 
+                                backgroundColor: "rgba(0,0,0,0.6)",
+                                textAlign: "center"
+                            }
+                        }
+                    ],
+                    audioUrl: "",
+                    duration: 10,
+                    aspectRatio: "9:16",
+                    resolution: {
+                        width: 1080,
+                        height: 1920
+                    }
+                };
+                
+                const project = {
+                    data: testData,
+                    fileName: 'fixed-test-project.json',
+                    title: 'Fixed Test Project - Proper Timeline'
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('videoEditorProject', JSON.stringify(project));
+                
+                resultDiv.innerHTML = `
+                    <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h4>✅ Fixed Test Data Loaded!</h4>
+                        <p><strong>Clips:</strong> ${testData.clips.length} (positioned at 0s, 3s, 7s)</p>
+                        <p><strong>Captions:</strong> ${testData.captions.length} (positioned at 0.5s, 3.5s, 7.5s)</p>
+                        <p><strong>Total Duration:</strong> ${testData.duration} seconds</p>
+                        <p><strong>Timeline Test:</strong> Clips should be properly spaced on timeline</p>
+                    </div>
+                `;
+                
+                console.log('✅ Fixed test data loaded:', testData);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h4>❌ Error Loading Test Data</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                
+                console.error('❌ Error loading test data:', error);
+            }
+        }
+
+        function openFixedEditor() {
+            const editorWindow = window.open('video-editor-app/index.html', '_blank', 'width=1400,height=900');
+            
+            // Give instructions
+            setTimeout(() => {
+                console.log(`
+🔧 TESTING INSTRUCTIONS:
+
+1. ✅ Check Timeline: Clips should be at 0s, 3s, and 7s
+2. ✅ Test Playhead: Should be positioned correctly at timeline start
+3. ✅ Test Play Button: Click to start/stop playback
+4. ✅ Click Clips: Click any clip to jump playhead to that position
+5. ✅ Drag Playhead: Should be draggable along the timeline
+6. ✅ Check Rendering: Preview should show content at current time
+
+If any of these don't work, check the browser console for errors.
+                `);
+            }, 1000);
+        }
+
+        function clearAllData() {
+            localStorage.removeItem('videoEditorProject');
+            localStorage.removeItem('webhookUrl');
+            alert('All data cleared! Editor will start fresh.');
+        }
+
+        // Auto-load test data when page opens
+        window.onload = function() {
+            console.log('🚀 Fixed editor test page loaded');
+        };
+    </script>
+</body>
+</html>

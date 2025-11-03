@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Video Editor</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .fix-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            background: white;
+        }
+        .success { 
+            background-color: #d4edda; 
+            border-color: #c3e6cb; 
+            color: #155724;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb; 
+            color: #721c24;
+        }
+        button { 
+            padding: 10px 15px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 4px;
+            background: #28a745;
+            color: white;
+        }
+        button:hover { background: #218838; }
+        .diagnostic-btn {
+            background: #007bff;
+        }
+        .diagnostic-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Video Editor Fix Tool</h1>
+    <p>This tool will attempt to fix common issues with the video editor.</p>
+
+    <div class="fix-section">
+        <h3>Quick Actions</h3>
+        <button onclick="openEditor()">🚀 Open Video Editor</button>
+        <button onclick="openDiagnostic()" class="diagnostic-btn">🔍 Run Diagnostics</button>
+        <button onclick="runAllFixes()">🔧 Apply All Fixes</button>
+    </div>
+
+    <div class="fix-section">
+        <h3>Individual Fixes</h3>
+        <button onclick="checkFiles()">📁 Check Files</button>
+        <button onclick="fixPermissions()">🔐 Fix Permissions</button>
+        <button onclick="clearCache()">🗑️ Clear Cache</button>
+        <button onclick="resetLocalStorage()">💾 Reset Settings</button>
+    </div>
+
+    <div class="fix-section">
+        <h3>Results</h3>
+        <div id="results">Click a button above to start fixing issues...</div>
+    </div>
+
+    <script>
+        function showResult(message, type = 'success') {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `
+                <div class="fix-section ${type}">
+                    <strong>[${timestamp}]</strong> ${message}
+                </div>
+            `;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function openEditor() {
+            try {
+                const editorWindow = window.open('video-editor-app/index.html', '_blank', 'width=1200,height=800');
+                if (editorWindow) {
+                    showResult('✅ Video editor opened in new window');
+                } else {
+                    showResult('❌ Failed to open editor - popup might be blocked', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error opening editor: ${error.message}`, 'error');
+            }
+        }
+
+        function openDiagnostic() {
+            try {
+                const diagnosticWindow = window.open('video-editor-app/diagnostic.html', '_blank', 'width=1000,height=800');
+                if (diagnosticWindow) {
+                    showResult('✅ Diagnostic tool opened in new window');
+                } else {
+                    showResult('❌ Failed to open diagnostic tool - popup might be blocked', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error opening diagnostic: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkFiles() {
+            showResult('🔍 Checking required files...');
+            
+            const files = [
+                'video-editor-app/index.html',
+                'video-editor-app/app.js',
+                'video-editor-app/styles.css'
+            ];
+
+            let allGood = true;
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        showResult(`✅ ${file} - OK`);
+                    } else {
+                        showResult(`❌ ${file} - ${response.status} ${response.statusText}`, 'error');
+                        allGood = false;
+                    }
+                } catch (error) {
+                    showResult(`❌ ${file} - ${error.message}`, 'error');
+                    allGood = false;
+                }
+            }
+            
+            if (allGood) {
+                showResult('✅ All required files are accessible');
+            } else {
+                showResult('❌ Some files are missing or inaccessible', 'error');
+            }
+        }
+
+        function fixPermissions() {
+            showResult('🔐 Checking file permissions...');
+            
+            // Try to access files with different methods
+            const testMethods = [
+                { name: 'Fetch API', test: () => fetch('video-editor-app/index.html', { method: 'HEAD' }) },
+                { name: 'XMLHttpRequest', test: () => {
+                    return new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('HEAD', 'video-editor-app/index.html');
+                        xhr.onload = () => resolve(xhr);
+                        xhr.onerror = () => reject(new Error('XHR failed'));
+                        xhr.send();
+                    });
+                }}
+            ];
+            
+            testMethods.forEach(async (method) => {
+                try {
+                    await method.test();
+                    showResult(`✅ ${method.name} - Working`);
+                } catch (error) {
+                    showResult(`❌ ${method.name} - ${error.message}`, 'error');
+                }
+            });
+        }
+
+        function clearCache() {
+            showResult('🗑️ Clearing browser cache...');
+            
+            try {
+                // Clear various caches
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            caches.delete(name);
+                        });
+                    });
+                    showResult('✅ Service worker caches cleared');
+                }
+                
+                // Force reload without cache
+                showResult('💡 Tip: Press Ctrl+F5 to force reload without cache');
+                showResult('✅ Cache clearing initiated');
+                
+            } catch (error) {
+                showResult(`❌ Cache clearing failed: ${error.message}`, 'error');
+            }
+        }
+
+        function resetLocalStorage() {
+            showResult('💾 Resetting local storage...');
+            
+            try {
+                const keys = Object.keys(localStorage);
+                const editorKeys = keys.filter(key => 
+                    key.includes('video') || 
+                    key.includes('editor') || 
+                    key.includes('webhook')
+                );
+                
+                if (editorKeys.length > 0) {
+                    editorKeys.forEach(key => {
+                        localStorage.removeItem(key);
+                        showResult(`🗑️ Removed: ${key}`);
+                    });
+                    showResult('✅ Editor settings reset');
+                } else {
+                    showResult('ℹ️ No editor settings found in local storage');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Local storage reset failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllFixes() {
+            showResult('🔧 Running comprehensive fix sequence...');
+            
+            await checkFiles();
+            fixPermissions();
+            clearCache();
+            resetLocalStorage();
+            
+            showResult('✅ All fixes completed! Try opening the editor now.');
+            showResult('💡 If issues persist, check the diagnostic tool for more details.');
+        }
+
+        // Initialize
+        showResult('🔧 Video Editor Fix Tool ready');
+        showResult('💡 Start by clicking "Check Files" to identify issues');
+    </script>
+</body>
+</html>

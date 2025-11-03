@@ -1,0 +1,28 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Clean implementation test",
+  "author": "Perfect Code",
+  "watermark": "@cleancode",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 1,
+      "duration": 4
+    },
+    {
+      "videoUrl": "temp/long_video3.mp4",
+      "start": 2,
+      "duration": 4
+    },
+    {
+      "videoUrl": "temp/long_video4.mp4",
+      "start": 0,
+      "duration": 2
+    }
+  ]
+}

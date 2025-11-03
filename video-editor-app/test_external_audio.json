@@ -1,0 +1,37 @@
+{
+  "audioUrl": "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3",
+  "watermark": "@cloudflare-test",
+  "overlay": false,
+  "duration": 20,
+  "clips": [
+    {
+      "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "start": 0,
+      "duration": 15,
+      "volume": 100,
+      "description": "Test video with external audio"
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing External Audio URLs",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "text": "This will work on Cloudflare Pages",
+      "start": 4,
+      "duration": 4
+    },
+    {
+      "text": "With HTTPS and proper CORS",
+      "start": 8,
+      "duration": 4
+    },
+    {
+      "text": "No file:// protocol issues",
+      "start": 12,
+      "duration": 4
+    }
+  ]
+}

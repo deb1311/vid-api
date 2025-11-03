@@ -1,0 +1,26 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "quote": "Comprehensive Demo: Mixed AR + Volume Control",
+  "author": "Wide + Tall Clips with Different Audio Levels",
+  "watermark": "@comprehensive",
+  "clips": [
+    {
+      "videoUrl": "temp/test_video.mp4",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "temp/test-image.jpg",
+      "start": 3,
+      "duration": 3,
+      "volume": 0
+    },
+    {
+      "videoUrl": "temp/actual_style3_video.mp4",
+      "start": 1,
+      "duration": 3,
+      "volume": 50
+    }
+  ]
+}

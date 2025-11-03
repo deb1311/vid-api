@@ -1,0 +1,37 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "duration": 30,
+  "watermark": "@audio_test",
+  "overlay": false,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 0,
+      "duration": 10,
+      "volume": 100
+    },
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 15,
+      "duration": 8,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Audio Duration Test",
+      "start": 0,
+      "duration": 5
+    },
+    {
+      "text": "Timeline should be 30s max",
+      "start": 10,
+      "duration": 5
+    },
+    {
+      "text": "Based on audio length",
+      "start": 20,
+      "duration": 5
+    }
+  ]
+}

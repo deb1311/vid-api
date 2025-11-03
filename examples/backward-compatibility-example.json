@@ -1,0 +1,43 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Background music for demonstration",
+  "watermark": "@compatibility",
+  "clips": [
+    {
+      "videoUrl": "https://example.com/old-video.mp4",
+      "description": "Legacy video parameter still works for backward compatibility",
+      "start": 0,
+      "duration": 5,
+      "volume": 100
+    },
+    {
+      "videourl": "https://example.com/new-video.mp4", 
+      "description": "New video parameter with improved naming convention",
+      "start": 10,
+      "duration": 5,
+      "volume": 100
+    },
+    {
+      "imageurl": "https://example.com/image.jpg",
+      "description": "New image parameter for better clarity",
+      "duration": 3
+    }
+  ],
+  "captions": [
+    {
+      "text": "Both old and new parameters work",
+      "start": 0,
+      "duration": 5
+    },
+    {
+      "text": "Seamless backward compatibility",
+      "start": 5,
+      "duration": 5
+    },
+    {
+      "text": "Enhanced with descriptions",
+      "start": 10,
+      "duration": 3
+    }
+  ]
+}

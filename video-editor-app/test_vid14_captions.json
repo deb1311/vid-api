@@ -1,0 +1,29 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@testhandle",
+  "clips": [
+    {
+      "videoUrl": "temp/test_video2.mp4",
+      "start": 0,
+      "duration": 6,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing Vid-1.4 Endpoint",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With Timed Captions",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "No Quote Parameter Needed!",
+      "start": 6,
+      "duration": 2
+    }
+  ]
+}

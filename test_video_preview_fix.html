@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Video Preview Play Button Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 15px 30px; margin: 10px; cursor: pointer; font-size: 16px; }
+        .primary { background-color: #4a90e2; color: white; border: none; border-radius: 5px; }
+        .success { background-color: #5cb85c; color: white; border: none; border-radius: 5px; }
+        .info { background-color: #d1ecf1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .warning { background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Test Video Preview Play Button Fix</h1>
+    <p>This tests the fix for the main video preview play button functionality.</p>
+
+    <div class="test-section">
+        <h3>Step 1: Load Test Data with Proper Timeline</h3>
+        <p>Load test data that uses 'begin' properties correctly:</p>
+        <button class="primary" onclick="loadVideoPreviewTestData()">Load Video Preview Test Data</button>
+        <div id="loadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 2: Open Editor and Test Video Preview</h3>
+        <p>Open the editor and test the video preview play functionality:</p>
+        <button class="success" onclick="openEditorForVideoTest()">Open Editor for Video Test</button>
+        
+        <div class="info">
+            <h4>🎬 What to Test in Video Preview:</h4>
+            <ul style="text-align: left; max-width: 600px; margin: 0 auto;">
+                <li><strong>Play Button:</strong> Click the play button in the preview area</li>
+                <li><strong>Visual Changes:</strong> The canvas should show different images as time progresses</li>
+                <li><strong>Caption Changes:</strong> Text should appear and disappear at the right times</li>
+                <li><strong>Time Display:</strong> Should show current time / total duration</li>
+                <li><strong>Playhead Movement:</strong> Should move along the timeline during playback</li>
+                <li><strong>Auto Stop:</strong> Should stop at the end and reset play button icon</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <h4>🔍 Expected Behavior:</h4>
+            <p><strong>0-3s:</strong> Mountain image with "Welcome to our journey" text</p>
+            <p><strong>3-7s:</strong> City image with "Exploring beautiful places" text</p>
+            <p><strong>7-10s:</strong> Ocean image with "Thanks for watching!" text</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 3: Debug Info</h3>
+        <p>If the video preview still doesn't work, check browser console for errors:</p>
+        <button onclick="showDebugInfo()">Show Debug Instructions</button>
+        <div id="debugInfo"></div>
+    </div>
+
+    <script>
+        function loadVideoPreviewTestData() {
+            const resultDiv = document.getElementById('loadResult');
+            
+            try {
+                // Create test data specifically for video preview testing
+                const testData = {
+                    clips: [
+                        {
+                            imageurl: "https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg",
+                            begin: 0,      // Mountain landscape from 0-3s
+                            duration: 3,
+                            description: "Mountain landscape"
+                        },
+                        {
+                            imageurl: "https://images.pexels.com/photos/1563356/pexels-photo-1563356.jpeg", 
+                            begin: 3,      // City skyline from 3-7s
+                            duration: 4,
+                            description: "City skyline at sunset"
+                        },
+                        {
+                            imageurl: "https://images.pexels.com/photos/1366919/pexels-photo-1366919.jpeg",
+                            begin: 7,      // Ocean waves from 7-10s
+                            duration: 3,
+                            description: "Ocean waves"
+                        }
+                    ],
+                    captions: [
+                        {
+                            text: "Welcome to our journey",
+                            begin: 0.5,    // Text appears at 0.5s
+                            duration: 2,   // Shows for 2 seconds
+                            style: {
+                                fontSize: 48,
+                                fontWeight: "bold",
+                                color: "#ffffff",
+                                backgroundColor: "rgba(0,0,0,0.7)",
+                                textAlign: "center"
+                            }
+                        },
+                        {
+                            text: "Exploring beautiful places",
+                            begin: 3.5,    // Text appears at 3.5s
+                            duration: 3,   // Shows for 3 seconds
+                            style: {
+                                fontSize: 42,
+                                fontWeight: "bold", 
+                                color: "#ffff00",
+                                backgroundColor: "rgba(0,0,0,0.5)",
+                                textAlign: "center"
+                            }
+                        },
+                        {
+                            text: "Thanks for watching!",
+                            begin: 7.5,    // Text appears at 7.5s
+                            duration: 2,   // Shows for 2 seconds
+                            style: {
+                                fontSize: 44,
+                                fontWeight: "bold",
+                                color: "#00ff00", 
+                                backgroundColor: "rgba(0,0,0,0.6)",
+                                textAlign: "center"
+                            }
+                        }
+                    ],
+                    audioUrl: "",
+                    duration: 10,
+                    aspectRatio: "9:16",
+                    resolution: {
+                        width: 1080,
+                        height: 1920
+                    }
+                };
+                
+                const project = {
+                    data: testData,
+                    fileName: 'video-preview-test.json',
+                    title: 'Video Preview Test - Play Button Fix'
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('videoEditorProject', JSON.stringify(project));
+                
+                resultDiv.innerHTML = `
+                    <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h4>✅ Video Preview Test Data Loaded!</h4>
+                        <p><strong>Timeline:</strong></p>
+                        <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+                            <li>0-3s: Mountain + "Welcome" text</li>
+                            <li>3-7s: City + "Exploring" text</li>
+                            <li>7-10s: Ocean + "Thanks" text</li>
+                        </ul>
+                        <p><strong>Total Duration:</strong> 10 seconds</p>
+                        <p>Now open the editor and test the video preview play button!</p>
+                    </div>
+                `;
+                
+                console.log('✅ Video preview test data loaded:', testData);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h4>❌ Error Loading Test Data</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                
+                console.error('❌ Error loading test data:', error);
+            }
+        }
+
+        function openEditorForVideoTest() {
+            const editorWindow = window.open('video-editor-app/index.html', '_blank', 'width=1400,height=900');
+            
+            // Give detailed instructions
+            setTimeout(() => {
+                console.log(`
+🎬 VIDEO PREVIEW TESTING INSTRUCTIONS:
+
+1. ✅ Wait for editor to load completely
+2. ✅ Look for the video preview canvas (should show mountain image initially)
+3. ✅ Click the PLAY button in the preview controls (▶️)
+4. ✅ Watch for these changes during playback:
+   
+   Time 0-3s: Mountain image + "Welcome to our journey" text
+   Time 3-7s: City image + "Exploring beautiful places" text  
+   Time 7-10s: Ocean image + "Thanks for watching!" text
+
+5. ✅ Check that playhead moves along timeline
+6. ✅ Check that time display updates (0:00 / 0:10)
+7. ✅ Verify play button changes to pause (⏸️) during playback
+8. ✅ Verify it stops at end and resets to play (▶️)
+
+If the preview doesn't change during playback, the fix didn't work.
+Check browser console for any errors.
+                `);
+            }, 2000);
+        }
+
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debugInfo');
+            
+            debugDiv.innerHTML = `
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px; text-align: left;">
+                    <h4>🐛 Debug Instructions:</h4>
+                    <ol>
+                        <li><strong>Open Browser Console:</strong> Press F12 or right-click → Inspect → Console</li>
+                        <li><strong>Look for Errors:</strong> Check for any red error messages</li>
+                        <li><strong>Check Render Messages:</strong> Look for "🎬 Rendering timeline..." messages</li>
+                        <li><strong>Check Playback Messages:</strong> Look for "🎬 Playback started/paused" messages</li>
+                        <li><strong>Check Media Loading:</strong> Look for image loading success/failure messages</li>
+                    </ol>
+                    
+                    <h4>🔍 Common Issues:</h4>
+                    <ul>
+                        <li><strong>Images not loading:</strong> Network issues or CORS problems</li>
+                        <li><strong>No render updates:</strong> renderCurrentMedia not finding clips</li>
+                        <li><strong>Time not advancing:</strong> Render loop not running</li>
+                        <li><strong>Wrong content shown:</strong> Using 'start' instead of 'begin' property</li>
+                    </ul>
+                    
+                    <h4>📝 Expected Console Messages:</h4>
+                    <pre style="background: #000; color: #0f0; padding: 10px; border-radius: 3px;">
+🎬 Rendering timeline...
+✅ Timeline rendered successfully
+🎬 Playback started at 0.0s
+🎯 Playhead positioned at XXXpx (time: X.XXs)
+                    </pre>
+                </div>
+            `;
+        }
+
+        // Auto-load test data when page opens
+        window.onload = function() {
+            console.log('🚀 Video preview test page loaded');
+        };
+    </script>
+</body>
+</html>

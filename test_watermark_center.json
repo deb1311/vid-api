@@ -1,0 +1,12 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "quote": "Testing centered watermark positioning",
+  "author": "Kiro Test",
+  "watermark": "@CENTERED",
+  "clips": [
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=40",
+      "duration": 6
+    }
+  ]
+}

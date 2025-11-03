@@ -1,0 +1,26 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "quote": "Testing Clip Audio Volume Control",
+  "author": "Original Video Audio vs Background Music",
+  "watermark": "@volumetest",
+  "clips": [
+    {
+      "videoUrl": "temp/test_video.mp4",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "temp/test_style3.mp4",
+      "start": 1,
+      "duration": 3,
+      "volume": 0
+    },
+    {
+      "videoUrl": "temp/test_style4.mp4",
+      "start": 2,
+      "duration": 3,
+      "volume": 150
+    }
+  ]
+}

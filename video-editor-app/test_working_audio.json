@@ -1,0 +1,32 @@
+{
+  "audioUrl": "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3",
+  "watermark": "@testhandle",
+  "overlay": false,
+  "duration": 15,
+  "clips": [
+    {
+      "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "start": 0,
+      "duration": 10,
+      "volume": 100,
+      "description": "Test video with audio"
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing Audio Playback",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With Working Audio URL",
+      "start": 3,
+      "duration": 4
+    },
+    {
+      "text": "Should hear background music",
+      "start": 7,
+      "duration": 4
+    }
+  ]
+}

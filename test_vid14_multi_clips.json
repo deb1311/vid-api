@@ -1,0 +1,50 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Test background music for multi-clip volume demonstration",
+  "watermark": "@multicliptest",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Big Buck Bunny opening scene with character introduction",
+      "start": 10,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Big Buck Bunny middle scene with action sequence",
+      "start": 30,
+      "duration": 3,
+      "volume": 90
+    },
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Big Buck Bunny later scene with character interactions",
+      "start": 50,
+      "duration": 3,
+      "volume": 80
+    }
+  ],
+  "captions": [
+    {
+      "text": "First Scene from Big Buck Bunny",
+      "start": 0,
+      "duration": 2.5
+    },
+    {
+      "text": "Second Scene Transition",
+      "start": 2.5,
+      "duration": 2.5
+    },
+    {
+      "text": "Third Scene Different Timing",
+      "start": 5,
+      "duration": 2.5
+    },
+    {
+      "text": "Final Caption Overlay",
+      "start": 7.5,
+      "duration": 1.5
+    }
+  ]
+}

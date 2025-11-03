@@ -1,0 +1,1 @@
+ffmpeg -loop 1 -i "F:\video api\temp\beb5913b-d0c6-44c2-ade7-cceeb7601f87-image.jpg" -i "F:\video api\temp\beb5913b-d0c6-44c2-ade7-cceeb7601f87-audio.mp3" -c:v libx264 -c:a aac -t 2.325333 -pix_fmt yuv420p -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black" -y "F:\video api\output\beb5913b-d0c6-44c2-ade7-cceeb7601f87-video.mp4"

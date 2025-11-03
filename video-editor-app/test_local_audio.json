@@ -1,0 +1,32 @@
+{
+  "audioUrl": "f9024664-0f30-42a0-b8d3-06207775b2d1-instagram-audio.mp3",
+  "watermark": "@testhandle",
+  "overlay": false,
+  "duration": 15,
+  "clips": [
+    {
+      "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "start": 0,
+      "duration": 10,
+      "volume": 100,
+      "description": "Test video with local audio"
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing Local Audio File",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Using Instagram Audio",
+      "start": 3,
+      "duration": 4
+    },
+    {
+      "text": "Should hear local audio",
+      "start": 7,
+      "duration": 4
+    }
+  ]
+}

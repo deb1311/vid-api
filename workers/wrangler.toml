@@ -1,0 +1,16 @@
+name = "notion-reader"
+main = "notion-reader.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables (use wrangler secret put to set these securely)
+[vars]
+# NOTION_TOKEN will be set as a secret instead of here
+
+# Optional: Custom domain configuration
+# [env.production]
+# route = "https://your-domain.com/api/*"
+
+# Optional: KV namespace for caching
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-kv-namespace-id"

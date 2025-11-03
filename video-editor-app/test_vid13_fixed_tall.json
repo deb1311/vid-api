@@ -1,0 +1,13 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Fixed Text Position Test",
+  "author": "Tall Clip - Same Position",
+  "watermark": "@fixed",
+  "clips": [
+    {
+      "videoUrl": "temp/ef5828e1-214c-4447-8fd0-7ed65e441b75-media-with-text.mp4",
+      "start": 1,
+      "duration": 4
+    }
+  ]
+}

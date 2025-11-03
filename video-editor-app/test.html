@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            background: #4a90e2;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+        }
+        .test-link:hover {
+            background: #357abd;
+        }
+        .status {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>🎬 Video Editor Canvas Fix Test</h1>
+        <p>The main preview canvas has been fixed to properly display video clips. Here's what was improved:</p>
+        
+        <h3>✅ Fixes Applied:</h3>
+        <ul>
+            <li><strong>Better Error Handling:</strong> Canvas now shows placeholder content when media fails to load</li>
+            <li><strong>Real Media URLs:</strong> Updated test files with working image and video URLs</li>
+            <li><strong>Visual Feedback:</strong> Added placeholders for missing media, empty clips, and timeline gaps</li>
+            <li><strong>Loading Status:</strong> Console logs and notifications show media loading progress</li>
+            <li><strong>Canvas Initialization:</strong> Improved canvas setup with proper rendering settings</li>
+        </ul>
+
+        <div class="status">
+            <strong>🚀 Server Status:</strong> Running on <code>http://localhost:8080</code>
+        </div>
+
+        <h3>🧪 Test the Fixes:</h3>
+        <a href="index.html" class="test-link">Open Video Editor</a>
+        <a href="try123.json" class="test-link">View Updated try123.json</a>
+        <a href="test_working_demo.json" class="test-link">View Working Demo JSON</a>
+        
+        <h3>📋 Testing Instructions:</h3>
+        <ol>
+            <li>Click "Open Video Editor" above</li>
+            <li>Click "Load JSON" button in the editor</li>
+            <li>Select "🎬 WORKING DEMO - Real images & video with overlay" (first option)</li>
+            <li>The canvas should now display the video clips properly</li>
+            <li>Use the play button to see the clips animate</li>
+            <li>Try the fullscreen button for a larger view</li>
+        </ol>
+
+        <h3>🔍 What to Look For:</h3>
+        <ul>
+            <li>Canvas displays actual images and video content (not black screen)</li>
+            <li>Timeline shows clips with proper durations</li>
+            <li>Playhead moves smoothly during playback</li>
+            <li>Console shows media loading status</li>
+            <li>Overlay effect creates a cinematic vignette</li>
+            <li>Text overlays appear over the media</li>
+        </ul>
+    </div>
+</body>
+</html>

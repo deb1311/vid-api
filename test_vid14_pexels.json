@@ -1,0 +1,36 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "audioDescription": "Test background music for video clip demonstration",
+  "watermark": "@videotest",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Extended Big Buck Bunny scene showcasing character development and forest environment",
+      "start": 10,
+      "duration": 12,
+      "volume": 60
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing Multiple Video Clips",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With Timed Captions",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "Different Aspect Ratios",
+      "start": 6,
+      "duration": 3
+    },
+    {
+      "text": "Smart Scaling Applied",
+      "start": 9,
+      "duration": 3
+    }
+  ]
+}

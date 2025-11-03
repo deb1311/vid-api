@@ -1,0 +1,23 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@overlaytest",
+  "overlay": true,
+  "clips": [
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=70",
+      "duration": 6
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing overlay with improved text layout system",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Consistent styling across all endpoints",
+      "start": 3,
+      "duration": 3
+    }
+  ]
+}

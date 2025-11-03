@@ -1,0 +1,72 @@
+{
+  "quote": "GFGEG",
+  "author": "",
+  "watermark": "@TheSuccessFormula",
+  "audioUrl": "f9024664-0f30-42a0-b8d3-06207775b2d1-instagram-audio.mp3",
+  "duration": 10,
+  "clips": [
+    {
+      "start": 0,
+      "duration": 1,
+      "description": "dhdghgh",
+      "begin": 8.6,
+      "volume": 100,
+      "videourl": "https://www.pexels.com/download/video/30763731/"
+    },
+    {
+      "start": 1,
+      "duration": 1,
+      "description": "",
+      "videourl": "https://www.pexels.com/download/video/13765936/"
+    },
+    {
+      "start": 2,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://images.pexels.com/photos/13943357/pexels-photo-13943357.jpeg"
+    },
+    {
+      "start": 3,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://images.pexels.com/photos/18673852/pexels-photo-18673852.jpeg"
+    },
+    {
+      "start": 4,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://images.pexels.com/photos/13125315/pexels-photo-13125315.jpeg"
+    },
+    {
+      "start": 5,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://placeholder.com/images/woman-legs-car-heels.jpg"
+    },
+    {
+      "start": 6,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://placeholder.com/images/dj-setup-vinyl.jpg"
+    },
+    {
+      "start": 7,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://placeholder.com/images/man-balcony-eiffel-tower.jpg"
+    },
+    {
+      "start": 8,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://placeholder.com/images/man-cigar-upscale-lounge.jpg"
+    },
+    {
+      "start": 9,
+      "duration": 1,
+      "description": "",
+      "imageurl": "https://placeholder.com/images/fan-of-20-dollar-bills.jpg"
+    }
+  ],
+  "overlay": false
+}

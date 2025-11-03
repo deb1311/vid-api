@@ -1,0 +1,26 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Success comes to those who work hard",
+  "author": "Anonymous",
+  "watermark": "@test",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 1,
+      "duration": 3,
+      "transition": "cut"
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 2,
+      "duration": 3,
+      "transition": "fade"
+    },
+    {
+      "videoUrl": "temp/long_video3.mp4",
+      "start": 1,
+      "duration": 3,
+      "transition": "wipeleft"
+    }
+  ]
+}

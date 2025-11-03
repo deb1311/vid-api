@@ -1,0 +1,28 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@mixedtest",
+  "clips": [
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "start": 15,
+      "duration": 2,
+      "volume": 100
+    },
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=50",
+      "duration": 2
+    }
+  ],
+  "captions": [
+    {
+      "text": "Video clip with videourl",
+      "start": 0,
+      "duration": 2
+    },
+    {
+      "text": "Image clip with imageurl",
+      "start": 2,
+      "duration": 2
+    }
+  ]
+}

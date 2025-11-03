@@ -1,0 +1,52 @@
+{
+  "quote": "Success is not final, failure is not fatal",
+  "author": "Winston Churchill",
+  "watermark": "@VideoEditor",
+  "audioUrl": "https://example.com/audio/inspiring-music.mp3",
+  "audioDescription": "Inspiring background music for motivational content",
+  "duration": 12,
+  "overlay": true,
+  "clips": [
+    {
+      "imageurl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1920&fit=crop&crop=center",
+      "description": "Mountain landscape with dramatic sky and peaks",
+      "start": 0.0,
+      "duration": 3.0
+    },
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Big Buck Bunny animated short film sample",
+      "start": 3.0,
+      "duration": 4.0
+    },
+    {
+      "imageurl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1080&h=1920&fit=crop&crop=center",
+      "description": "Forest path with sunlight filtering through trees",
+      "start": 7.0,
+      "duration": 3.0
+    },
+    {
+      "imageurl": "https://images.pexels.com/photos/1851415/pexels-photo-1851415.jpeg?auto=compress&cs=tinysrgb&w=1080&h=1920&fit=crop",
+      "description": "Ocean waves crashing on rocky shore",
+      "start": 10.0,
+      "duration": 2.0
+    }
+  ],
+  "captions": [
+    {
+      "text": "Believe in yourself",
+      "start": 1.0,
+      "duration": 2.0
+    },
+    {
+      "text": "Take action today",
+      "start": 5.0,
+      "duration": 2.0
+    },
+    {
+      "text": "Never give up",
+      "start": 9.0,
+      "duration": 2.0
+    }
+  ]
+}

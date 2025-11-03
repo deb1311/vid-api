@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #2d2d2d;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #2d2d2d;
+        }
+
+        /* Top Header */
+        .top-header {
+            background: #4a90e2;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            border-bottom: 2px solid #333;
+        }
+
+        .video-title {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            outline: none;
+            padding: 8px 0;
+            min-width: 200px;
+        }
+
+        .video-title:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 8px 12px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load { background: #666; color: white; }
+        .btn-load:hover { background: #777; }
+        .btn-save { background: #b8b8b8; color: #333; }
+        .btn-save:hover { background: #a8a8a8; }
+        .btn-confirm { background: #5cb85c; color: white; }
+        .btn-confirm:hover { background: #4cae4c; }
+        .btn-settings { background: #6c757d; color: white; padding: 8px 12px; }
+        .btn-settings:hover { background: #5a6268; }
+
+        /* Main Content Area */
+        .main-area {
+            display: flex;
+            height: calc(100vh - 60px - 200px);
+            overflow: hidden;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            width: 320px;
+            background: #999999;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #333;
+            flex-shrink: 0;
+        }
+
+        .preview-header {
+            background: #666666;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            background: #4a90e2;
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: #357abd;
+            transform: scale(1.05);
+        }
+
+        .control-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .preview-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #999999;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: #666;
+        }
+
+        .preview-placeholder i {
+            font-size: 64px;
+            margin-bottom: 16px;
+            color: #555;
+        }
+
+        .preview-canvas-container {
+            width: 100%;
+            max-width: 280px;
+            aspect-ratio: 9/16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            width: 280px;
+            height: auto;
+            display: block;
+            background: #000;
+            cursor: pointer;
+        }
+
+        .preview-time-display {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        /* Properties Section */
+        .properties-section {
+            flex: 1;
+            background: #999999;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .properties-header {
+            background: #666666;
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .properties-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #777;
+        }
+
+        /* Form Groups */
+        .form-group {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        /* Timeline Area */
+        .timeline-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: #2d2d2d;
+            display: flex;
+            border-top: 2px solid #333;
+            z-index: 50;
+        }
+
+        .timeline-tracks {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .timeline-track {
+            flex: 1;
+            display: flex;
+            background: #c9b5b5;
+            border-bottom: 2px solid #333;
+        }
+
+        .track-label {
+            width: 150px;
+            background: #c9b5b5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            border-right: 2px solid #333;
+        }
+
+        .track-content {
+            flex: 1;
+            background: #c9b5b5;
+            position: relative;
+            overflow-x: auto;
+            padding: 8px;
+            min-height: 56px;
+        }
+
+        .timeline-clip {
+            position: absolute;
+            background: #4a90e2;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: move;
+            top: 8px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .timeline-clip.caption {
+            background: #ff9800;
+        }
+
+        .timeline-clip.audio {
+            background: #9c27b0;
+        }
+
+        .timeline-playhead {
+            position: fixed;
+            bottom: 0;
+            height: 200px;
+            width: 2px;
+            background: #e74c3c;
+            z-index: 100;
+            left: 150px;
+            cursor: move;
+        }
+
+        .timeline-playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 18px;
+            height: 16px;
+            background: #e74c3c;
+            border-radius: 3px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            line-height: 1;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .json-file-item {
+            padding: 16px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .json-file-item:hover {
+            background: #e8f4f8;
+            border-color: #4a90e2;
+        }
+
+        .json-file-item h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .json-file-item p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success { background: #5cb85c; }
+        .notification.error { background: #d9534f; }
+        .notification.info { background: #5bc0de; }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="video-title-section">
+                <input type="text" id="videoTitle" class="video-title" value="Video Title">
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-load" id="loadBtn">Load JSON</button>
+                <button class="btn btn-save" id="saveBtn">Save</button>
+                <button class="btn btn-confirm" id="confirmBtn">Confirm</button>
+                <button class="btn btn-settings" id="webhookSettingsBtn" title="Webhook Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="main-area">
+            <!-- Left: Video Preview -->
+            <div class="preview-section">
+                <div class="preview-header">
+                    <div>Video Preview</div>
+                    <div class="preview-controls">
+                        <button class="control-btn" id="playPauseBtn" disabled>
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="control-btn" id="fullscreenBtn" disabled title="View in fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        <i class="fas fa-video"></i>
+                        <p>Video Preview</p>
+                        <small>9:16 (1080x1920)</small>
+                    </div>
+                    <div class="preview-canvas-container" id="previewCanvasContainer" style="display: none;">
+                        <canvas id="previewCanvas"></canvas>
+                        <div class="preview-time-display" id="previewTimeDisplay">0:00 / 0:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Properties Panel -->
+            <div class="properties-section">
+                <div class="properties-header">Properties</div>
+                <div class="properties-content" id="propertiesContent">
+                    <div class="empty-state">
+                        <i class="fas fa-file-import"></i>
+                        <p>Load a JSON file to start editing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Timeline Area -->
+        <div class="timeline-area">
+            <div class="timeline-tracks" id="timelineTracks">
+                <!-- Video Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">video timeline</div>
+                    <div class="track-content" id="videoTimeline"></div>
+                </div>
+
+                <!-- Text Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">text timeline</div>
+                    <div class="track-content" id="textTimeline"></div>
+                </div>
+
+                <!-- Audio Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">audio timeline</div>
+                    <div class="track-content" id="audioTimeline"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playhead -->
+        <div class="timeline-playhead" id="globalPlayhead" style="display: none;"></div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <!-- Modal for JSON selection -->
+    <div id="jsonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load JSON Data</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="jsonFileList">
+                <!-- JSON files will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Webhook Settings Modal -->
+    <div id="webhookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Webhook Settings</h3>
+                <button class="close-btn" id="closeWebhookModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="webhookUrl">Webhook URL</label>
+                    <input type="url" id="webhookUrl" placeholder="https://n8n.ncertbot.fun/webhook/...">
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button class="btn btn-confirm" id="saveWebhookSettings">Save</button>
+                    <button class="btn btn-load" id="cancelWebhookSettings">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Video Editor Class
+        class VideoEditor {
+            constructor() {
+                this.currentData = null;
+                this.currentFileName = '';
+                this.timelineZoom = 60; // pixels per second
+                this.isPlaying = false;
+                this.currentTime = 0;
+                this.totalDuration = 0;
+                this.webhookUrl = localStorage.getItem('webhookUrl') || 'https://n8n.ncertbot.fun/webhook/90aa23d0-a017-4833-8dee-6fd0a591c1bf';
+
+                // Canvas setup
+                this.canvas = document.getElementById('previewCanvas');
+                this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+                if (this.canvas) {
+                    this.canvas.width = 1080;
+                    this.canvas.height = 1920;
+                    this.ctx.imageSmoothingEnabled = true;
+                    this.ctx.imageSmoothingQuality = 'high';
+                }
+
+                this.loadedImages = new Map();
+                this.loadedVideos = new Map();
+
+                this.init();
+            }
+
+            async init() {
+                this.setupEventListeners();
+                this.loadFromLocalStorage();
+                this.startRenderLoop();
+            }
+
+            setupEventListeners() {
+                document.getElementById('loadBtn').addEventListener('click', () => this.showJsonModal());
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveJson());
+                document.getElementById('confirmBtn').addEventListener('click', () => this.confirmData());
+                document.getElementById('webhookSettingsBtn').addEventListener('click', () => this.showWebhookModal());
+                document.getElementById('closeModal').addEventListener('click', () => this.hideJsonModal());
+                document.getElementById('closeWebhookModal').addEventListener('click', () => this.hideWebhookModal());
+                document.getElementById('saveWebhookSettings').addEventListener('click', () => this.saveWebhookSettings());
+                document.getElementById('cancelWebhookSettings').addEventListener('click', () => this.hideWebhookModal());
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileUpload(e));
+                document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlayPause());
+                document.getElementById('videoTitle').addEventListener('input', () => this.autoSave());
+
+                // Modal click outside to close
+                document.getElementById('jsonModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'jsonModal') this.hideJsonModal();
+                });
+                document.getElementById('webhookModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'webhookModal') this.hideWebhookModal();
+                });
+            }
+
+            showJsonModal() {
+                document.getElementById('jsonModal').classList.add('active');
+                this.populateJsonModal();
+            }
+
+            hideJsonModal() {
+                document.getElementById('jsonModal').classList.remove('active');
+            }
+
+            showWebhookModal() {
+                document.getElementById('webhookModal').classList.add('active');
+                document.getElementById('webhookUrl').value = this.webhookUrl;
+            }
+
+            hideWebhookModal() {
+                document.getElementById('webhookModal').classList.remove('active');
+            }
+
+            saveWebhookSettings() {
+                const webhookUrl = document.getElementById('webhookUrl').value.trim();
+                if (webhookUrl) {
+                    this.webhookUrl = webhookUrl;
+                    localStorage.setItem('webhookUrl', webhookUrl);
+                    this.showNotification('Webhook settings saved!', 'success');
+                    this.hideWebhookModal();
+                } else {
+                    this.showNotification('Please enter a valid webhook URL', 'error');
+                }
+            }
+
+            populateJsonModal() {
+                const listContainer = document.getElementById('jsonFileList');
+                listContainer.innerHTML = `
+                    <div class="json-file-item" onclick="document.getElementById('fileInput').click()" style="border: 2px dashed #4a90e2;">
+                        <h4><i class="fas fa-upload"></i> Upload Custom JSON</h4>
+                        <p>Load your own JSON file from your computer</p>
+                    </div>
+                `;
+            }
+
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        this.currentData = jsonData;
+                        this.currentFileName = file.name;
+                        this.loadData(jsonData);
+                        this.hideJsonModal();
+                        this.showNotification('JSON loaded successfully!', 'success');
+                    } catch (error) {
+                        this.showNotification('Error parsing JSON file', 'error');
+                        console.error('JSON parse error:', error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            loadData(data) {
+                this.currentData = data;
+                this.calculateTotalDuration();
+                this.renderProperties();
+                this.renderTimeline();
+                this.showPreview();
+                this.autoSave();
+            }
+
+            calculateTotalDuration() {
+                if (!this.currentData) return;
+
+                let maxDuration = 0;
+
+                // Check clips
+                if (this.currentData.clips && Array.isArray(this.currentData.clips)) {
+                    this.currentData.clips.forEach(clip => {
+                        const clipEnd = (clip.start || 0) + (clip.duration || 5);
+                        maxDuration = Math.max(maxDuration, clipEnd);
+                    });
+                }
+
+                // Check captions
+                if (this.currentData.captions && Array.isArray(this.currentData.captions)) {
+                    this.currentData.captions.forEach(caption => {
+                        const captionEnd = (caption.start || 0) + (caption.duration || 3);
+                        maxDuration = Math.max(maxDuration, captionEnd);
+                    });
+                }
+
+                // Default to 10 seconds if no clips/captions
+                this.totalDuration = maxDuration || 10;
+            }
+
+            renderProperties() {
+                const container = document.getElementById('propertiesContent');
+                if (!this.currentData) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-file-import"></i>
+                            <p>Load a JSON file to start editing</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+
+                // Basic properties
+                html += `<div class="form-group">
+                    <label>Quote</label>
+                    <textarea id="propQuote" rows="3">${this.currentData.quote || ''}</textarea>
+                </div>`;
+
+                html += `<div class="form-group">
+                    <label>Author</label>
+                    <input type="text" id="propAuthor" value="${this.currentData.author || ''}">
+                </div>`;
+
+                html += `<div class="form-group">
+                    <label>Watermark</label>
+                    <input type="text" id="propWatermark" value="${this.currentData.watermark || ''}">
+                </div>`;
+
+                html += `<div class="form-group">
+                    <label>Audio URL</label>
+                    <input type="text" id="propAudioUrl" value="${this.currentData.audioUrl || ''}">
+                </div>`;
+
+                container.innerHTML = html;
+
+                // Add event listeners
+                document.getElementById('propQuote').addEventListener('input', () => this.updateProperty('quote'));
+                document.getElementById('propAuthor').addEventListener('input', () => this.updateProperty('author'));
+                document.getElementById('propWatermark').addEventListener('input', () => this.updateProperty('watermark'));
+                document.getElementById('propAudioUrl').addEventListener('input', () => this.updateProperty('audioUrl'));
+            }
+
+            updateProperty(prop) {
+                if (!this.currentData) return;
+
+                const elementMap = {
+                    'quote': 'propQuote',
+                    'author': 'propAuthor',
+                    'watermark': 'propWatermark',
+                    'audioUrl': 'propAudioUrl'
+                };
+
+                const element = document.getElementById(elementMap[prop]);
+                if (element) {
+                    this.currentData[prop] = element.value;
+                    this.autoSave();
+                }
+            }
+
+            renderTimeline() {
+                const videoTimeline = document.getElementById('videoTimeline');
+                const textTimeline = document.getElementById('textTimeline');
+                const audioTimeline = document.getElementById('audioTimeline');
+
+                videoTimeline.innerHTML = '';
+                textTimeline.innerHTML = '';
+                audioTimeline.innerHTML = '';
+
+                if (!this.currentData) return;
+
+                // Render video clips
+                if (this.currentData.clips && Array.isArray(this.currentData.clips)) {
+                    this.currentData.clips.forEach((clip, index) => {
+                        const clipEl = this.createTimelineClip(clip, index, 'video');
+                        videoTimeline.appendChild(clipEl);
+                    });
+                }
+
+                // Render captions
+                if (this.currentData.captions && Array.isArray(this.currentData.captions)) {
+                    this.currentData.captions.forEach((caption, index) => {
+                        const captionEl = this.createTimelineClip(caption, index, 'caption');
+                        textTimeline.appendChild(captionEl);
+                    });
+                }
+
+                // Render audio
+                if (this.currentData.audioUrl) {
+                    const audioEl = document.createElement('div');
+                    audioEl.className = 'timeline-clip audio';
+                    audioEl.style.left = '0px';
+                    audioEl.style.width = `${this.totalDuration * this.timelineZoom}px`;
+                    audioEl.innerHTML = '<i class="fas fa-music"></i> Audio';
+                    audioTimeline.appendChild(audioEl);
+                }
+
+                // Show playhead
+                document.getElementById('globalPlayhead').style.display = 'block';
+            }
+
+            createTimelineClip(data, index, type) {
+                const clip = document.createElement('div');
+                clip.className = `timeline-clip ${type}`;
+                
+                const start = data.start || 0;
+                const duration = data.duration || (type === 'caption' ? 3 : 5);
+                
+                clip.style.left = `${start * this.timelineZoom}px`;
+                clip.style.width = `${duration * this.timelineZoom}px`;
+                
+                const icon = type === 'video' ? 'fa-video' : 'fa-comment';
+                const label = type === 'video' ? `Clip ${index + 1}` : data.text?.substring(0, 20) || `Caption ${index + 1}`;
+                
+                clip.innerHTML = `<i class="fas ${icon}"></i> ${label}`;
+                
+                return clip;
+            }
+
+            showPreview() {
+                document.getElementById('previewPlaceholder').style.display = 'none';
+                document.getElementById('previewCanvasContainer').style.display = 'flex';
+                document.getElementById('playPauseBtn').disabled = false;
+                document.getElementById('fullscreenBtn').disabled = false;
+            }
+
+            startRenderLoop() {
+                const render = () => {
+                    if (this.isPlaying) {
+                        this.currentTime += 1/60; // 60 FPS
+                        if (this.currentTime >= this.totalDuration) {
+                            this.currentTime = 0;
+                            this.isPlaying = false;
+                            document.querySelector('#playPauseBtn i').className = 'fas fa-play';
+                        }
+                        this.updatePlayhead();
+                    }
+                    this.renderCanvas();
+                    requestAnimationFrame(render);
+                };
+                render();
+            }
+
+            renderCanvas() {
+                if (!this.ctx || !this.currentData) return;
+
+                // Clear canvas
+                this.ctx.fillStyle = '#000000';
+                this.ctx.fillRect(0, 0, 1080, 1920);
+
+                // Draw placeholder text
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = 'bold 48px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Video Preview', 540, 960);
+
+                // Update time display
+                const timeDisplay = document.getElementById('previewTimeDisplay');
+                if (timeDisplay) {
+                    timeDisplay.textContent = `${this.formatTime(this.currentTime)} / ${this.formatTime(this.totalDuration)}`;
+                }
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            togglePlayPause() {
+                this.isPlaying = !this.isPlaying;
+                const icon = document.querySelector('#playPauseBtn i');
+                icon.className = this.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            }
+
+            updatePlayhead() {
+                const playhead = document.getElementById('globalPlayhead');
+                const position = 150 + (this.currentTime * this.timelineZoom);
+                playhead.style.left = `${position}px`;
+            }
+
+            async saveJson() {
+                if (!this.currentData) {
+                    this.showNotification('No data to save', 'error');
+                    return;
+                }
+
+                try {
+                    const jsonStr = JSON.stringify(this.currentData, null, 2);
+                    const blob = new Blob([jsonStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = this.currentFileName || 'video-data.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    this.showNotification('JSON saved successfully!', 'success');
+                } catch (error) {
+                    this.showNotification('Error saving JSON', 'error');
+                    console.error('Save error:', error);
+                }
+            }
+
+            async confirmData() {
+                if (!this.currentData) {
+                    this.showNotification('No data to confirm', 'error');
+                    return;
+                }
+
+                try {
+                    this.showNotification('Sending to webhook...', 'info');
+                    
+                    const response = await fetch(this.webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.currentData)
+                    });
+
+                    if (response.ok) {
+                        this.showNotification('Data sent successfully!', 'success');
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    this.showNotification('Error sending to webhook', 'error');
+                    console.error('Webhook error:', error);
+                }
+            }
+
+            autoSave() {
+                if (this.currentData) {
+                    localStorage.setItem('videoEditorData', JSON.stringify(this.currentData));
+                    localStorage.setItem('videoEditorFileName', this.currentFileName);
+                }
+            }
+
+            loadFromLocalStorage() {
+                const savedData = localStorage.getItem('videoEditorData');
+                const savedFileName = localStorage.getItem('videoEditorFileName');
+                
+                if (savedData) {
+                    try {
+                        this.currentData = JSON.parse(savedData);
+                        this.currentFileName = savedFileName || 'untitled.json';
+                        this.loadData(this.currentData);
+                    } catch (error) {
+                        console.error('Error loading saved data:', error);
+                    }
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                // Remove existing notifications
+                const existing = document.querySelectorAll('.notification');
+                existing.forEach(n => n.remove());
+
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+
+        // Initialize the editor when DOM is ready
+        let videoEditor;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                videoEditor = new VideoEditor();
+            });
+        } else {
+            videoEditor = new VideoEditor();
+        }
+    </script>
+</body>
+</html>

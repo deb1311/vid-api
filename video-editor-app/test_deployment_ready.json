@@ -1,0 +1,32 @@
+{
+  "audioUrl": "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+  "watermark": "@deployed-on-cloudflare",
+  "overlay": true,
+  "duration": 12,
+  "clips": [
+    {
+      "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "start": 0,
+      "duration": 10,
+      "volume": 100,
+      "description": "Deployment test video"
+    }
+  ],
+  "captions": [
+    {
+      "text": "🚀 Deployment Ready!",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Works on Cloudflare Pages",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "With external audio URLs",
+      "start": 6,
+      "duration": 3
+    }
+  ]
+}

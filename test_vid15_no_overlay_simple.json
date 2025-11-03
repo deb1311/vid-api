@@ -1,0 +1,19 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "captions": [
+    {
+      "text": "Testing Vid-1.5 without Overlay",
+      "start": 0,
+      "duration": 5
+    }
+  ],
+  "watermark": "@vid15test",
+  "overlay": false,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/1851415/pexels-photo-1851415.jpeg",
+      "start": 0,
+      "duration": 8
+    }
+  ]
+}

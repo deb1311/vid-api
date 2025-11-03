@@ -1,0 +1,43 @@
+{
+  "test_main_endpoint": {
+    "description": "Test main /create-video endpoint without quote",
+    "payload": {
+      "author": "Test Author",
+      "imageUrl": "https://example.com/image.jpg",
+      "audioUrl": "https://example.com/audio.mp3"
+    },
+    "expected": "Should work without quote parameter"
+  },
+  "test_vid12_endpoint": {
+    "description": "Test /vid-1.2 endpoint without quote",
+    "payload": {
+      "audioUrl": "https://example.com/audio.mp3",
+      "author": "Test Author",
+      "watermark": "Test Watermark",
+      "clips": [
+        {
+          "url": "https://example.com/video1.mp4",
+          "start": 0,
+          "duration": 5
+        }
+      ]
+    },
+    "expected": "Should work without quote parameter"
+  },
+  "test_with_quote": {
+    "description": "Test that existing functionality still works with quote",
+    "payload": {
+      "quote": "This is a test quote",
+      "author": "Test Author",
+      "audioUrl": "https://example.com/audio.mp3",
+      "clips": [
+        {
+          "url": "https://example.com/video1.mp4",
+          "start": 0,
+          "duration": 5
+        }
+      ]
+    },
+    "expected": "Should work with quote parameter as before"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Testing timeline-based duration calculation",
+  "author": "Timeline Expert",
+  "watermark": "@timeline",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0
+    },
+    {
+      "videoUrl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center.jpg"
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 1
+    },
+    {
+      "videoUrl": "temp/long_video3.mp4",
+      "start": 2,
+      "duration": 3
+    }
+  ]
+}

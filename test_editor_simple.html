@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Editor Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        iframe { width: 100%; height: 600px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Simple Editor Test</h1>
+    <p>Testing if the video editor loads without errors.</p>
+
+    <div class="test-section">
+        <h3>1. Direct Editor Test</h3>
+        <button onclick="testEditorDirect()">Open Editor in New Tab</button>
+        <div id="directResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Console Check</h3>
+        <button onclick="checkConsole()">Check for JavaScript Errors</button>
+        <div id="consoleResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. File Existence Check</h3>
+        <button onclick="checkFiles()">Check Required Files</button>
+        <div id="fileResult"></div>
+    </div>
+
+    <script>
+        function testEditorDirect() {
+            const resultDiv = document.getElementById('directResult');
+            
+            try {
+                const editorWindow = window.open('video-editor-app/index.html', '_blank');
+                
+                if (editorWindow) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Editor Window Opened</h4>
+                            <p>Check the new tab for any errors in the console (F12)</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Failed to Open Editor</h4>
+                            <p>Popup might be blocked</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error: ${error.message}</h4>
+                    </div>
+                `;
+            }
+        }
+
+        function checkConsole() {
+            const resultDiv = document.getElementById('consoleResult');
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h4>📋 Console Check Instructions</h4>
+                    <ol>
+                        <li>Open the editor in a new tab</li>
+                        <li>Press F12 to open Developer Tools</li>
+                        <li>Click on the "Console" tab</li>
+                        <li>Look for any red error messages</li>
+                        <li>Common issues to look for:
+                            <ul>
+                                <li>404 errors (files not found)</li>
+                                <li>JavaScript syntax errors</li>
+                                <li>CORS errors</li>
+                                <li>Missing dependencies</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        async function checkFiles() {
+            const resultDiv = document.getElementById('fileResult');
+            const files = [
+                'video-editor-app/index.html',
+                'video-editor-app/app.js',
+                'video-editor-app/styles.css'
+            ];
+
+            let results = '<h4>📁 File Check Results:</h4><ul>';
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        results += `<li>✅ ${file} - OK</li>`;
+                    } else {
+                        results += `<li>❌ ${file} - ${response.status} ${response.statusText}</li>`;
+                    }
+                } catch (error) {
+                    results += `<li>❌ ${file} - ${error.message}</li>`;
+                }
+            }
+            
+            results += '</ul>';
+            resultDiv.innerHTML = `<div class="success">${results}</div>`;
+        }
+    </script>
+</body>
+</html>

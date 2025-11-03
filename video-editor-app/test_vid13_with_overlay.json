@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@cinematic",
+  "overlay": true,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 0,
+      "duration": 5,
+      "volume": 80
+    }
+  ],
+  "captions": [
+    {
+      "text": "Cinematic storytelling",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With radial vignette effect",
+      "start": 3,
+      "duration": 2
+    }
+  ]
+}

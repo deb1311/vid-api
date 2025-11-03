@@ -1,0 +1,14 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "quote": "Volume Control Demo",
+  "author": "Clip Audio at 25%",
+  "watermark": "@demo",
+  "clips": [
+    {
+      "videoUrl": "temp/test_video.mp4",
+      "start": 0,
+      "duration": 5,
+      "volume": 25
+    }
+  ]
+}

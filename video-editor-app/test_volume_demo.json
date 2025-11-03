@@ -1,0 +1,46 @@
+{
+    "audioUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+    "watermark": "@volumetest",
+    "overlay": false,
+    "duration": 15,
+    "clips": [
+        {
+            "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            "start": 0,
+            "duration": 5,
+            "volume": 50,
+            "description": "Low volume clip (50%)"
+        },
+        {
+            "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            "start": 5,
+            "duration": 5,
+            "volume": 100,
+            "description": "Normal volume clip (100%)"
+        },
+        {
+            "videoUrl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            "start": 10,
+            "duration": 5,
+            "volume": 150,
+            "description": "High volume clip (150%)"
+        }
+    ],
+    "captions": [
+        {
+            "text": "Volume: 50%",
+            "start": 0,
+            "duration": 5
+        },
+        {
+            "text": "Volume: 100%",
+            "start": 5,
+            "duration": 5
+        },
+        {
+            "text": "Volume: 150%",
+            "start": 10,
+            "duration": 5
+        }
+    ]
+}

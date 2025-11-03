@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@enhanced",
+  "overlay": true,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 0,
+      "duration": 4,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Enhanced storytelling",
+      "start": 0,
+      "duration": 2
+    },
+    {
+      "text": "With atmospheric effects",
+      "start": 2,
+      "duration": 2
+    }
+  ]
+}

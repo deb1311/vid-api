@@ -1,0 +1,26 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "quote": "Real Video Test with Volume Control",
+  "author": "Actual Video Clips + Mixed Audio Levels",
+  "watermark": "@realtest",
+  "clips": [
+    {
+      "videoUrl": "temp/video1.mp4",
+      "start": 1,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "temp/video2.mp4",
+      "start": 2,
+      "duration": 3,
+      "volume": 0
+    },
+    {
+      "videoUrl": "temp/video3.mp4",
+      "start": 1,
+      "duration": 3,
+      "volume": 75
+    }
+  ]
+}

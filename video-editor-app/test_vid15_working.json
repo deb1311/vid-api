@@ -1,0 +1,30 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@testhandle",
+  "overlay": false,
+  "clips": [
+    {
+      "videoUrl": "temp/test_video2.mp4",
+      "start": 0,
+      "duration": 6,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing Vid-1.5 Endpoint",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With Timed Captions",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "No Overlay Applied",
+      "start": 6,
+      "duration": 2
+    }
+  ]
+}

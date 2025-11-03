@@ -1,0 +1,34 @@
+{
+  "audioUrl": "https://www.instagram.com/reel/DP6Vrd1iIbg/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+  "watermark": "@instagramtest",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "start": 10,
+      "duration": 12,
+      "volume": 60
+    }
+  ],
+  "captions": [
+    {
+      "text": "Instagram Audio Extraction",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Clip Audio at 60% Volume",
+      "start": 3,
+      "duration": 3
+    },
+    {
+      "text": "Background Music from IG",
+      "start": 6,
+      "duration": 3
+    },
+    {
+      "text": "Testing Complete Setup",
+      "start": 9,
+      "duration": 3
+    }
+  ]
+}

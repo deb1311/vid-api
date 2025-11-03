@@ -1,0 +1,13 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Wide Clip Smart Layout",
+  "author": "16:9 Landscape Video",
+  "watermark": "@wide",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 2,
+      "duration": 4
+    }
+  ]
+}

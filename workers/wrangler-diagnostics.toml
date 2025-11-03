@@ -1,0 +1,6 @@
+name = "notion-diagnostics"
+main = "notion-diagnostics.js"
+compatibility_date = "2024-01-01"
+
+# This is a temporary diagnostic worker
+# Deploy with: wrangler deploy --config wrangler-diagnostics.toml

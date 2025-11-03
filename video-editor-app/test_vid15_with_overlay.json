@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@radialeffect",
+  "overlay": true,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 0,
+      "duration": 6,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Advanced Vid-1.5 Features",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "With Radial Vignette Overlay",
+      "start": 3,
+      "duration": 3
+    }
+  ]
+}

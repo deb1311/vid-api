@@ -1,0 +1,35 @@
+{
+  "audioUrl": "temp/test_audio.mp3",
+  "captions": [
+    {
+      "text": "Testing the new begin parameter functionality",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "text": "Different parts of the same source video",
+      "start": 5,
+      "duration": 4
+    }
+  ],
+  "watermark": "Begin Parameter Demo",
+  "clips": [
+    {
+      "videourl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "description": "First segment from beginning of source video",
+      "begin": 0,
+      "start": 0,
+      "duration": 5,
+      "volume": 100
+    },
+    {
+      "videourl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "description": "Second segment from middle of source video",
+      "begin": 10,
+      "start": 5,
+      "duration": 5,
+      "volume": 90
+    }
+  ],
+  "overlay": false
+}

@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@overlay_test",
+  "overlay": false,
+  "clips": [
+    {
+      "videoUrl": "https://images.pexels.com/photos/273886/pexels-photo-273886.jpeg",
+      "start": 0,
+      "duration": 6,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "Overlay Preview Test",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Toggle overlay to see effect",
+      "start": 3,
+      "duration": 3
+    }
+  ]
+}

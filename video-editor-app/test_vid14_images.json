@@ -1,0 +1,35 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@testhandle",
+  "clips": [
+    {
+      "videoUrl": "https://picsum.photos/800/600?random=1",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    },
+    {
+      "videoUrl": "https://picsum.photos/800/600?random=2",
+      "start": 0,
+      "duration": 3,
+      "volume": 100
+    }
+  ],
+  "captions": [
+    {
+      "text": "First Caption with Images",
+      "start": 0,
+      "duration": 2
+    },
+    {
+      "text": "Second Caption Appears",
+      "start": 2,
+      "duration": 2
+    },
+    {
+      "text": "Final Caption Here",
+      "start": 4,
+      "duration": 2
+    }
+  ]
+}

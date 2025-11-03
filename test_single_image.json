@@ -1,0 +1,22 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@imagetest",
+  "clips": [
+    {
+      "imageurl": "https://picsum.photos/1200/800?random=20",
+      "duration": 5
+    }
+  ],
+  "captions": [
+    {
+      "text": "Testing new imageurl parameter",
+      "start": 0,
+      "duration": 3
+    },
+    {
+      "text": "Watermark centered on image!",
+      "start": 3,
+      "duration": 2
+    }
+  ]
+}

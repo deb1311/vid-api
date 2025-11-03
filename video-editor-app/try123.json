@@ -1,0 +1,41 @@
+{
+  "quote": "goals not dreams",
+  "author": "Achieve",
+  "watermark": "@TheSuccessFormula",
+  "audioUrl": "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+  "audioDescription": "Test audio file for demonstrating extended duration support",
+  "duration": 30,
+  "overlay": true,
+  "clips": [
+    {
+      "imageurl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1920&fit=crop&crop=center",
+      "description": "Mountain landscape with dramatic sky and peaks",
+      "start": 0.0,
+      "duration": 2.0
+    },
+    {
+      "videourl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Big Buck Bunny animated short film sample",
+      "start": 2.0,
+      "duration": 2.0
+    },
+    {
+      "imageurl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1080&h=1920&fit=crop&crop=center",
+      "description": "Forest path with sunlight filtering through trees",
+      "start": 4.0,
+      "duration": 2.0
+    },
+    {
+      "imageurl": "https://images.pexels.com/photos/1851415/pexels-photo-1851415.jpeg?auto=compress&cs=tinysrgb&w=1080&h=1920&fit=crop",
+      "description": "Ocean waves crashing on rocky shore",
+      "start": 6.0,
+      "duration": 2.0
+    },
+    {
+      "imageurl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1080&h=1920&fit=crop&crop=center",
+      "description": "Mountain landscape with dramatic sky and peaks (repeat)",
+      "start": 8.0,
+      "duration": 2.0
+    }
+  ]
+}

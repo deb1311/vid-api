@@ -1,0 +1,25 @@
+{
+  "audioUrl": "temp/test-instagram-audio.mp3",
+  "quote": "Testing automatic duration calculation",
+  "author": "Auto Duration Expert",
+  "watermark": "@autoduration",
+  "clips": [
+    {
+      "videoUrl": "temp/long_video1.mp4",
+      "start": 0
+    },
+    {
+      "videoUrl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop&crop=center.jpg",
+      "start": 0
+    },
+    {
+      "videoUrl": "temp/long_video2.mp4",
+      "start": 2,
+      "duration": 4
+    },
+    {
+      "videoUrl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&h=1080&fit=crop&crop=center.jpg",
+      "start": 0
+    }
+  ]
+}
