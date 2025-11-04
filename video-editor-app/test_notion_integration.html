@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notion Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #4a90e2;
+            color: white;
+        }
+        .btn-success {
+            background: #5cb85c;
+            color: white;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Notion Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Worker Connection</h2>
+        <button class="btn-primary" onclick="testWorkerConnection()">Test Connection</button>
+        <div id="connectionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Get All Records</h2>
+        <button class="btn-primary" onclick="getAllRecords()">Get All Records</button>
+        <div id="allRecordsResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Filter by Status</h2>
+        <button class="btn-primary" onclick="filterByStatus('pending')">Pending</button>
+        <button class="btn-primary" onclick="filterByStatus('scheduled')">Scheduled</button>
+        <button class="btn-primary" onclick="filterByStatus('confirmed')">Confirmed</button>
+        <button class="btn-primary" onclick="filterByStatus('completed')">Completed</button>
+        <div id="filterResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Get JSON by ID</h2>
+        <input type="text" id="jsonIdInput" placeholder="Enter Formula ID" style="padding: 8px; width: 200px;">
+        <button class="btn-success" onclick="getJsonById()">Get JSON</button>
+        <div id="jsonResult"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://notion-reader.debabratamaitra898.workers.dev';
+
+        async function testWorkerConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                const response = await fetch(WORKER_URL);
+                if (response.ok) {
+                    resultDiv.innerHTML = '<p class="status status-success">✅ Worker is accessible!</p>';
+                } else {
+                    resultDiv.innerHTML = `<p class="status status-error">❌ Worker returned status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status status-error">❌ Connection failed: ${error.message}</p>`;
+            }
+        }
+
+        async function getAllRecords() {
+            const resultDiv = document.getElementById('allRecordsResult');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(WORKER_URL);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="status status-success">✅ Found ${data.total} records</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status status-error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function filterByStatus(status) {
+            const resultDiv = document.getElementById('filterResult');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${WORKER_URL}/?filter=${status}`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="status status-success">✅ Found ${data.total_filtered} ${status} records</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status status-error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function getJsonById() {
+            const jsonId = document.getElementById('jsonIdInput').value;
+            const resultDiv = document.getElementById('jsonResult');
+            
+            if (!jsonId) {
+                resultDiv.innerHTML = '<p class="status status-error">❌ Please enter a Formula ID</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${jsonId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<p class="status status-error">❌ ${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="status status-success">✅ Record found!</p>
+                        <p><strong>Username:</strong> ${data.username}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Endpoint:</strong> ${data.endpoint}</p>
+                        <pre>${JSON.stringify(data.json_parsed, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="status status-error">❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

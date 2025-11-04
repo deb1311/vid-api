@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple URL Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Simple URL Parameter Test</h1>
+    
+    <div id="results"></div>
+    
+    <h3>Test Links:</h3>
+    <ul>
+        <li><a href="?id=251023005700">Test with ID: 251023005700</a></li>
+        <li><a href="?id=251023100300">Test with ID: 251023100300</a></li>
+        <li><a href="?">Test without ID</a></li>
+    </ul>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test URL parameter detection
+        addResult(`📍 <strong>Current URL:</strong> ${window.location.href}`, 'info');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const notionId = urlParams.get('id');
+        
+        if (notionId) {
+            addResult(`✅ <strong>ID Parameter Found:</strong> ${notionId}`, 'success');
+            
+            // Test the worker URL
+            const workerUrl = `https://notion-reader.debabratamaitra898.workers.dev/?json_id=${notionId}`;
+            addResult(`🔗 <strong>Worker URL:</strong> ${workerUrl}`, 'info');
+            
+            // Test fetch
+            fetch(workerUrl)
+                .then(response => {
+                    addResult(`📡 <strong>Worker Response Status:</strong> ${response.status}`, response.ok ? 'success' : 'error');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        addResult(`❌ <strong>Worker Error:</strong> ${data.error}`, 'error');
+                    } else {
+                        addResult(`✅ <strong>Worker Success:</strong> Found record for ${data.username || 'Unknown'}`, 'success');
+                        addResult(`📊 <strong>Has JSON:</strong> ${data.json_parsed ? 'Yes' : 'No'}`, data.json_parsed ? 'success' : 'error');
+                    }
+                })
+                .catch(error => {
+                    addResult(`❌ <strong>Fetch Error:</strong> ${error.message}`, 'error');
+                });
+                
+        } else {
+            addResult(`ℹ️ <strong>No ID Parameter:</strong> URL has no ?id= parameter`, 'info');
+        }
+        
+        // Test all URL parameters
+        const allParams = {};
+        for (const [key, value] of urlParams) {
+            allParams[key] = value;
+        }
+        addResult(`🔍 <strong>All Parameters:</strong> ${JSON.stringify(allParams)}`, 'info');
+    </script>
+</body>
+</html>

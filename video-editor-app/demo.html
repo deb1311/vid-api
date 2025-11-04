@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor Studio - Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 16px;
+            padding: 48px;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 32px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .features {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .features ul {
+            color: #666;
+            line-height: 1.8;
+            margin: 0;
+            padding-left: 24px;
+        }
+
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            border-radius: 4px;
+            margin-top: 24px;
+        }
+
+        .note strong {
+            color: #92400e;
+        }
+
+        .note p {
+            margin: 0;
+            color: #78350f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1>🎬 Video Editor Studio</h1>
+        <p>
+            A professional video editing web application with a modern interface inspired by
+            industry-standard video editors. Create Instagram Reels with videos, captions, and audio.
+        </p>
+
+        <div class="features">
+            <h3>✨ Key Features</h3>
+            <ul>
+                <li>Import JSON test files instantly</li>
+                <li>Drag & drop timeline editing with resizable clips</li>
+                <li>Real-time property editing</li>
+                <li>FFmpeg.wasm video rendering in browser</li>
+                <li>9:16 aspect ratio preview</li>
+                <li>Timeline-only playhead for precise editing</li>
+                <li>Auto-save functionality</li>
+            </ul>
+        </div>
+
+        <a href="index.html" class="btn">Launch Editor</a>
+        <a href="QUICKSTART.md" class="btn btn-secondary">Quick Start Guide</a>
+        <a href="README.md" class="btn btn-secondary">Documentation</a>
+
+        <div class="note">
+            <strong>💡 Quick Tip:</strong>
+            <p>
+                Click "Import JSON" in the editor and select one of the test files
+                (test_vid13_captions.json, test_vid14_mixed_media.json, etc.) to see
+                the editor in action with pre-loaded clips and captions!
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

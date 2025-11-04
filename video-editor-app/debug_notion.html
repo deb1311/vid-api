@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Notion Worker</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 400px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Notion Worker</h1>
+    
+    <div class="section">
+        <h3>1. Test Worker Connection</h3>
+        <button onclick="testConnection()">Test Connection</button>
+        <div id="connectionResult"></div>
+    </div>
+
+    <div class="section">
+        <h3>2. Get All Records (to see available IDs)</h3>
+        <button onclick="getAllRecords()">Get All Records</button>
+        <div id="allRecordsResult"></div>
+    </div>
+
+    <div class="section">
+        <h3>3. Test Specific ID: 251023005700</h3>
+        <button onclick="testSpecificId('251023005700')">Test ID: 251023005700</button>
+        <div id="specificIdResult"></div>
+    </div>
+
+    <div class="section">
+        <h3>4. Test Another ID</h3>
+        <input type="text" id="customId" placeholder="Enter ID" value="251023100300">
+        <button onclick="testCustomId()">Test Custom ID</button>
+        <div id="customIdResult"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://notion-reader.debabratamaitra898.workers.dev';
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(WORKER_URL);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Worker is accessible!</p>
+                        <p>Status: ${response.status}</p>
+                        <p>Total records: ${data.total || 'Unknown'}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Worker returned status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Connection failed: ${error.message}</p>`;
+            }
+        }
+
+        async function getAllRecords() {
+            const resultDiv = document.getElementById('allRecordsResult');
+            resultDiv.innerHTML = '<p>Loading all records...</p>';
+            
+            try {
+                const response = await fetch(WORKER_URL);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const availableIds = data.items ? data.items.map(item => item.properties.ID).filter(id => id) : [];
+                    
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Found ${data.total} records</p>
+                        <p><strong>Available IDs:</strong></p>
+                        <ul>
+                            ${availableIds.map(id => `<li><code>${id}</code></li>`).join('')}
+                        </ul>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p class="error">❌ Error: ${response.status}</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testSpecificId(id) {
+            const resultDiv = document.getElementById('specificIdResult');
+            resultDiv.innerHTML = '<p>Testing ID: ' + id + '...</p>';
+            
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ ID found!</p>
+                        <p><strong>Username:</strong> ${data.username || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${data.status || 'N/A'}</p>
+                        <p><strong>Has JSON:</strong> ${data.json_parsed ? 'Yes' : 'No'}</p>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ ID not found (${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testCustomId() {
+            const id = document.getElementById('customId').value.trim();
+            if (!id) {
+                alert('Please enter an ID');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('customIdResult');
+            resultDiv.innerHTML = '<p>Testing ID: ' + id + '...</p>';
+            
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ ID found!</p>
+                        <p><strong>Username:</strong> ${data.username || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${data.status || 'N/A'}</p>
+                        <p><strong>Has JSON:</strong> ${data.json_parsed ? 'Yes' : 'No'}</p>
+                        <p><strong>Test URL:</strong> <a href="http://localhost:8080/?id=${id}" target="_blank">http://localhost:8080/?id=${id}</a></p>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ ID not found (${response.status})</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

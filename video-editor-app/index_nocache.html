@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor (No Cache)</title>
+    <!-- Cache busting with timestamp -->
+    <link rel="stylesheet" href="styles.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="video-title-section">
+                <input type="text" id="videoTitle" class="video-title" value="Video Title">
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-notion" id="loadNotionBtn">Load from Notion</button>
+                <button class="btn btn-save" id="saveBtn">Save</button>
+                <button class="btn btn-confirm" id="confirmBtn">Confirm</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="main-area">
+            <!-- Left: Video Preview -->
+            <div class="preview-section">
+                <div class="preview-header">
+                    <div>Video Preview</div>
+                    <div class="preview-controls">
+                        <button class="control-btn" id="playPauseBtn" disabled>
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="control-btn" id="fullscreenBtn" disabled title="View in fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        <i class="fas fa-video"></i>
+                        <p>Video Preview</p>
+                        <small>9:16 (1080x1920)</small>
+                    </div>
+                    <div class="preview-canvas-container" id="previewCanvasContainer" style="display: none;">
+                        <canvas id="previewCanvas"></canvas>
+                        <div class="preview-time-display" id="previewTimeDisplay">0:00 / 0:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Properties Panel -->
+            <div class="properties-section">
+                <div class="properties-header">Properties</div>
+                <div class="properties-content" id="propertiesContent">
+                    <div class="empty-state">
+                        <i class="fas fa-file-import"></i>
+                        <p>Load a JSON file to start editing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Timeline Area -->
+        <div class="timeline-area">
+            <!-- Timeline Tracks -->
+            <div class="timeline-tracks" id="timelineTracks">
+                <!-- Video Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">video timeline</div>
+                    <div class="track-content" id="videoTimeline">
+                        <!-- Video clips will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Text Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">text timeline</div>
+                    <div class="track-content" id="textTimeline">
+                        <!-- Text clips will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Audio Timeline -->
+                <div class="timeline-track">
+                    <div class="track-label">audio timeline</div>
+                    <div class="track-content" id="audioTimeline">
+                        <!-- Audio clips will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single Playhead - Only in Timeline Area -->
+        <div class="timeline-playhead" id="globalPlayhead" style="display: none;"></div>
+    </div>
+
+    <!-- Modal for Notion records -->
+    <div id="notionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load from Notion Database</h3>
+                <button class="close-btn" id="closeNotionModal">&times;</button>
+            </div>
+            <div class="modal-filters">
+                <label>Filter by Status:</label>
+                <select id="notionStatusFilter">
+                    <option value="">All Records</option>
+                    <option value="pending">Pending</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <button class="btn btn-load" id="refreshNotionBtn">Refresh</button>
+            </div>
+            <div class="modal-body" id="notionRecordList">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading records from Notion...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Video Modal -->
+    <div id="fullscreenModal" class="modal fullscreen-modal">
+        <div class="fullscreen-content">
+            <div class="fullscreen-header">
+                <h3>Video Preview - Fullscreen</h3>
+                <div class="fullscreen-controls">
+                    <button class="control-btn" id="fullscreenPlayPauseBtn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="close-btn" id="closeFullscreenModal">&times;</button>
+                </div>
+            </div>
+            <div class="fullscreen-preview-container">
+                <canvas id="fullscreenCanvas"></canvas>
+                <div class="fullscreen-time-display" id="fullscreenTimeDisplay">0:00 / 0:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Edit Modal -->
+    <div id="videoEditModal" class="modal video-edit-modal">
+        <div class="video-edit-content">
+            <div class="video-edit-header">
+                <h3 id="videoEditTitle">Edit Video Clip</h3>
+                <button class="close-btn" id="closeVideoEditModal">&times;</button>
+            </div>
+            <div class="video-edit-container">
+                <!-- Left: Video Preview -->
+                <div class="video-edit-preview">
+                    <div class="video-preview-area">
+                        <video id="videoEditPlayer" controls muted>
+                            <source id="videoEditSource" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                
+                <!-- Right: Clip Properties Panel -->
+                <div class="video-edit-properties">
+                    <div class="clip-timeline-header">
+                        <h4>loaded clip timeline</h4>
+                    </div>
+                    
+                    <div class="clip-properties-form">
+                        <div class="property-field">
+                            <label>video url</label>
+                            <input type="text" id="clipVideoUrl" readonly>
+                        </div>
+                        
+                        <div class="property-field">
+                            <label>Begin</label>
+                            <input type="number" id="clipBegin" step="0.1" min="0">
+                        </div>
+                        
+                        <div class="property-field">
+                            <label>Duration</label>
+                            <input type="number" id="clipDuration" step="0.1" min="0.1">
+                        </div>
+                        
+                        <div class="property-field">
+                            <label>Start</label>
+                            <input type="number" id="clipStart" step="0.1" min="0">
+                        </div>
+                        
+                        <div class="property-field">
+                            <label>Volume</label>
+                            <input type="number" id="clipVolume" min="0" max="200" value="100">
+                        </div>
+                        
+                        <div class="property-field">
+                            <label>Description</label>
+                            <textarea id="clipDescription" rows="3" placeholder="Optional description for this clip"></textarea>
+                        </div>
+                        
+                        <div class="property-actions">
+                            <button class="btn btn-apply" id="applyClipChanges">Apply Changes</button>
+                            <button class="btn btn-cancel" id="cancelClipChanges">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache busting script tag -->
+    <script>
+        // Add timestamp to force reload
+        const timestamp = new Date().getTime();
+        const script = document.createElement('script');
+        script.src = 'app.js?v=' + timestamp;
+        document.head.appendChild(script);
+        
+        // Debug info
+        console.log('🔄 Cache-busted version loaded at:', new Date().toISOString());
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🔍 URL Parameters:', new URLSearchParams(window.location.search).toString());
+    </script>
+</body>
+</html>

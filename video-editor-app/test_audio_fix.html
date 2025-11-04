@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Audio Playback Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <p>This test verifies that the audio playback fix is working correctly in the video editor.</p>
+        <ol>
+            <li>Load a JSON file with audio (audioUrl or instagramUrl)</li>
+            <li>Click the play button in the video editor</li>
+            <li>Verify that audio plays along with the visual timeline</li>
+            <li>Test seeking by clicking on the timeline</li>
+            <li>Test pause/resume functionality</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample Test Data</h2>
+        <p>Use this sample JSON data to test audio playback:</p>
+        <textarea id="sampleJson" rows="15" style="width: 100%; font-family: monospace;">
+{
+    "endpoint": "vid13",
+    "audioUrl": "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+    "duration": 10,
+    "clips": [
+        {
+            "videourl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            "start": 0,
+            "duration": 5,
+            "volume": 80
+        },
+        {
+            "imageurl": "https://picsum.photos/800/600",
+            "start": 5,
+            "duration": 5,
+            "volume": 100
+        }
+    ],
+    "captions": [
+        {
+            "text": "Testing audio playback",
+            "start": 0,
+            "duration": 3
+        }
+    ]
+}
+        </textarea>
+        <br>
+        <button onclick="copyToClipboard()">Copy Sample JSON</button>
+        <button onclick="openEditor()">Open Video Editor</button>
+        <button onclick="checkAudioStatus()">Check Audio Status (Debug)</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <div class="status info">
+            <strong>✅ Audio Loading:</strong> You should see a notification "🎵 Audio loaded and ready to play!" when audio loads successfully.
+        </div>
+        <div class="status info">
+            <strong>✅ Play/Pause:</strong> Audio should start/stop when clicking the play/pause button.
+        </div>
+        <div class="status info">
+            <strong>✅ Timeline Sync:</strong> Audio should sync with the visual timeline position.
+        </div>
+        <div class="status info">
+            <strong>✅ Seeking:</strong> Clicking on timeline should seek audio to that position.
+        </div>
+        <div class="status info">
+            <strong>✅ Volume Control:</strong> Audio volume should adjust based on clip volume settings.
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Troubleshooting</h2>
+        <div class="status error">
+            <strong>⚠️ No Audio:</strong> Check browser console for CORS errors or audio loading failures.
+        </div>
+        <div class="status error">
+            <strong>⚠️ Audio Out of Sync:</strong> Verify that audio duration matches the timeline duration.
+        </div>
+        <div class="status error">
+            <strong>⚠️ Volume Issues:</strong> Check that clip volume values are between 0-200.
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const textarea = document.getElementById('sampleJson');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Sample JSON copied to clipboard!');
+        }
+
+        function openEditor() {
+            window.open('index.html', '_blank');
+        }
+
+        function checkAudioStatus() {
+            // This function can be called from browser console when the editor is open
+            alert('Open browser console and run: videoEditor.getAudioStatus()');
+        }
+    </script>
+</body>
+</html>

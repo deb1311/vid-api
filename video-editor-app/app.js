@@ -10,6 +10,10 @@ class VideoEditor {
         this.totalDuration = 0;
         this.animationFrameId = null;
         
+        // Audio playback
+        this.audioElement = null;
+        this.audioLoaded = false;
+        
         // Canvas setup for 9:16 aspect ratio (matching backend 1080x1920)
         this.canvas = document.getElementById('previewCanvas');
         this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
@@ -429,6 +433,7 @@ class VideoEditor {
         
         this.calculateTotalDuration();
         await this.preloadMedia();
+        await this.loadAudio();
         
         this.renderProperties();
         this.renderTimeline();
@@ -526,6 +531,103 @@ class VideoEditor {
             if (failed > 0) {
                 this.showNotification(`⚠️ ${failed} media files failed to load`, 'warning');
             }
+        }
+    }
+
+    async loadAudio() {
+        // Clean up existing audio
+        if (this.audioElement) {
+            this.audioElement.pause();
+            this.audioElement.src = '';
+            this.audioElement = null;
+        }
+        
+        this.audioLoaded = false;
+        
+        if (!this.currentData) return;
+        
+        // Check for audio URL (audioUrl or instagramUrl)
+        const audioUrl = this.currentData.audioUrl || this.currentData.instagramUrl;
+        
+        if (!audioUrl) {
+            console.log('📢 No audio URL found in data');
+            return;
+        }
+        
+        try {
+            console.log('🎵 Loading audio:', audioUrl.substring(0, 50) + '...');
+            
+            this.audioElement = new Audio();
+            this.audioElement.crossOrigin = 'anonymous';
+            this.audioElement.preload = 'auto';
+            
+            let audioLoadResolved = false;
+            
+            // Set up audio event listeners with proper state management
+            const onAudioLoaded = () => {
+                if (audioLoadResolved) return;
+                audioLoadResolved = true;
+                this.audioLoaded = true;
+                console.log('✅ Audio loaded successfully - readyState:', this.audioElement.readyState);
+                this.showNotification('🎵 Audio loaded and ready to play!', 'success');
+            };
+            
+            const onAudioError = (e) => {
+                if (audioLoadResolved) return;
+                
+                // Give a small delay to see if audio actually loads despite the error
+                setTimeout(() => {
+                    if (audioLoadResolved) return;
+                    
+                    // Check if audio actually has loaded data despite the error event
+                    if (this.audioElement && this.audioElement.readyState >= 2) {
+                        onAudioLoaded();
+                        return;
+                    }
+                    
+                    audioLoadResolved = true;
+                    console.warn('❌ Audio loading failed - readyState:', this.audioElement?.readyState, 'error:', e);
+                    this.audioLoaded = false;
+                    this.showNotification('⚠️ Audio failed to load - video will play without sound', 'warning');
+                }, 1000);
+            };
+            
+            // Multiple success events to handle different browsers
+            this.audioElement.addEventListener('loadeddata', onAudioLoaded);
+            this.audioElement.addEventListener('canplay', onAudioLoaded);
+            this.audioElement.addEventListener('canplaythrough', onAudioLoaded);
+            
+            // Error handling
+            this.audioElement.addEventListener('error', onAudioError);
+            this.audioElement.addEventListener('abort', onAudioError);
+            
+            this.audioElement.addEventListener('ended', () => {
+                this.isPlaying = false;
+                this.currentTime = 0;
+                this.updatePlayPauseButtons();
+            });
+            
+            // Timeout fallback for slow loading
+            setTimeout(() => {
+                if (!audioLoadResolved && this.audioElement) {
+                    if (this.audioElement.readyState >= 2) {
+                        // Audio has loaded enough data but events didn't fire properly
+                        console.log('🔄 Audio loaded via timeout fallback');
+                        onAudioLoaded();
+                    } else {
+                        // Audio really failed to load
+                        console.warn('⏰ Audio loading timeout');
+                        onAudioError(new Error('Audio loading timeout'));
+                    }
+                }
+            }, 8000);
+            
+            // Load the audio
+            this.audioElement.src = audioUrl;
+            
+        } catch (error) {
+            console.error('Error setting up audio:', error);
+            this.audioLoaded = false;
         }
     }
 
@@ -642,12 +744,27 @@ class VideoEditor {
     startRenderLoop() {
         const render = () => {
             if (this.isPlaying) {
-                this.currentTime += 1/30; // 30 FPS
+                // Sync with audio if available, otherwise use frame-based timing
+                if (this.audioElement && this.audioLoaded && !this.audioElement.paused) {
+                    this.currentTime = this.audioElement.currentTime;
+                } else {
+                    this.currentTime += 1/30; // 30 FPS fallback
+                }
+                
                 if (this.currentTime >= this.totalDuration) {
                     this.currentTime = 0;
+                    this.isPlaying = false;
+                    this.updatePlayPauseButtons();
+                    
+                    // Stop audio if playing
+                    if (this.audioElement && this.audioLoaded) {
+                        this.audioElement.pause();
+                        this.audioElement.currentTime = 0;
+                    }
                 }
                 this.updateTimeDisplay();
                 this.updatePlayheadPosition();
+                this.updateAudioVolume();
             }
             
             this.renderFrame();
@@ -747,6 +864,48 @@ class VideoEditor {
             
             ctx.restore();
         }
+    }
+
+    getAudioStatus() {
+        if (!this.audioElement) return 'No audio element';
+        
+        const states = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
+        return {
+            loaded: this.audioLoaded,
+            readyState: this.audioElement.readyState,
+            readyStateText: states[this.audioElement.readyState] || 'UNKNOWN',
+            duration: this.audioElement.duration,
+            currentTime: this.audioElement.currentTime,
+            paused: this.audioElement.paused,
+            src: this.audioElement.src
+        };
+    }
+
+    updateAudioVolume() {
+        if (!this.audioElement || !this.audioLoaded) return;
+        
+        let volume = 1.0; // Default volume
+        
+        // Check if any video clips are currently playing and have volume settings
+        if (this.currentData.clips) {
+            for (const clip of this.currentData.clips) {
+                const clipStart = clip.start || 0;
+                const clipDuration = clip.duration || 5;
+                const clipEnd = clipStart + clipDuration;
+                
+                // If current time is within this clip's timeframe
+                if (this.currentTime >= clipStart && this.currentTime <= clipEnd) {
+                    if (clip.volume !== undefined) {
+                        // Convert percentage to decimal (100% = 1.0)
+                        volume = Math.max(0, Math.min(2.0, (clip.volume || 100) / 100));
+                        break; // Use the first matching clip's volume
+                    }
+                }
+            }
+        }
+        
+        // Apply volume to audio element
+        this.audioElement.volume = volume;
     }
 
     renderCurrentMedia(ctx, width, height) {
@@ -1186,7 +1345,7 @@ class VideoEditor {
                 fontSize = 40; // Match backend fontSize=40 exactly
                 color = 'rgba(255, 255, 255, 0.4)'; // Match backend opacity
                 textAlign = 'center';
-                y = canvasHeight - 60; // Match backend y=h-60 exactly
+                y = (canvasHeight - 40) / 2; // Match backend y=(1920-40)/2 exactly - center position
                 maxWidth = canvasWidth * 0.8;
                 break;
         }
@@ -1199,8 +1358,15 @@ class VideoEditor {
         // Text shadow matching backend exactly
         ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
         ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        
+        // Different shadow offsets for different text types to match backend
+        if (type === 'watermark') {
+            ctx.shadowOffsetX = 3; // Match backend shadowx=3
+            ctx.shadowOffsetY = 3; // Match backend shadowy=3
+        } else {
+            ctx.shadowOffsetX = 2; // Match backend shadowx=2 for other text
+            ctx.shadowOffsetY = 2; // Match backend shadowy=2 for other text
+        }
         
         // Word wrap using backend logic
         const words = text.split(' ');
@@ -2265,16 +2431,38 @@ class VideoEditor {
 
     togglePlayPause() {
         this.isPlaying = !this.isPlaying;
+        
+        if (this.isPlaying && this.currentTime >= this.totalDuration) {
+            this.currentTime = 0;
+        }
+        
+        // Control audio playback
+        if (this.audioElement && this.audioLoaded) {
+            try {
+                if (this.isPlaying) {
+                    this.audioElement.currentTime = this.currentTime;
+                    this.audioElement.play().catch(e => {
+                        console.warn('Audio play failed:', e);
+                        // If audio fails, continue with visual playback
+                    });
+                } else {
+                    this.audioElement.pause();
+                }
+            } catch (error) {
+                console.warn('Audio control error:', error);
+            }
+        }
+        
+        this.updatePlayPauseButtons();
+    }
+    
+    updatePlayPauseButtons() {
         const btn = document.getElementById('playPauseBtn');
         const fullscreenBtn = document.getElementById('fullscreenPlayPauseBtn');
         
         const iconHTML = this.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
         btn.innerHTML = iconHTML;
         fullscreenBtn.innerHTML = iconHTML;
-        
-        if (this.isPlaying && this.currentTime >= this.totalDuration) {
-            this.currentTime = 0;
-        }
     }
 
     setupTimelineInteractions() {
@@ -2285,6 +2473,12 @@ class VideoEditor {
                 const x = e.clientX - rect.left;
                 const time = x / this.timelineZoom;
                 this.currentTime = Math.max(0, Math.min(time, this.totalDuration));
+                
+                // Sync audio to new time
+                if (this.audioElement && this.audioLoaded) {
+                    this.audioElement.currentTime = this.currentTime;
+                }
+                
                 this.updatePlayheadPosition();
                 this.updateTimeDisplay();
             }
@@ -2316,6 +2510,12 @@ class VideoEditor {
             const newTime = Math.max(0, Math.min(startTime + deltaTime, this.totalDuration));
             
             this.currentTime = newTime;
+            
+            // Sync audio to new time
+            if (this.audioElement && this.audioLoaded) {
+                this.audioElement.currentTime = this.currentTime;
+            }
+            
             this.updatePlayheadPosition();
             this.updateTimeDisplay();
         };

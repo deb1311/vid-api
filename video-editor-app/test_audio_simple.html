@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Audio Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 5px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Simple Audio Loading Test</h1>
+    
+    <button onclick="testAudio()">Test Audio Loading</button>
+    <button onclick="testBadAudio()">Test Bad Audio URL</button>
+    
+    <div id="status"></div>
+    
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function testAudio() {
+            updateStatus('Testing audio loading...', 'info');
+            
+            const audio = new Audio();
+            audio.crossOrigin = 'anonymous';
+            
+            let resolved = false;
+            
+            const onSuccess = () => {
+                if (resolved) return;
+                resolved = true;
+                updateStatus('✅ Audio loaded successfully!', 'success');
+            };
+            
+            const onError = (e) => {
+                if (resolved) return;
+                
+                setTimeout(() => {
+                    if (resolved) return;
+                    
+                    if (audio.readyState >= 2) {
+                        onSuccess();
+                        return;
+                    }
+                    
+                    resolved = true;
+                    updateStatus('❌ Audio failed to load: ' + e.type, 'error');
+                }, 1000);
+            };
+            
+            audio.addEventListener('loadeddata', onSuccess);
+            audio.addEventListener('canplay', onSuccess);
+            audio.addEventListener('error', onError);
+            
+            // Use a reliable test audio file
+            audio.src = 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav';
+        }
+
+        function testBadAudio() {
+            updateStatus('Testing bad audio URL...', 'info');
+            
+            const audio = new Audio();
+            audio.crossOrigin = 'anonymous';
+            
+            let resolved = false;
+            
+            const onSuccess = () => {
+                if (resolved) return;
+                resolved = true;
+                updateStatus('Unexpected: Bad URL loaded successfully', 'success');
+            };
+            
+            const onError = (e) => {
+                if (resolved) return;
+                
+                setTimeout(() => {
+                    if (resolved) return;
+                    resolved = true;
+                    updateStatus('✅ Correctly detected bad audio URL', 'success');
+                }, 1000);
+            };
+            
+            audio.addEventListener('loadeddata', onSuccess);
+            audio.addEventListener('canplay', onSuccess);
+            audio.addEventListener('error', onError);
+            
+            // Use a bad URL
+            audio.src = 'https://invalid-url-that-should-fail.com/nonexistent.mp3';
+        }
+    </script>
+</body>
+</html>

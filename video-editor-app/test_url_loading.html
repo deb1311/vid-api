@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test URL Loading Feature</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4a90e2;
+            margin-top: 0;
+        }
+        .url-example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #4a90e2;
+            margin: 15px 0;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .test-form {
+            margin: 20px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info strong {
+            color: #0066cc;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 URL Loading Feature Test</h1>
+
+    <div class="section">
+        <h2>📋 How It Works</h2>
+        <p>The video editor now supports loading JSON data directly from Notion using URL parameters.</p>
+        
+        <div class="info">
+            <strong>URL Format:</strong><br>
+            <code>http://your-domain.com/video-editor-app/?id=NOTION_ID</code>
+        </div>
+
+        <p><strong>Features:</strong></p>
+        <ul>
+            <li>✅ Automatically loads JSON when ID is in URL</li>
+            <li>✅ Works with any domain (localhost, production, etc.)</li>
+            <li>✅ Silent loading (no notifications)</li>
+            <li>✅ Falls back to empty editor if no ID provided</li>
+            <li>✅ "Load JSON" button removed - only "Load from Notion" remains</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Test the Feature</h2>
+        
+        <div class="test-form">
+            <label><strong>Enter a Notion Formula ID:</strong></label>
+            <input type="text" id="notionId" placeholder="e.g., 251023100300" value="">
+            
+            <button onclick="openWithId()">Open Editor with ID</button>
+            <button class="btn-secondary" onclick="openWithoutId()">Open Editor (No ID)</button>
+        </div>
+
+        <div class="info">
+            <strong>💡 Tip:</strong> Get a Formula ID from your Notion database or use the "Load from Notion" button in the editor to see available IDs.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📝 Example URLs</h2>
+        
+        <p><strong>With ID (auto-loads from Notion):</strong></p>
+        <div class="url-example" id="exampleWithId">
+            http://localhost/video-editor-app/?id=251023100300
+        </div>
+
+        <p><strong>Without ID (empty editor):</strong></p>
+        <div class="url-example">
+            http://localhost/video-editor-app/
+        </div>
+
+        <p><strong>Production example:</strong></p>
+        <div class="url-example">
+            https://yourdomain.com/video-editor-app/?id=251023100300
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 What Happens</h2>
+        
+        <p><strong>When URL has ID parameter:</strong></p>
+        <ol>
+            <li>Page loads</li>
+            <li>JavaScript detects <code>?id=</code> parameter</li>
+            <li>Fetches JSON from Notion via Cloudflare Worker</li>
+            <li>Loads data into editor (silently, no notification)</li>
+            <li>Video preview and timeline render automatically</li>
+        </ol>
+
+        <p><strong>When URL has NO ID parameter:</strong></p>
+        <ol>
+            <li>Page loads</li>
+            <li>Shows empty editor</li>
+            <li>User can click "Load from Notion" to browse records</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Use Cases</h2>
+        <ul>
+            <li><strong>Direct Links:</strong> Share specific video projects via URL</li>
+            <li><strong>Notion Integration:</strong> Link from Notion database to editor</li>
+            <li><strong>Bookmarks:</strong> Save frequently used projects as bookmarks</li>
+            <li><strong>Automation:</strong> Generate URLs programmatically</li>
+            <li><strong>Email/Slack:</strong> Send direct links to team members</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ Technical Details</h2>
+        
+        <p><strong>JavaScript Implementation:</strong></p>
+        <ul>
+            <li><code>checkUrlParameter()</code> - Checks for ID in URL on page load</li>
+            <li><code>loadNotionRecord(id, silent)</code> - Loads data from Notion</li>
+            <li>Silent mode prevents notifications when loading from URL</li>
+            <li>Uses <code>URLSearchParams</code> to parse query string</li>
+        </ul>
+
+        <p><strong>API Endpoint Used:</strong></p>
+        <div class="url-example">
+            GET https://notion-reader.debabratamaitra898.workers.dev/?json_id=FORMULA_ID
+        </div>
+    </div>
+
+    <script>
+        // Update example URL with current location
+        const currentBase = window.location.origin + window.location.pathname.replace('test_url_loading.html', '');
+        document.getElementById('exampleWithId').textContent = currentBase + '?id=251023100300';
+
+        function openWithId() {
+            const notionId = document.getElementById('notionId').value.trim();
+            if (!notionId) {
+                alert('Please enter a Notion Formula ID');
+                return;
+            }
+            
+            const editorUrl = currentBase + '?id=' + encodeURIComponent(notionId);
+            window.open(editorUrl, '_blank');
+        }
+
+        function openWithoutId() {
+            window.open(currentBase, '_blank');
+        }
+
+        // Pre-fill with example ID if available
+        document.getElementById('notionId').value = '251023100300';
+    </script>
+</body>
+</html>

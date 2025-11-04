@@ -2,9 +2,9 @@
   "quote": "goals not dreams",
   "author": "Achieve",
   "watermark": "@TheSuccessFormula",
-  "audioUrl": "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-  "audioDescription": "Test audio file for demonstrating extended duration support",
-  "duration": 30,
+  "audioUrl": "https://example.com/audio/dramatic-voiceover-and-music.mp3",
+  "audioDescription": "Dramatic voiceover with inspiring background music for success content",
+  "duration": 10,
   "overlay": true,
   "clips": [
     {
