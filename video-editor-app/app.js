@@ -464,6 +464,28 @@ class VideoEditor {
         video.addEventListener('timeupdate', this.currentTimeUpdateHandler);
         this.previousTimeUpdateHandler = this.currentTimeUpdateHandler;
         
+        // Add duration limiting functionality
+        this.currentDurationLimitHandler = () => {
+            const beginTime = parseFloat(document.getElementById('clipBegin').value) || 0;
+            const duration = parseFloat(document.getElementById('clipDuration').value) || 5;
+            const endTime = beginTime + duration;
+            
+            if (video.currentTime >= endTime) {
+                video.pause();
+                video.currentTime = beginTime; // Reset to begin position for next play
+                console.log(`⏹️ Video paused at duration limit: ${endTime}s (begin: ${beginTime}s + duration: ${duration}s) - Reset to begin position`);
+            }
+        };
+        
+        // Remove existing duration limit handler
+        if (this.previousDurationLimitHandler) {
+            video.removeEventListener('timeupdate', this.previousDurationLimitHandler);
+        }
+        
+        // Add new duration limit handler
+        video.addEventListener('timeupdate', this.currentDurationLimitHandler);
+        this.previousDurationLimitHandler = this.currentDurationLimitHandler;
+        
         // Add real-time preview updates when begin time changes
         const clipBeginInput = document.getElementById('clipBegin');
         this.currentVideoPreviewUpdater = () => {
@@ -496,6 +518,11 @@ class VideoEditor {
             clipVolumeInput.removeEventListener('input', this.previousVolumeUpdater);
             clipVolumeInput.removeEventListener('change', this.previousVolumeUpdater);
         }
+        if (this.previousDurationUpdater) {
+            const clipDurationInput = document.getElementById('clipDuration');
+            clipDurationInput.removeEventListener('input', this.previousDurationUpdater);
+            clipDurationInput.removeEventListener('change', this.previousDurationUpdater);
+        }
         
         // Add new event listeners
         clipBeginInput.addEventListener('input', this.currentVideoPreviewUpdater);
@@ -504,6 +531,25 @@ class VideoEditor {
         // Add volume event listeners
         clipVolumeInput.addEventListener('input', this.currentVolumeUpdater);
         clipVolumeInput.addEventListener('change', this.currentVolumeUpdater);
+        
+        // Add duration event listeners to update duration limiting
+        const clipDurationInput = document.getElementById('clipDuration');
+        this.currentDurationUpdater = () => {
+            // Duration limiting is handled by the timeupdate event listener
+            // This just provides feedback that duration has changed
+            const newDuration = parseFloat(clipDurationInput.value) || 5;
+            console.log(`⏱️ Video edit modal: Duration updated to ${newDuration}s`);
+        };
+        
+        // Remove existing duration updater
+        if (this.previousDurationUpdater) {
+            clipDurationInput.removeEventListener('input', this.previousDurationUpdater);
+            clipDurationInput.removeEventListener('change', this.previousDurationUpdater);
+        }
+        
+        // Add new duration event listeners
+        clipDurationInput.addEventListener('input', this.currentDurationUpdater);
+        clipDurationInput.addEventListener('change', this.currentDurationUpdater);
         
         // Add helper button functionality
         const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
@@ -523,13 +569,13 @@ class VideoEditor {
             const beginTime = parseFloat(clipBeginInput.value) || 0;
             const duration = parseFloat(document.getElementById('clipDuration').value) || 5;
             if (video.readyState >= 2) {
+                // Always reset to begin time and restart playback
+                video.pause(); // Ensure video is paused first
                 video.currentTime = beginTime;
                 video.play();
-                // Stop playback after duration
-                setTimeout(() => {
-                    video.pause();
-                    console.log(`🎬 Previewed clip segment: ${beginTime}s to ${beginTime + duration}s`);
-                }, duration * 1000);
+                // The duration limiting will automatically stop playback at begin + duration
+                // No need for setTimeout as timeupdate handler will handle it
+                console.log(`🎬 Previewing clip segment: ${beginTime}s to ${beginTime + duration}s (auto-stop enabled)`);
             }
         };
         
@@ -584,6 +630,7 @@ class VideoEditor {
         // Store references for cleanup
         this.previousVideoPreviewUpdater = this.currentVideoPreviewUpdater;
         this.previousVolumeUpdater = this.currentVolumeUpdater;
+        this.previousDurationUpdater = this.currentDurationUpdater;
         this.previousJumpToBeginHandler = this.currentJumpToBeginHandler;
         this.previousPreviewClipHandler = this.currentPreviewClipHandler;
         this.previousTestVolumeHandler = this.currentTestVolumeHandler;
@@ -640,6 +687,14 @@ class VideoEditor {
             this.currentVolumeUpdater = null;
         }
         
+        // Clean up duration event listeners
+        const clipDurationInput = document.getElementById('clipDuration');
+        if (this.currentDurationUpdater) {
+            clipDurationInput.removeEventListener('input', this.currentDurationUpdater);
+            clipDurationInput.removeEventListener('change', this.currentDurationUpdater);
+            this.currentDurationUpdater = null;
+        }
+        
         // Clean up helper button listeners
         const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
         const previewClipBtn = document.getElementById('previewClipBtn');
@@ -670,6 +725,12 @@ class VideoEditor {
         if (this.currentTimeUpdateHandler) {
             video.removeEventListener('timeupdate', this.currentTimeUpdateHandler);
             this.currentTimeUpdateHandler = null;
+        }
+        
+        // Clean up duration limit handler
+        if (this.currentDurationLimitHandler) {
+            video.removeEventListener('timeupdate', this.currentDurationLimitHandler);
+            this.currentDurationLimitHandler = null;
         }
         
         // Clear current editing clip reference
