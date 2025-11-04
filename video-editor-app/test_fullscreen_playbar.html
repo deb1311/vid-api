@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Playbar Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 5px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Fullscreen Playbar Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <p>This test verifies that the fullscreen playbar is working correctly.</p>
+        <ol>
+            <li>Load a JSON file with audio in the video editor</li>
+            <li>Click the fullscreen button to open fullscreen preview</li>
+            <li>Verify the playbar appears at the bottom with all controls</li>
+            <li>Test each playbar feature listed below</li>
+        </ol>
+        <button onclick="openEditor()">Open Video Editor</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Playbar Features to Test</h2>
+        
+        <div class="status info">
+            <strong>✅ Progress Bar:</strong>
+            <ul>
+                <li>Click anywhere on the progress bar to seek to that position</li>
+                <li>Drag the progress handle to scrub through the timeline</li>
+                <li>Progress bar should update in real-time during playback</li>
+                <li>Audio should sync when seeking</li>
+            </ul>
+        </div>
+        
+        <div class="status info">
+            <strong>✅ Play/Pause Button:</strong>
+            <ul>
+                <li>Click the play button in the playbar to start/stop playback</li>
+                <li>Button icon should change between play and pause</li>
+                <li>Should sync with the header play/pause button</li>
+            </ul>
+        </div>
+        
+        <div class="status info">
+            <strong>✅ Time Display:</strong>
+            <ul>
+                <li>Shows current time / total duration (e.g., "1:23 / 5:00")</li>
+                <li>Updates in real-time during playback</li>
+                <li>Updates immediately when seeking</li>
+            </ul>
+        </div>
+        
+        <div class="status info">
+            <strong>✅ Volume Control:</strong>
+            <ul>
+                <li>Click volume button to mute/unmute audio</li>
+                <li>Volume icon changes based on mute state and volume level</li>
+                <li>Drag volume slider to adjust audio volume</li>
+                <li>Volume changes should be immediate</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample Test Data</h2>
+        <p>Use this sample JSON with audio to test the playbar:</p>
+        <textarea id="sampleJson" rows="12" style="width: 100%; font-family: monospace;">
+{
+    "endpoint": "vid15",
+    "audioUrl": "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+    "duration": 8,
+    "watermark": "@testplaybar",
+    "clips": [
+        {
+            "videourl": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            "start": 0,
+            "duration": 4,
+            "volume": 100
+        },
+        {
+            "imageurl": "https://picsum.photos/800/600",
+            "start": 4,
+            "duration": 4,
+            "volume": 80
+        }
+    ]
+}
+        </textarea>
+        <br>
+        <button onclick="copyToClipboard()">Copy Sample JSON</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <div class="status success">
+            <strong>Visual Design:</strong> Traditional video player style with dark background, progress bar, and control buttons
+        </div>
+        <div class="status success">
+            <strong>Positioning:</strong> Playbar fixed at bottom of fullscreen modal, always visible
+        </div>
+        <div class="status success">
+            <strong>Responsiveness:</strong> Progress bar and controls should respond immediately to user interaction
+        </div>
+        <div class="status success">
+            <strong>Audio Sync:</strong> All playbar controls should properly sync with audio playback
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const textarea = document.getElementById('sampleJson');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Sample JSON copied to clipboard!');
+        }
+
+        function openEditor() {
+            window.open('index.html', '_blank');
+        }
+    </script>
+</body>
+</html>

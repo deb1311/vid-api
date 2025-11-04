@@ -84,6 +84,14 @@ class VideoEditor {
         document.getElementById('closeFullscreenModal').addEventListener('click', () => this.hideFullscreenModal());
         document.getElementById('fullscreenPlayPauseBtn').addEventListener('click', () => this.togglePlayPause());
         
+        // Fullscreen playbar controls
+        document.getElementById('fullscreenPlaybarPlayBtn').addEventListener('click', () => this.togglePlayPause());
+        document.getElementById('fullscreenVolumeBtn').addEventListener('click', () => this.toggleMute());
+        document.getElementById('fullscreenVolumeSlider').addEventListener('input', (e) => this.setVolume(e.target.value));
+        
+        // Progress bar seeking
+        this.setupFullscreenProgressBar();
+        
         // Video Edit Modal listeners
         document.getElementById('videoEditModal').addEventListener('click', (e) => {
             if (e.target.id === 'videoEditModal') this.hideVideoEditModal();
@@ -236,12 +244,145 @@ class VideoEditor {
         
         document.getElementById('fullscreenModal').classList.add('active');
         this.setupFullscreenCanvas();
+        this.initializeFullscreenPlaybar();
         console.log('🖥️ Opened fullscreen video preview');
+    }
+
+    initializeFullscreenPlaybar() {
+        // Initialize volume slider with current audio volume
+        const volumeSlider = document.getElementById('fullscreenVolumeSlider');
+        const volumeBtn = document.getElementById('fullscreenVolumeBtn');
+        
+        if (this.audioElement && this.audioLoaded) {
+            const currentVolume = this.audioElement.volume * 100;
+            volumeSlider.value = currentVolume;
+            
+            if (this.audioElement.muted || currentVolume === 0) {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else if (currentVolume < 50) {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+            } else {
+                volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+        } else {
+            volumeSlider.value = 100;
+            volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
+        
+        // Initialize playbar state
+        this.updateFullscreenPlaybar();
     }
 
     hideFullscreenModal() {
         document.getElementById('fullscreenModal').classList.remove('active');
         console.log('🖥️ Closed fullscreen video preview');
+    }
+
+    setupFullscreenProgressBar() {
+        const progressTrack = document.getElementById('fullscreenProgressTrack');
+        const progressFill = document.getElementById('fullscreenProgressFill');
+        const progressHandle = document.getElementById('fullscreenProgressHandle');
+        
+        let isDragging = false;
+        
+        const updateProgress = (clientX) => {
+            const rect = progressTrack.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+            const newTime = (percentage / 100) * this.totalDuration;
+            
+            this.currentTime = newTime;
+            
+            // Sync audio to new time
+            if (this.audioElement && this.audioLoaded) {
+                this.audioElement.currentTime = this.currentTime;
+            }
+            
+            this.updateFullscreenPlaybar();
+        };
+        
+        const onMouseDown = (e) => {
+            isDragging = true;
+            updateProgress(e.clientX);
+            e.preventDefault();
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            updateProgress(e.clientX);
+        };
+        
+        const onMouseUp = () => {
+            isDragging = false;
+        };
+        
+        progressTrack.addEventListener('mousedown', onMouseDown);
+        progressHandle.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        // Click to seek
+        progressTrack.addEventListener('click', (e) => {
+            if (!isDragging) {
+                updateProgress(e.clientX);
+            }
+        });
+    }
+
+    updateFullscreenPlaybar() {
+        if (!document.getElementById('fullscreenModal').classList.contains('active')) return;
+        
+        const progressFill = document.getElementById('fullscreenProgressFill');
+        const progressHandle = document.getElementById('fullscreenProgressHandle');
+        const timeDisplay = document.getElementById('fullscreenPlaybarTime');
+        const playBtn = document.getElementById('fullscreenPlaybarPlayBtn');
+        
+        // Update progress bar
+        const percentage = this.totalDuration > 0 ? (this.currentTime / this.totalDuration) * 100 : 0;
+        progressFill.style.width = `${percentage}%`;
+        progressHandle.style.left = `${percentage}%`;
+        
+        // Update time display
+        const currentTimeStr = this.formatTime(this.currentTime);
+        const totalTimeStr = this.formatTime(this.totalDuration);
+        timeDisplay.textContent = `${currentTimeStr} / ${totalTimeStr}`;
+        
+        // Update play button
+        const iconHTML = this.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        playBtn.innerHTML = iconHTML;
+    }
+
+    toggleMute() {
+        if (!this.audioElement || !this.audioLoaded) return;
+        
+        const volumeBtn = document.getElementById('fullscreenVolumeBtn');
+        const volumeSlider = document.getElementById('fullscreenVolumeSlider');
+        
+        if (this.audioElement.muted) {
+            this.audioElement.muted = false;
+            volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            this.audioElement.volume = volumeSlider.value / 100;
+        } else {
+            this.audioElement.muted = true;
+            volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        }
+    }
+
+    setVolume(value) {
+        if (!this.audioElement || !this.audioLoaded) return;
+        
+        const volume = value / 100;
+        this.audioElement.volume = volume;
+        this.audioElement.muted = false;
+        
+        const volumeBtn = document.getElementById('fullscreenVolumeBtn');
+        if (volume === 0) {
+            volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        } else if (volume < 0.5) {
+            volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+        } else {
+            volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
     }
 
     editVideoClip(index) {
@@ -278,6 +419,176 @@ class VideoEditor {
         source.src = videoUrl;
         video.load();
         
+        // Seek to begin time and set volume when video is loaded
+        const beginTime = clip.begin || 0;
+        const videoInitialVolume = clip.volume || 100;
+        const seekToBeginAndSetVolume = () => {
+            if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                // Set volume
+                const volumeDecimal = Math.max(0, Math.min(2.0, videoInitialVolume / 100));
+                video.volume = volumeDecimal;
+                console.log(`🔊 Video edit modal: Set initial volume to ${videoInitialVolume}% (${volumeDecimal.toFixed(2)})`);
+                
+                // Seek to begin time if needed
+                if (beginTime > 0) {
+                    video.currentTime = beginTime;
+                    console.log(`🎯 Video edit modal: Seeking to begin time ${beginTime}s`);
+                    
+                    // Show visual feedback
+                    this.showNotification(`📍 Video positioned at begin time: ${beginTime}s, volume: ${videoInitialVolume}%`, 'info');
+                } else if (videoInitialVolume !== 100) {
+                    this.showNotification(`🔊 Video volume set to: ${videoInitialVolume}%`, 'info');
+                }
+            }
+        };
+        
+        // Add event listeners for seeking to begin time and setting volume
+        video.addEventListener('loadeddata', seekToBeginAndSetVolume, { once: true });
+        video.addEventListener('canplay', seekToBeginAndSetVolume, { once: true });
+        
+        // Update video time indicator
+        const videoTimeIndicator = document.getElementById('videoTimeIndicator');
+        this.currentTimeUpdateHandler = () => {
+            const currentTime = video.currentTime || 0;
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = Math.floor(currentTime % 60);
+            videoTimeIndicator.textContent = `Video time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        };
+        
+        // Remove existing time update handler
+        if (this.previousTimeUpdateHandler) {
+            video.removeEventListener('timeupdate', this.previousTimeUpdateHandler);
+        }
+        
+        // Add new time update handler
+        video.addEventListener('timeupdate', this.currentTimeUpdateHandler);
+        this.previousTimeUpdateHandler = this.currentTimeUpdateHandler;
+        
+        // Add real-time preview updates when begin time changes
+        const clipBeginInput = document.getElementById('clipBegin');
+        this.currentVideoPreviewUpdater = () => {
+            const newBeginTime = parseFloat(clipBeginInput.value) || 0;
+            if (video.readyState >= 2 && newBeginTime >= 0) {
+                video.currentTime = newBeginTime;
+                console.log(`🎯 Video edit modal: Updated preview to begin time ${newBeginTime}s`);
+            }
+        };
+        
+        // Add real-time volume updates
+        const clipVolumeInput = document.getElementById('clipVolume');
+        const volumeIndicator = document.getElementById('volumeIndicator');
+        this.currentVolumeUpdater = () => {
+            const newVolume = parseFloat(clipVolumeInput.value) || 100;
+            const volumeDecimal = Math.max(0, Math.min(2.0, newVolume / 100)); // Convert to 0-2.0 range
+            if (video.readyState >= 2) {
+                video.volume = volumeDecimal;
+                volumeIndicator.textContent = `Volume: ${newVolume}%`;
+                console.log(`🔊 Video edit modal: Updated volume to ${newVolume}% (${volumeDecimal.toFixed(2)})`);
+            }
+        };
+        
+        // Remove any existing event listeners to prevent duplicates
+        if (this.previousVideoPreviewUpdater) {
+            clipBeginInput.removeEventListener('input', this.previousVideoPreviewUpdater);
+            clipBeginInput.removeEventListener('change', this.previousVideoPreviewUpdater);
+        }
+        if (this.previousVolumeUpdater) {
+            clipVolumeInput.removeEventListener('input', this.previousVolumeUpdater);
+            clipVolumeInput.removeEventListener('change', this.previousVolumeUpdater);
+        }
+        
+        // Add new event listeners
+        clipBeginInput.addEventListener('input', this.currentVideoPreviewUpdater);
+        clipBeginInput.addEventListener('change', this.currentVideoPreviewUpdater);
+        
+        // Add volume event listeners
+        clipVolumeInput.addEventListener('input', this.currentVolumeUpdater);
+        clipVolumeInput.addEventListener('change', this.currentVolumeUpdater);
+        
+        // Add helper button functionality
+        const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
+        const previewClipBtn = document.getElementById('previewClipBtn');
+        const testVolumeBtn = document.getElementById('testVolumeBtn');
+        const muteUnmuteBtn = document.getElementById('muteUnmuteBtn');
+        
+        this.currentJumpToBeginHandler = () => {
+            const beginTime = parseFloat(clipBeginInput.value) || 0;
+            if (video.readyState >= 2) {
+                video.currentTime = beginTime;
+                console.log(`⏭️ Jumped to begin time: ${beginTime}s`);
+            }
+        };
+        
+        this.currentPreviewClipHandler = () => {
+            const beginTime = parseFloat(clipBeginInput.value) || 0;
+            const duration = parseFloat(document.getElementById('clipDuration').value) || 5;
+            if (video.readyState >= 2) {
+                video.currentTime = beginTime;
+                video.play();
+                // Stop playback after duration
+                setTimeout(() => {
+                    video.pause();
+                    console.log(`🎬 Previewed clip segment: ${beginTime}s to ${beginTime + duration}s`);
+                }, duration * 1000);
+            }
+        };
+        
+        this.currentTestVolumeHandler = () => {
+            const volume = parseFloat(clipVolumeInput.value) || 100;
+            const beginTime = parseFloat(clipBeginInput.value) || 0;
+            if (video.readyState >= 2) {
+                video.currentTime = beginTime;
+                video.play();
+                // Play for 3 seconds to test volume
+                setTimeout(() => {
+                    video.pause();
+                    console.log(`🔊 Tested volume: ${volume}% for 3 seconds`);
+                }, 3000);
+            }
+        };
+        
+        this.currentMuteUnmuteHandler = () => {
+            if (video.muted) {
+                video.muted = false;
+                muteUnmuteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                muteUnmuteBtn.title = 'Mute video';
+                console.log('🔊 Video unmuted');
+            } else {
+                video.muted = true;
+                muteUnmuteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                muteUnmuteBtn.title = 'Unmute video';
+                console.log('🔇 Video muted');
+            }
+        };
+        
+        // Remove existing handlers if any
+        if (this.previousJumpToBeginHandler) {
+            jumpToBeginBtn.removeEventListener('click', this.previousJumpToBeginHandler);
+        }
+        if (this.previousPreviewClipHandler) {
+            previewClipBtn.removeEventListener('click', this.previousPreviewClipHandler);
+        }
+        if (this.previousTestVolumeHandler) {
+            testVolumeBtn.removeEventListener('click', this.previousTestVolumeHandler);
+        }
+        if (this.previousMuteUnmuteHandler) {
+            muteUnmuteBtn.removeEventListener('click', this.previousMuteUnmuteHandler);
+        }
+        
+        // Add new handlers
+        jumpToBeginBtn.addEventListener('click', this.currentJumpToBeginHandler);
+        previewClipBtn.addEventListener('click', this.currentPreviewClipHandler);
+        testVolumeBtn.addEventListener('click', this.currentTestVolumeHandler);
+        muteUnmuteBtn.addEventListener('click', this.currentMuteUnmuteHandler);
+        
+        // Store references for cleanup
+        this.previousVideoPreviewUpdater = this.currentVideoPreviewUpdater;
+        this.previousVolumeUpdater = this.currentVolumeUpdater;
+        this.previousJumpToBeginHandler = this.currentJumpToBeginHandler;
+        this.previousPreviewClipHandler = this.currentPreviewClipHandler;
+        this.previousTestVolumeHandler = this.currentTestVolumeHandler;
+        this.previousMuteUnmuteHandler = this.currentMuteUnmuteHandler;
+        
         // Populate form fields
         document.getElementById('clipVideoUrl').value = videoUrl;
         document.getElementById('clipBegin').value = clip.begin || 0;
@@ -286,17 +597,80 @@ class VideoEditor {
         document.getElementById('clipVolume').value = clip.volume || 100;
         document.getElementById('clipDescription').value = clip.description || '';
         
+        // Set initial volume and update indicator
+        const clipInitialVolume = clip.volume || 100;
+        const volumeIndicatorElement = document.getElementById('volumeIndicator');
+        volumeIndicatorElement.textContent = `Volume: ${clipInitialVolume}%`;
+        
+        // Set initial mute button state
+        const muteUnmuteBtnElement = document.getElementById('muteUnmuteBtn');
+        if (clipInitialVolume === 0) {
+            muteUnmuteBtnElement.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            muteUnmuteBtnElement.title = 'Unmute video';
+        } else {
+            muteUnmuteBtnElement.innerHTML = '<i class="fas fa-volume-up"></i>';
+            muteUnmuteBtnElement.title = 'Mute video';
+        }
+        
         // Show modal
         modal.classList.add('active');
-        console.log(`🎬 Opened video edit modal for clip ${index + 1}`);
+        console.log(`🎬 Opened video edit modal for clip ${index + 1} (begin: ${beginTime}s)`);
     }
 
     hideVideoEditModal() {
         const modal = document.getElementById('videoEditModal');
         const video = document.getElementById('videoEditPlayer');
+        const clipBeginInput = document.getElementById('clipBegin');
         
         // Pause video when closing modal
         video.pause();
+        
+        // Clean up event listeners to prevent memory leaks
+        if (this.currentVideoPreviewUpdater) {
+            clipBeginInput.removeEventListener('input', this.currentVideoPreviewUpdater);
+            clipBeginInput.removeEventListener('change', this.currentVideoPreviewUpdater);
+            this.currentVideoPreviewUpdater = null;
+        }
+        
+        // Clean up volume event listeners
+        const clipVolumeInput = document.getElementById('clipVolume');
+        if (this.currentVolumeUpdater) {
+            clipVolumeInput.removeEventListener('input', this.currentVolumeUpdater);
+            clipVolumeInput.removeEventListener('change', this.currentVolumeUpdater);
+            this.currentVolumeUpdater = null;
+        }
+        
+        // Clean up helper button listeners
+        const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
+        const previewClipBtn = document.getElementById('previewClipBtn');
+        const testVolumeBtn = document.getElementById('testVolumeBtn');
+        const muteUnmuteBtn = document.getElementById('muteUnmuteBtn');
+        
+        if (this.currentJumpToBeginHandler) {
+            jumpToBeginBtn.removeEventListener('click', this.currentJumpToBeginHandler);
+            this.currentJumpToBeginHandler = null;
+        }
+        
+        if (this.currentPreviewClipHandler) {
+            previewClipBtn.removeEventListener('click', this.currentPreviewClipHandler);
+            this.currentPreviewClipHandler = null;
+        }
+        
+        if (this.currentTestVolumeHandler) {
+            testVolumeBtn.removeEventListener('click', this.currentTestVolumeHandler);
+            this.currentTestVolumeHandler = null;
+        }
+        
+        if (this.currentMuteUnmuteHandler) {
+            muteUnmuteBtn.removeEventListener('click', this.currentMuteUnmuteHandler);
+            this.currentMuteUnmuteHandler = null;
+        }
+        
+        // Clean up time update handler
+        if (this.currentTimeUpdateHandler) {
+            video.removeEventListener('timeupdate', this.currentTimeUpdateHandler);
+            this.currentTimeUpdateHandler = null;
+        }
         
         // Clear current editing clip reference
         this.currentEditingClip = null;
@@ -434,6 +808,9 @@ class VideoEditor {
         this.calculateTotalDuration();
         await this.preloadMedia();
         await this.loadAudio();
+        
+        // Ensure all videos start paused
+        this.pauseAllVideos();
         
         this.renderProperties();
         this.renderTimeline();
@@ -761,6 +1138,10 @@ class VideoEditor {
                         this.audioElement.pause();
                         this.audioElement.currentTime = 0;
                     }
+                    
+                    // Pause all videos and mute audio when timeline ends
+                    this.pauseAllVideos();
+                    this.muteAllVideoAudio();
                 }
                 this.updateTimeDisplay();
                 this.updatePlayheadPosition();
@@ -908,10 +1289,52 @@ class VideoEditor {
         this.audioElement.volume = volume;
     }
 
+    pauseAllVideos() {
+        // Simple pause all videos when playback stops
+        if (this.loadedVideos && this.loadedVideos.size > 0) {
+            for (const [url, video] of this.loadedVideos) {
+                if (video && !video.paused) {
+                    video.pause();
+                }
+            }
+        }
+    }
+
+    updateVideoAudioStates(activeVideoUrl) {
+        // Mute all videos except the currently active one
+        if (this.loadedVideos && this.loadedVideos.size > 0) {
+            for (const [url, video] of this.loadedVideos) {
+                if (video) {
+                    if (url === activeVideoUrl) {
+                        // This video will be unmuted in drawMedia if it's playing
+                        continue;
+                    } else {
+                        // Mute videos that are not currently active
+                        if (!video.muted) {
+                            video.muted = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    muteAllVideoAudio() {
+        // Mute all video audio (used when no clip is active)
+        if (this.loadedVideos && this.loadedVideos.size > 0) {
+            for (const [url, video] of this.loadedVideos) {
+                if (video && !video.muted) {
+                    video.muted = true;
+                }
+            }
+        }
+    }
+
     renderCurrentMedia(ctx, width, height) {
         let currentMedia = null;
         let clipStartTime = 0;
         let clipDuration = 0;
+        let currentVideoUrl = null;
         
         // Find current video/image clip
         if (this.currentData.clips) {
@@ -923,9 +1346,26 @@ class VideoEditor {
                     currentMedia = clip;
                     clipStartTime = start;
                     clipDuration = duration;
+                    currentVideoUrl = clip.imageurl || clip.videourl || clip.videoUrl;
+                    
+                    // Debug logging for begin parameter usage
+                    if (clip.begin && clip.begin > 0) {
+                        console.log(`🎯 Found clip with begin parameter: begin=${clip.begin}s, start=${start}s, duration=${duration}s, currentTime=${this.currentTime.toFixed(2)}s`);
+                    }
                     break;
                 }
             }
+        }
+        
+        // Manage video audio states when active video changes
+        if (this.currentActiveVideoUrl !== currentVideoUrl) {
+            this.updateVideoAudioStates(currentVideoUrl);
+            this.currentActiveVideoUrl = currentVideoUrl;
+        }
+        
+        // If no video is currently active, make sure all are muted
+        if (!currentVideoUrl) {
+            this.muteAllVideoAudio();
         }
         
         // Fallback to single media
@@ -934,7 +1374,7 @@ class VideoEditor {
                 currentMedia = { videoUrl: this.currentData.imageUrl };
                 clipDuration = this.currentData.duration || 10;
             } else if (this.currentData.videoUrl) {
-                currentMedia = { videoUrl: this.currentData.videoUrl, start: this.currentData.start || 0 };
+                currentMedia = { videoUrl: this.currentData.videoUrl, start: this.currentData.start || 0, begin: this.currentData.begin || 0 };
                 clipDuration = this.currentData.duration || 10;
             }
         }
@@ -954,7 +1394,7 @@ class VideoEditor {
                     fadeOpacity = this.calculateFadeOpacity(timeInClip, clipDuration);
                 }
                 
-                this.drawMedia(ctx, mediaUrl, width, height, currentMedia.start || clipStartTime, fadeOpacity);
+                this.drawMedia(ctx, mediaUrl, width, height, currentMedia.start || clipStartTime, fadeOpacity, currentMedia);
             } else {
                 // No media URL found, draw empty clip placeholder
                 this.drawEmptyClipPlaceholder(ctx, width, height);
@@ -1041,7 +1481,7 @@ class VideoEditor {
         return 1.0;
     }
 
-    drawMedia(ctx, url, canvasWidth, canvasHeight, clipStart, opacity = 1.0) {
+    drawMedia(ctx, url, canvasWidth, canvasHeight, clipStart, opacity = 1.0, currentClip = null) {
         // Save context and apply fade opacity
         ctx.save();
         ctx.globalAlpha = opacity;
@@ -1058,11 +1498,46 @@ class VideoEditor {
             const video = this.loadedVideos.get(url);
             if (video) {
                 try {
-                    // Sync video time with clip time
-                    const videoTime = (this.currentTime - clipStart) + (clipStart || 0);
+                    // Sync video time with clip time, accounting for begin parameter
+                    const beginTime = currentClip ? (currentClip.begin || 0) : 0;
+                    const timeInClip = this.currentTime - clipStart;
+                    const videoTime = beginTime + timeInClip;
+                    
+                    // Debug logging for begin parameter
+                    if (beginTime > 0) {
+                        console.log(`🎬 Video preview using begin parameter: begin=${beginTime}s, timeInClip=${timeInClip.toFixed(2)}s, videoTime=${videoTime.toFixed(2)}s`);
+                    }
+                    
                     if (Math.abs(video.currentTime - videoTime) > 0.5) {
                         video.currentTime = videoTime;
                     }
+                    // Apply volume control only if this is the current active video
+                    if (url === this.currentActiveVideoUrl && currentClip) {
+                        // Apply volume control first
+                        if (currentClip.volume !== undefined) {
+                            const clipVolume = Math.max(0, Math.min(2.0, (currentClip.volume || 100) / 100));
+                            if (Math.abs(video.volume - clipVolume) > 0.1) { // Less frequent updates
+                                video.volume = clipVolume;
+                            }
+                        } else {
+                            // Default volume
+                            if (Math.abs(video.volume - 1.0) > 0.1) {
+                                video.volume = 1.0;
+                            }
+                        }
+                        
+                        // Enable audio for this video clip (only when playing)
+                        if (this.isPlaying && video.muted) {
+                            video.muted = false;
+                        }
+                    } else {
+                        // Mute videos that are not currently active
+                        if (!video.muted) {
+                            video.muted = true;
+                        }
+                    }
+                    
+                    // Simple video playback control
                     if (this.isPlaying && video.paused) {
                         video.play().catch(() => {});
                     } else if (!this.isPlaying && !video.paused) {
@@ -1945,6 +2420,9 @@ class VideoEditor {
         if (display) {
             display.textContent = `${this.formatTime(this.currentTime)} / ${this.formatTime(this.totalDuration)}`;
         }
+        
+        // Also update the playbar
+        this.updateFullscreenPlaybar();
     }
 
     formatTime(seconds) {
@@ -2451,6 +2929,13 @@ class VideoEditor {
             } catch (error) {
                 console.warn('Audio control error:', error);
             }
+        }
+        
+        // Control video clip audio playback
+        if (!this.isPlaying) {
+            // Pause all videos and mute audio when playback stops
+            this.pauseAllVideos();
+            this.muteAllVideoAudio();
         }
         
         this.updatePlayPauseButtons();
