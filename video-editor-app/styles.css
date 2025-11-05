@@ -977,9 +977,9 @@ body {
     background: #2d2d2d;
     border-radius: 8px;
     width: 98%;
-    height: 98%;
+    height: 98vh;
     max-width: none;
-    max-height: none;
+    max-height: 98vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1041,6 +1041,8 @@ body {
     position: relative;
     padding: 10px;
     background: #1a1a1a;
+    min-height: 0;
+    overflow: hidden;
 }
 
 #fullscreenCanvas {
@@ -1072,6 +1074,9 @@ body {
     border-top: 1px solid #444;
     flex-shrink: 0;
     backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 5;
+    pointer-events: auto;
 }
 
 .playbar-progress-container {
@@ -1150,11 +1155,19 @@ body {
     justify-content: center;
     width: 36px;
     height: 36px;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
 }
 
 .playbar-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #4a90e2;
+}
+
+.playbar-btn i {
+    pointer-events: none;
+    font-size: inherit;
 }
 
 .playbar-time {
@@ -1248,6 +1261,38 @@ body {
         flex-direction: row;
         justify-content: space-around;
     }
+    
+    /* Video Edit Modal Responsive */
+    .video-edit-modal .modal-content {
+        width: 98%;
+        max-height: 95vh;
+    }
+    
+    .video-edit-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        max-height: calc(95vh - 80px);
+    }
+    
+    .video-edit-preview {
+        border-right: none;
+        border-bottom: 2px solid #444;
+        padding: 15px;
+    }
+    
+    .video-preview-area {
+        min-height: 250px;
+        max-height: 300px;
+    }
+    
+    .video-edit-preview video {
+        max-width: 280px;
+        max-height: 250px;
+    }
+    
+    .video-edit-properties {
+        max-height: calc(95vh - 400px);
+    }
 }
 /* M
 odal Styles */
@@ -1312,7 +1357,8 @@ odal Styles */
 .video-edit-modal .modal-content {
     max-width: 1200px;
     width: 95%;
-    max-height: 90vh;
+    height: 100vh; /* Full screen height */
+    max-height: 100vh;
 }
 
 .video-edit-content {
@@ -1321,7 +1367,8 @@ odal Styles */
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh; /* Full screen height */
+    max-height: 100vh;
 }
 
 .video-edit-header {
@@ -1345,33 +1392,38 @@ odal Styles */
     gap: 0;
     flex: 1;
     min-height: 0;
+    height: calc(100vh - 80px); /* Full height minus header */
 }
 
 /* Left: Video Preview Area */
 .video-edit-preview {
     background: #999999;
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Align to top instead of center */
     justify-content: center;
-    padding: 20px;
+    padding: 20px 10px 10px 10px; /* More padding at top, less at bottom */
     border-right: 2px solid #444;
 }
 
 .video-preview-area {
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Align video to top */
     justify-content: center;
     width: 100%;
     height: 100%;
+    padding-top: 0; /* Remove any top padding */
 }
 
 .video-edit-preview video {
     width: 100%;
-    max-width: 400px;
+    max-width: 350px; /* Keep width fixed */
+    max-height: calc(100vh - 150px); /* Full height minus header and padding */
     aspect-ratio: 9/16; /* 9:16 vertical aspect ratio */
     background: #000;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    object-fit: contain; /* Maintain aspect ratio */
+    margin-top: 0; /* Remove any top margin */
 }
 
 /* Right: Properties Panel */

@@ -82,10 +82,21 @@ class VideoEditor {
         });
         
         document.getElementById('closeFullscreenModal').addEventListener('click', () => this.hideFullscreenModal());
-        document.getElementById('fullscreenPlayPauseBtn').addEventListener('click', () => this.togglePlayPause());
         
-        // Fullscreen playbar controls
-        document.getElementById('fullscreenPlaybarPlayBtn').addEventListener('click', () => this.togglePlayPause());
+        // Fullscreen playbar controls - use event delegation for better reliability
+        document.addEventListener('click', (e) => {
+            // Handle playbar play button clicks (button or its icon)
+            if (e.target.id === 'fullscreenPlaybarPlayBtn' || 
+                e.target.closest('#fullscreenPlaybarPlayBtn') ||
+                (e.target.tagName === 'I' && e.target.parentElement && e.target.parentElement.id === 'fullscreenPlaybarPlayBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePlayPause();
+                console.log('🎮 Playbar play button clicked');
+                return;
+            }
+        });
+        
         document.getElementById('fullscreenVolumeBtn').addEventListener('click', () => this.toggleMute());
         document.getElementById('fullscreenVolumeSlider').addEventListener('input', (e) => this.setVolume(e.target.value));
         
@@ -3004,11 +3015,13 @@ class VideoEditor {
     
     updatePlayPauseButtons() {
         const btn = document.getElementById('playPauseBtn');
-        const fullscreenBtn = document.getElementById('fullscreenPlayPauseBtn');
+        const playbarBtn = document.getElementById('fullscreenPlaybarPlayBtn');
         
         const iconHTML = this.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
         btn.innerHTML = iconHTML;
-        fullscreenBtn.innerHTML = iconHTML;
+        if (playbarBtn) {
+            playbarBtn.innerHTML = iconHTML;
+        }
     }
 
     setupTimelineInteractions() {
