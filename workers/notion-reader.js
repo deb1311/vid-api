@@ -134,11 +134,17 @@ async function getRecordsByStatus(statusFilter) {
   // Extract ID values from filtered records
   const filteredRecords = data.results.map(page => {
     const idProperty = page.properties.ID;
-    const formulaId = idProperty?.formula?.string || 'unknown';
+    // Handle both number and formula types
+    let recordId = 'unknown';
+    if (idProperty?.type === 'number') {
+      recordId = idProperty.number?.toString() || 'unknown';
+    } else if (idProperty?.type === 'formula') {
+      recordId = idProperty.formula?.string || 'unknown';
+    }
     
     return {
       page_id: page.id,
-      formula_id: formulaId,
+      formula_id: recordId,
       username: page.properties.Username?.title?.[0]?.plain_text || '',
       caption: page.properties.Caption?.rich_text?.[0]?.plain_text || '',
       created_time: page.created_time,
@@ -196,11 +202,15 @@ async function getJsonContentById(formulaId) {
 
   const data = await notionResponse.json();
   
-  // Find the record with matching formula ID
+  // Find the record with matching ID (supports both number and formula types)
   const targetRecord = data.results.find(page => {
     const idProperty = page.properties.ID;
-    if (idProperty && idProperty.type === 'formula' && idProperty.formula) {
-      return idProperty.formula.string === formulaId;
+    if (idProperty) {
+      if (idProperty.type === 'number') {
+        return idProperty.number?.toString() === formulaId;
+      } else if (idProperty.type === 'formula' && idProperty.formula) {
+        return idProperty.formula.string === formulaId;
+      }
     }
     return false;
   });
@@ -208,10 +218,15 @@ async function getJsonContentById(formulaId) {
   if (!targetRecord) {
     return new Response(
       JSON.stringify({ 
-        error: `Record with formula ID ${formulaId} not found`,
+        error: `Record with ID ${formulaId} not found`,
         available_ids: data.results.map(page => {
           const idProp = page.properties.ID;
-          return idProp?.formula?.string || 'unknown';
+          if (idProp?.type === 'number') {
+            return idProp.number?.toString() || 'unknown';
+          } else if (idProp?.type === 'formula') {
+            return idProp.formula?.string || 'unknown';
+          }
+          return 'unknown';
         })
       }),
       {
@@ -597,7 +612,7 @@ async function handlePatchRequest(pageId, requestBody) {
  * Handle PATCH request by Formula ID - Find record by formula ID and update it
  */
 async function handlePatchByFormulaId(formulaId, requestBody) {
-  // First, get all records to find the one with matching formula ID
+  // First, get all records to find the one with matching ID
   const notionResponse = await fetch(
     `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
     {
@@ -630,11 +645,15 @@ async function handlePatchByFormulaId(formulaId, requestBody) {
 
   const data = await notionResponse.json();
   
-  // Find the record with matching formula ID
+  // Find the record with matching ID (supports both number and formula types)
   const targetRecord = data.results.find(page => {
     const idProperty = page.properties.ID;
-    if (idProperty && idProperty.type === 'formula' && idProperty.formula) {
-      return idProperty.formula.string === formulaId;
+    if (idProperty) {
+      if (idProperty.type === 'number') {
+        return idProperty.number?.toString() === formulaId;
+      } else if (idProperty.type === 'formula' && idProperty.formula) {
+        return idProperty.formula.string === formulaId;
+      }
     }
     return false;
   });
@@ -642,10 +661,15 @@ async function handlePatchByFormulaId(formulaId, requestBody) {
   if (!targetRecord) {
     return new Response(
       JSON.stringify({ 
-        error: `Record with formula ID ${formulaId} not found`,
+        error: `Record with ID ${formulaId} not found`,
         available_ids: data.results.map(page => {
           const idProp = page.properties.ID;
-          return idProp?.formula?.string || 'unknown';
+          if (idProp?.type === 'number') {
+            return idProp.number?.toString() || 'unknown';
+          } else if (idProp?.type === 'formula') {
+            return idProp.formula?.string || 'unknown';
+          }
+          return 'unknown';
         })
       }),
       {
