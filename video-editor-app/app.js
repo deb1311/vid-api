@@ -450,6 +450,9 @@ class VideoEditor {
                 } else if (videoInitialVolume !== 100) {
                     this.showNotification(`🔊 Video volume set to: ${videoInitialVolume}%`, 'info');
                 }
+                
+                // Initialize clip timeline AFTER video is loaded and modal is rendered
+                // Timeline initialization removed temporarily
             }
         };
         
@@ -670,7 +673,7 @@ class VideoEditor {
             muteUnmuteBtnElement.title = 'Mute video';
         }
         
-        // Show modal
+        // Show modal (timeline will be initialized after video loads)
         modal.classList.add('active');
         console.log(`🎬 Opened video edit modal for clip ${index + 1} (begin: ${beginTime}s)`);
     }
@@ -743,6 +746,8 @@ class VideoEditor {
             video.removeEventListener('timeupdate', this.currentDurationLimitHandler);
             this.currentDurationLimitHandler = null;
         }
+        
+        // Timeline cleanup removed temporarily
         
         // Clear current editing clip reference
         this.currentEditingClip = null;
@@ -1420,10 +1425,10 @@ class VideoEditor {
                     clipDuration = duration;
                     currentVideoUrl = clip.imageurl || clip.videourl || clip.videoUrl;
                     
-                    // Debug logging for begin parameter usage
-                    if (clip.begin && clip.begin > 0) {
-                        console.log(`🎯 Found clip with begin parameter: begin=${clip.begin}s, start=${start}s, duration=${duration}s, currentTime=${this.currentTime.toFixed(2)}s`);
-                    }
+                    // Debug logging for begin parameter usage (disabled to reduce console spam)
+                    // if (clip.begin && clip.begin > 0) {
+                    //     console.log(`🎯 Found clip with begin parameter: begin=${clip.begin}s, start=${start}s, duration=${duration}s, currentTime=${this.currentTime.toFixed(2)}s`);
+                    // }
                     break;
                 }
             }
@@ -1575,10 +1580,10 @@ class VideoEditor {
                     const timeInClip = this.currentTime - clipStart;
                     const videoTime = beginTime + timeInClip;
                     
-                    // Debug logging for begin parameter
-                    if (beginTime > 0) {
-                        console.log(`🎬 Video preview using begin parameter: begin=${beginTime}s, timeInClip=${timeInClip.toFixed(2)}s, videoTime=${videoTime.toFixed(2)}s`);
-                    }
+                    // Debug logging for begin parameter (disabled to reduce console spam)
+                    // if (beginTime > 0) {
+                    //     console.log(`🎬 Video preview using begin parameter: begin=${beginTime}s, timeInClip=${timeInClip.toFixed(2)}s, videoTime=${videoTime.toFixed(2)}s`);
+                    // }
                     
                     if (Math.abs(video.currentTime - videoTime) > 0.5) {
                         video.currentTime = videoTime;
@@ -3381,6 +3386,8 @@ class VideoEditor {
             setTimeout(() => notification.remove(), 300);
         }, duration);
     }
+
+    // Clip timeline functions removed - feature disabled for now
 }
 
 const videoEditor = new VideoEditor();
