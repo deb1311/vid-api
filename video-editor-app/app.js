@@ -2545,6 +2545,9 @@ class VideoEditor {
             }
         }
         
+        // Always show original parameter field (even if empty) with open link button
+        html += this.createOriginalFormGroup('original', 'Original Instagram URL', this.currentData.original || '');
+        
         if (this.currentData.instagramUrl !== undefined) {
             html += this.createFormGroup('instagramUrl', 'Instagram URL (audio extracted by backend)', this.currentData.instagramUrl, 'url');
             if (this.currentData.instagramDescription !== undefined) {
@@ -2586,6 +2589,29 @@ class VideoEditor {
             <div class="form-group">
                 <label for="${id}">${label}</label>
                 ${inputElement}
+            </div>
+        `;
+    }
+
+    createOriginalFormGroup(id, label, value) {
+        const hasValue = value && value.trim() !== '';
+        const buttonDisabled = !hasValue ? 'disabled' : '';
+        
+        return `
+            <div class="form-group">
+                <label for="${id}">${label}</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="url" id="${id}" value="${value || ''}" style="flex: 1;" placeholder="https://www.instagram.com/reel/...">
+                    <button 
+                        id="${id}OpenBtn" 
+                        class="btn-open-link"
+                        onclick="videoEditor.openOriginalUrl()" 
+                        ${buttonDisabled}
+                        title="Open original Instagram URL in new tab">
+                        <i class="fas fa-external-link-alt"></i>
+                        Open
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -2779,6 +2805,11 @@ class VideoEditor {
                 if (this.currentData && field) {
                     this.currentData[field] = value;
                     this.autoSave();
+                    
+                    // Update the open button state if this is the original field
+                    if (field === 'original') {
+                        this.updateOriginalOpenButton();
+                    }
                 }
             });
         });
@@ -2789,6 +2820,35 @@ class VideoEditor {
             this.currentData.overlay = enabled;
             this.autoSave();
             console.log(`🎨 Overlay ${enabled ? 'enabled' : 'disabled'}`);
+        }
+    }
+
+    openOriginalUrl() {
+        const originalInput = document.getElementById('original');
+        const url = originalInput ? originalInput.value.trim() : '';
+        
+        if (url) {
+            // Validate URL format
+            try {
+                new URL(url);
+                window.open(url, '_blank', 'noopener,noreferrer');
+                console.log(`🔗 Opened original URL: ${url}`);
+            } catch (e) {
+                this.showNotification('Invalid URL format', 'error');
+                console.error('Invalid URL:', url);
+            }
+        } else {
+            this.showNotification('No URL to open', 'warning');
+        }
+    }
+
+    updateOriginalOpenButton() {
+        const originalInput = document.getElementById('original');
+        const openBtn = document.getElementById('originalOpenBtn');
+        
+        if (originalInput && openBtn) {
+            const hasValue = originalInput.value.trim() !== '';
+            openBtn.disabled = !hasValue;
         }
     }
 

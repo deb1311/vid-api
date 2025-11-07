@@ -84,7 +84,8 @@ curl -X POST https://video-editor-api-519298355551.us-central1.run.app/create-vi
     "author": "Anonymous",
     "watermark": "@motivational",
     "imageUrl": "https://images.unsplash.com/photo-example.jpg",
-    "instagramUrl": "https://www.instagram.com/reel/ABC123/"
+    "instagramUrl": "https://www.instagram.com/reel/ABC123/",
+    "original": "https://www.instagram.com/reel/ABC123/"
   }'
 ```
 
@@ -263,6 +264,7 @@ curl -X POST http://localhost:3000/create-video-vid-1.2 \
     "author": "Content Creator",
     "watermark": "@creator",
     "audioUrl": "temp/audio.mp3",
+    "original": "https://www.instagram.com/reel/ORIGINAL123/",
     "clips": [
       {
         "videoUrl": "https://example.com/intro.mp4",
@@ -661,9 +663,34 @@ All media URLs now support optional `description` parameters for better document
 |-----------|------|----------|-------------|
 | `audioUrl` | string | Yes* | Direct audio URL or local file path |
 | `instagramUrl` | string | Yes* | Instagram reel URL for audio extraction |
+| `original` | string | No | Original Instagram URL (display only, no processing function) |
 | `audio` | file | Yes* | Audio file upload |
 
 *One audio source required
+
+### 🔗 Original Parameter (NEW)
+The `original` parameter is a new optional field that stores the original Instagram URL for reference purposes:
+
+**Purpose:**
+- **Display Only** - Shows the original Instagram URL in the Video Editor UI
+- **No Processing Function** - Does not affect video rendering or audio extraction
+- **Documentation** - Helps track the source of content for organization
+
+**Usage:**
+- Add to any endpoint alongside existing audio parameters
+- Appears in the Video Editor interface above/below the audio URL field
+- Useful for content creators who want to track original sources
+- Completely optional - existing functionality unchanged
+
+**Example:**
+```json
+{
+  "quote": "Amazing content",
+  "instagramUrl": "https://www.instagram.com/reel/ABC123/",
+  "original": "https://www.instagram.com/reel/ABC123/",
+  "imageUrl": "https://example.com/image.jpg"
+}
+```
 
 ### Other Parameters
 | Parameter | Type | Required | Description |

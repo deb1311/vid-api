@@ -298,6 +298,38 @@ body {
     min-height: 80px;
 }
 
+/* Open Link Button for Original URL */
+.btn-open-link {
+    padding: 8px 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-open-link:hover:not(:disabled) {
+    background: #357abd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.btn-open-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #4a90e2;
+}
+
+.btn-open-link i {
+    font-size: 12px;
+}
+
 /* Overlay Toggle Styles */
 .overlay-toggle {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
