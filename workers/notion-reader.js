@@ -1,6 +1,6 @@
 /**
- * Cloudflare Worker to read and write data to Notion database
- * This worker fetches data from a Notion database and can also add new records
+ * Cloudflare Worker to read and write data to Notion database and Supabase
+ * This worker fetches metadata from Notion and JSON data from Supabase
  */
 
 // Your Notion integration token (store this as an environment variable in production)
@@ -8,6 +8,11 @@ const NOTION_TOKEN = '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';
 
 // Your hardcoded database ID
 const DATABASE_ID = '29451a6d097f8008aa06f33a562cfa0b';
+
+// Supabase configuration
+const SUPABASE_URL = 'https://vllxucytucjyflsenjmz.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsbHh1Y3l0dWNqeWZsc2Vuam16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjEwMjgyNCwiZXhwIjoyMDc3Njc4ODI0fQ.4Ghk-tZX0bI99hxcysnkaARQ86b5koQ8XYYWAADL3bI';
+const SUPABASE_TABLE = 'vid-data';
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
@@ -168,8 +173,10 @@ async function getRecordsByStatus(statusFilter) {
 
 /**
  * Get JSON content from a record by its formula ID
+ * Fetches metadata from Notion and JSON data from Supabase
  */
 async function getJsonContentById(formulaId) {
+  // First, fetch metadata from Notion
   const notionResponse = await fetch(
     `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
     {
@@ -218,7 +225,7 @@ async function getJsonContentById(formulaId) {
   if (!targetRecord) {
     return new Response(
       JSON.stringify({ 
-        error: `Record with ID ${formulaId} not found`,
+        error: `Record with ID ${formulaId} not found in Notion`,
         available_ids: data.results.map(page => {
           const idProp = page.properties.ID;
           if (idProp?.type === 'number') {
@@ -236,19 +243,51 @@ async function getJsonContentById(formulaId) {
     );
   }
 
-  // Extract JSON content
-  const jsonProperty = targetRecord.properties.JSON;
-  let jsonContent = '';
-  let parsedJson = null;
+  // Now fetch JSON data from Supabase
+  const supabaseResponse = await fetch(
+    `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${formulaId}&select=JSON`,
+    {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+      }
+    }
+  );
 
-  if (jsonProperty && jsonProperty.rich_text && jsonProperty.rich_text.length > 0) {
-    jsonContent = jsonProperty.rich_text.map(t => t.plain_text).join('');
+  if (!supabaseResponse.ok) {
+    const errorText = await supabaseResponse.text();
+    return new Response(
+      JSON.stringify({ 
+        error: 'Failed to fetch JSON from Supabase',
+        details: errorText,
+        status: supabaseResponse.status
+      }),
+      {
+        status: supabaseResponse.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  const supabaseData = await supabaseResponse.json();
+  
+  let parsedJson = null;
+  let jsonContent = '';
+
+  if (supabaseData && supabaseData.length > 0 && supabaseData[0].JSON) {
+    jsonContent = supabaseData[0].JSON;
     
-    // Try to parse the JSON content
+    // Try to parse the JSON content if it's a string
     try {
-      parsedJson = JSON.parse(jsonContent);
+      if (typeof jsonContent === 'string') {
+        parsedJson = JSON.parse(jsonContent);
+      } else {
+        parsedJson = jsonContent;
+      }
     } catch (parseError) {
-      // If parsing fails, return as string
+      // If parsing fails, return as is
       parsedJson = jsonContent;
     }
   }
@@ -273,7 +312,7 @@ async function getJsonContentById(formulaId) {
     caption: targetRecord.properties.Caption?.rich_text?.[0]?.plain_text || '',
     status: targetRecord.properties.Status?.status?.name || 'unknown',
     endpoint: endpointValue,
-    json_raw: jsonContent,
+    json_raw: typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent),
     json_parsed: parsedJson,
     created_time: targetRecord.created_time,
     last_edited_time: targetRecord.last_edited_time,
@@ -357,6 +396,7 @@ async function handlePostRequest(requestBody) {
   }
 
   // Build properties object for Notion API
+  // Note: JSON is now stored in Supabase, not Notion
   const properties = {};
   
   // Handle Caption field
@@ -366,23 +406,6 @@ async function handlePostRequest(requestBody) {
         {
           text: {
             content: requestBody.caption
-          }
-        }
-      ]
-    };
-  }
-
-  // Handle JSON field
-  if (requestBody.json) {
-    const jsonString = typeof requestBody.json === 'string' 
-      ? requestBody.json 
-      : JSON.stringify(requestBody.json);
-    
-    properties.JSON = {
-      rich_text: [
-        {
-          text: {
-            content: jsonString
           }
         }
       ]
@@ -418,6 +441,7 @@ async function handlePostRequest(requestBody) {
     };
   }
 
+  // Note: JSON field is stored in Supabase, not Notion
   // Note: Editor is now a formula field and cannot be directly updated
 
   // Create the page in Notion
@@ -497,6 +521,7 @@ async function handlePatchRequest(pageId, requestBody) {
   }
 
   // Build properties object for Notion API (same as POST but for updates)
+  // Note: JSON is now stored in Supabase, not Notion
   const properties = {};
   
   // Handle Caption field
@@ -506,23 +531,6 @@ async function handlePatchRequest(pageId, requestBody) {
         {
           text: {
             content: requestBody.caption
-          }
-        }
-      ]
-    };
-  }
-
-  // Handle JSON field
-  if (requestBody.json !== undefined) {
-    const jsonString = typeof requestBody.json === 'string' 
-      ? requestBody.json 
-      : JSON.stringify(requestBody.json);
-    
-    properties.JSON = {
-      rich_text: [
-        {
-          text: {
-            content: jsonString
           }
         }
       ]
@@ -558,6 +566,7 @@ async function handlePatchRequest(pageId, requestBody) {
     };
   }
 
+  // Note: JSON field is stored in Supabase, not Notion
   // Note: Editor is now a formula field and cannot be directly updated
 
   // Update the page in Notion
@@ -609,78 +618,138 @@ async function handlePatchRequest(pageId, requestBody) {
 }
 
 /**
- * Handle PATCH request by Formula ID - Find record by formula ID and update it
+ * Handle PATCH request by Formula ID - Update JSON in Supabase and optionally update Notion metadata
  */
 async function handlePatchByFormulaId(formulaId, requestBody) {
-  // First, get all records to find the one with matching ID
-  const notionResponse = await fetch(
-    `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
+  // If JSON data is being updated, save it to Supabase
+  if (requestBody.json !== undefined) {
+    const jsonString = typeof requestBody.json === 'string' 
+      ? requestBody.json 
+      : JSON.stringify(requestBody.json);
+    
+    // Update JSON in Supabase
+    const supabaseResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${formulaId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
+          JSON: jsonString
+        })
+      }
+    );
+
+    if (!supabaseResponse.ok) {
+      const errorText = await supabaseResponse.text();
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to update JSON in Supabase',
+          details: errorText,
+          status: supabaseResponse.status
+        }),
+        {
+          status: supabaseResponse.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+  }
+
+  // If other properties need to be updated in Notion (like status), handle that
+  if (requestBody.status !== undefined || requestBody.caption !== undefined || 
+      requestBody.username !== undefined || requestBody.output_url !== undefined) {
+    
+    // First, get the Notion page ID for this formula ID
+    const notionResponse = await fetch(
+      `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          page_size: 100,
+        }),
+      }
+    );
+
+    if (!notionResponse.ok) {
+      const errorText = await notionResponse.text();
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to fetch from Notion API',
+          details: errorText,
+          status: notionResponse.status
+        }),
+        {
+          status: notionResponse.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const data = await notionResponse.json();
+    
+    // Find the record with matching ID
+    const targetRecord = data.results.find(page => {
+      const idProperty = page.properties.ID;
+      if (idProperty) {
+        if (idProperty.type === 'number') {
+          return idProperty.number?.toString() === formulaId;
+        } else if (idProperty.type === 'formula' && idProperty.formula) {
+          return idProperty.formula.string === formulaId;
+        }
+      }
+      return false;
+    });
+
+    if (!targetRecord) {
+      return new Response(
+        JSON.stringify({ 
+          error: `Record with ID ${formulaId} not found in Notion`,
+          available_ids: data.results.map(page => {
+            const idProp = page.properties.ID;
+            if (idProp?.type === 'number') {
+              return idProp.number?.toString() || 'unknown';
+            } else if (idProp?.type === 'formula') {
+              return idProp.formula?.string || 'unknown';
+            }
+            return 'unknown';
+          })
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Update Notion metadata (excluding JSON)
+    const notionUpdateBody = { ...requestBody };
+    delete notionUpdateBody.json; // Don't try to update JSON in Notion
+    
+    return await handlePatchRequest(targetRecord.id, notionUpdateBody);
+  }
+
+  // If only JSON was updated, return success
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: 'JSON data updated successfully in Supabase',
+      formula_id: formulaId
+    }, null, 2),
     {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        page_size: 100,
-      }),
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     }
   );
-
-  if (!notionResponse.ok) {
-    const errorText = await notionResponse.text();
-    return new Response(
-      JSON.stringify({ 
-        error: 'Failed to fetch from Notion API',
-        details: errorText,
-        status: notionResponse.status
-      }),
-      {
-        status: notionResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  }
-
-  const data = await notionResponse.json();
-  
-  // Find the record with matching ID (supports both number and formula types)
-  const targetRecord = data.results.find(page => {
-    const idProperty = page.properties.ID;
-    if (idProperty) {
-      if (idProperty.type === 'number') {
-        return idProperty.number?.toString() === formulaId;
-      } else if (idProperty.type === 'formula' && idProperty.formula) {
-        return idProperty.formula.string === formulaId;
-      }
-    }
-    return false;
-  });
-
-  if (!targetRecord) {
-    return new Response(
-      JSON.stringify({ 
-        error: `Record with ID ${formulaId} not found`,
-        available_ids: data.results.map(page => {
-          const idProp = page.properties.ID;
-          if (idProp?.type === 'number') {
-            return idProp.number?.toString() || 'unknown';
-          } else if (idProp?.type === 'formula') {
-            return idProp.formula?.string || 'unknown';
-          }
-          return 'unknown';
-        })
-      }),
-      {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  }
-
-  // Now update the found record using its page ID
-  return await handlePatchRequest(targetRecord.id, requestBody);
 }
 
 /**

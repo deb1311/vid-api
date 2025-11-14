@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Clip Timeline Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        .test-button:hover {
+            background: #357abd;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+        .feature-list {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .feature-list h4 {
+            margin-top: 0;
+            color: #555;
+        }
+        .feature-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin: 6px 0;
+        }
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Clip Timeline Implementation Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions</h3>
+        <ol>
+            <li>Click "Open Video Editor" below to launch the main editor</li>
+            <li>Load a test JSON file with video clips (e.g., test_vid13_mixed_final.json)</li>
+            <li>Click on a video clip in the timeline to open the edit modal</li>
+            <li>Look for the visual timeline above the clip properties</li>
+            <li>Test the three drag modes:
+                <ul>
+                    <li><strong>Left Handle (White):</strong> Drag to adjust begin time</li>
+                    <li><strong>Right Handle (White):</strong> Drag to adjust duration</li>
+                    <li><strong>Blue Block (Middle):</strong> Drag to slide the entire selection</li>
+                </ul>
+            </li>
+            <li>Verify that:
+                <ul>
+                    <li>The video player seeks to the new begin position as you drag</li>
+                    <li>The form inputs (Begin, Duration) update automatically</li>
+                    <li>The time label shows the current selection range</li>
+                    <li>You cannot drag beyond video boundaries</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🚀 Launch Video Editor</h3>
+        <p>Click the button below to open the video editor in a new window:</p>
+        <button class="test-button" onclick="openEditor()">Open Video Editor</button>
+    </div>
+
+    <div class="test-section">
+        <h3>✅ Expected Features</h3>
+        <div class="feature-list">
+            <h4>Visual Timeline Components:</h4>
+            <ul>
+                <li>Time ruler showing markers (0s, 5s, 10s, etc.)</li>
+                <li>Dark track representing the full source video</li>
+                <li>Blue draggable block showing selected portion</li>
+                <li>White handles on left and right edges</li>
+                <li>Time label showing current selection (e.g., "10.0s - 18.0s")</li>
+            </ul>
+            
+            <h4>Drag Functionality:</h4>
+            <ul>
+                <li><strong>Left Handle:</strong> Adjusts begin parameter, maintains end point</li>
+                <li><strong>Right Handle:</strong> Adjusts duration parameter, maintains begin point</li>
+                <li><strong>Middle Block:</strong> Slides entire selection, maintains duration</li>
+            </ul>
+            
+            <h4>Real-Time Features:</h4>
+            <ul>
+                <li>Video preview seeks to new begin position during drag</li>
+                <li>Form inputs update automatically</li>
+                <li>Time label updates in real-time</li>
+                <li>Smooth visual feedback with hover effects</li>
+            </ul>
+            
+            <h4>Constraints:</h4>
+            <ul>
+                <li>Cannot drag before 0s (video start)</li>
+                <li>Cannot drag beyond video duration (video end)</li>
+                <li>Minimum duration of 0.1 seconds enforced</li>
+                <li>Selection stays within valid bounds</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 Test Scenarios</h3>
+        <div class="feature-list">
+            <h4>Recommended Test Cases:</h4>
+            <ul>
+                <li><strong>Short Video (5-10s):</strong> Test with a short clip to verify precision</li>
+                <li><strong>Long Video (60s+):</strong> Test with a long clip to verify ruler scaling</li>
+                <li><strong>Edge Cases:</strong> Try dragging to the very start (0s) and end of video</li>
+                <li><strong>Rapid Dragging:</strong> Drag handles quickly to test performance</li>
+                <li><strong>Small Durations:</strong> Try creating very short selections (< 1s)</li>
+                <li><strong>Full Video:</strong> Try selecting the entire video duration</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Implementation Details</h3>
+        <p><strong>Files Modified:</strong></p>
+        <ul>
+            <li><code>video-editor-app/index.html</code> - Added timeline HTML structure</li>
+            <li><code>video-editor-app/app.js</code> - Added timeline JavaScript functions</li>
+            <li><code>video-editor-app/styles.css</code> - Added timeline CSS styling</li>
+        </ul>
+        
+        <p><strong>Key Functions Added:</strong></p>
+        <ul>
+            <li><code>initializeClipTimeline()</code> - Initializes timeline when modal opens</li>
+            <li><code>generateTimelineRuler()</code> - Creates time markers</li>
+            <li><code>updateTimelinePosition()</code> - Updates visual position</li>
+            <li><code>setupTimelineDragHandlers()</code> - Sets up drag functionality</li>
+            <li><code>cleanupTimelineListeners()</code> - Cleans up on modal close</li>
+        </ul>
+    </div>
+
+    <script>
+        function openEditor() {
+            window.open('index.html', '_blank', 'width=1400,height=900');
+        }
+    </script>
+</body>
+</html>

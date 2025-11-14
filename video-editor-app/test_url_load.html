@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test URL Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .link-box {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4a90e2;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 URL Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>How URL Loading Works</h2>
+        <div class="info">
+            <p><strong>Feature:</strong> Load a video configuration directly from a URL parameter</p>
+            <p><strong>Format:</strong> <code>index.html?id=NOTION_ID</code></p>
+            <p><strong>Behavior:</strong></p>
+            <ul>
+                <li>Automatically loads the record on page load</li>
+                <li>No notification shown (silent load)</li>
+                <li>Fetches metadata from Notion + JSON from Supabase</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Links</h2>
+        <p>Click any link below to test URL loading with different records:</p>
+        
+        <h3>Record ID 6 (@e2)</h3>
+        <div class="link-box">
+            <a href="index.html?id=6" target="_blank">http://localhost:8080/index.html?id=6</a>
+        </div>
+        
+        <h3>Record ID 7</h3>
+        <div class="link-box">
+            <a href="index.html?id=7" target="_blank">http://localhost:8080/index.html?id=7</a>
+        </div>
+        
+        <h3>Record ID 1</h3>
+        <div class="link-box">
+            <a href="index.html?id=1" target="_blank">http://localhost:8080/index.html?id=1</a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Test</h2>
+        <p>Enter a Notion ID to generate a test URL:</p>
+        <input type="text" id="notionId" placeholder="Enter Notion ID (e.g., 6)" style="padding: 8px; width: 200px; margin-right: 10px;">
+        <button onclick="generateUrl()">Generate URL</button>
+        <div id="generatedUrl" style="display:none; margin-top: 15px;">
+            <div class="link-box">
+                <a id="testLink" href="#" target="_blank"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Verification Steps</h2>
+        <ol>
+            <li>Click one of the test links above</li>
+            <li>A new tab will open with the video editor</li>
+            <li>The record should load automatically (no notification)</li>
+            <li>Check the browser console for: <code>🔗 Loading from URL parameter: [ID]</code></li>
+            <li>Verify the video title and timeline are populated</li>
+            <li>Check console for: <code>📊 Loaded Notion record</code> with <code>loadedFrom: 'URL'</code></li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Current URL Parameter Function</h2>
+        <p>Test the URL parameter detection directly:</p>
+        <button onclick="testUrlFunction()">Test URL Function</button>
+        <div id="testResult" style="display:none; margin-top: 15px;">
+            <div class="link-box" id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function generateUrl() {
+            const notionId = document.getElementById('notionId').value.trim();
+            if (!notionId) {
+                alert('Please enter a Notion ID');
+                return;
+            }
+            
+            const url = `index.html?id=${notionId}`;
+            const fullUrl = `http://localhost:8080/${url}`;
+            
+            const linkElement = document.getElementById('testLink');
+            linkElement.href = url;
+            linkElement.textContent = fullUrl;
+            
+            document.getElementById('generatedUrl').style.display = 'block';
+        }
+
+        async function testUrlFunction() {
+            const resultDiv = document.getElementById('testResult');
+            const resultContent = document.getElementById('resultContent');
+            resultDiv.style.display = 'block';
+            
+            // Simulate URL parameter check
+            const urlParams = new URLSearchParams(window.location.search);
+            const notionId = urlParams.get('id');
+            
+            if (notionId) {
+                resultContent.innerHTML = `
+                    <strong>✅ URL Parameter Detected!</strong><br>
+                    Notion ID: ${notionId}<br><br>
+                    Testing worker endpoint...
+                `;
+                
+                try {
+                    const workerUrl = 'https://notion-reader.debabratamaitra898.workers.dev';
+                    const response = await fetch(\`\${workerUrl}/?json_id=\${notionId}\`);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        resultContent.innerHTML += `<br><strong style="color: red;">❌ Error:</strong> ${data.error}`;
+                    } else {
+                        resultContent.innerHTML += `
+                            <br><strong style="color: green;">✅ Data Retrieved Successfully!</strong><br>
+                            Username: ${data.username}<br>
+                            Status: ${data.status}<br>
+                            Has JSON: ${data.json_parsed ? 'Yes' : 'No'}<br>
+                            Clips: ${data.json_parsed?.clips?.length || 0}<br>
+                            Captions: ${data.json_parsed?.captions?.length || 0}
+                        `;
+                    }
+                } catch (error) {
+                    resultContent.innerHTML += `<br><strong style="color: red;">❌ Error:</strong> ${error.message}`;
+                }
+            } else {
+                resultContent.innerHTML = `
+                    <strong>ℹ️ No URL Parameter</strong><br>
+                    Current URL: ${window.location.href}<br><br>
+                    To test, add <code>?id=6</code> to the URL
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

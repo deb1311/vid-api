@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Confirm Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        button.success {
+            background: #5cb85c;
+        }
+        button.warning {
+            background: #f0ad4e;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4a90e2;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left-color: #5cb85c;
+            background: #f0f9f0;
+        }
+        .error {
+            border-left-color: #d9534f;
+            background: #fff0f0;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status-pending {
+            background: #f0ad4e;
+            color: white;
+        }
+        .status-confirmed {
+            background: #5cb85c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Confirm Button Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>Current Status</h2>
+        <p>Check the current status of record ID 6</p>
+        <button onclick="checkStatus()">Check Status</button>
+        <div id="statusResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Complete Confirm Flow</h2>
+        <p>This simulates what the Confirm button does:</p>
+        <ol>
+            <li>Save JSON to Supabase</li>
+            <li>Update Notion status to "Confirmed"</li>
+        </ol>
+        <button class="success" onclick="testConfirmFlow()">Run Confirm Flow</button>
+        <div id="confirmResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Verify Results</h2>
+        <p>Check that both operations completed successfully</p>
+        <button onclick="verifyResults()">Verify Results</button>
+        <div id="verifyResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Reset Status</h2>
+        <p>Reset status back to "Pending" for next test</p>
+        <button class="warning" onclick="resetStatus()">Reset to Pending</button>
+        <div id="resetResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://notion-reader.debabratamaitra898.workers.dev';
+        const TEST_ID = '6';
+
+        async function checkStatus() {
+            const resultDiv = document.getElementById('statusResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Checking...';
+
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${TEST_ID}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const statusClass = data.status === 'Confirmed' ? 'status-confirmed' : 'status-pending';
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Current Status: <span class="status-badge ${statusClass}">${data.status}</span>\n\n` +
+                    `Record Details:\n` +
+                    `- ID: ${data.formula_id}\n` +
+                    `- Username: ${data.username}\n` +
+                    `- Caption: ${data.caption}\n` +
+                    `- Endpoint: ${data.endpoint}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function testConfirmFlow() {
+            const resultDiv = document.getElementById('confirmResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Running confirm flow...\n\n';
+
+            try {
+                // Step 1: Save JSON to Supabase
+                resultDiv.textContent += 'Step 1: Saving JSON to Supabase...\n';
+                
+                const testData = {
+                    test: 'confirm_flow_test',
+                    timestamp: new Date().toISOString(),
+                    watermark: '@TEST_CONFIRM',
+                    clips: [
+                        { videoUrl: 'test.mp4', start: 0, duration: 5 }
+                    ]
+                };
+
+                const saveResponse = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        json: JSON.stringify(testData)
+                    })
+                });
+
+                const saveResult = await saveResponse.json();
+                
+                if (!saveResult.success) {
+                    throw new Error('Failed to save JSON: ' + (saveResult.error || 'Unknown error'));
+                }
+
+                resultDiv.textContent += '✅ JSON saved to Supabase\n\n';
+
+                // Step 2: Update Notion status
+                resultDiv.textContent += 'Step 2: Updating Notion status to Confirmed...\n';
+                
+                const statusResponse = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'Confirmed'
+                    })
+                });
+
+                const statusResult = await statusResponse.json();
+                
+                if (!statusResult.success) {
+                    throw new Error('Failed to update status: ' + (statusResult.error || 'Unknown error'));
+                }
+
+                resultDiv.textContent += '✅ Status updated to Confirmed\n\n';
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent += '🎉 CONFIRM FLOW COMPLETED SUCCESSFULLY!\n\n' +
+                    'Both operations completed:\n' +
+                    '1. JSON saved to Supabase ✓\n' +
+                    '2. Notion status set to Confirmed ✓';
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += '\n❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function verifyResults() {
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Verifying...\n\n';
+
+            try {
+                // Check Notion status
+                const response = await fetch(`${WORKER_URL}/?json_id=${TEST_ID}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const statusOk = data.status === 'Confirmed';
+                const jsonOk = data.json_parsed && data.json_parsed.test === 'confirm_flow_test';
+
+                resultDiv.textContent += `Notion Status: ${data.status} ${statusOk ? '✓' : '✗'}\n`;
+                resultDiv.textContent += `JSON in Supabase: ${jsonOk ? 'Test data found ✓' : 'Test data not found ✗'}\n\n`;
+
+                if (statusOk && jsonOk) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent += '✅ VERIFICATION PASSED!\n\n' +
+                        'Both operations were successful:\n' +
+                        '- Status is "Confirmed" in Notion\n' +
+                        '- Test JSON is stored in Supabase';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent += '❌ VERIFICATION FAILED!\n\n' +
+                        'One or more operations did not complete correctly.';
+                }
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += '❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function resetStatus() {
+            const resultDiv = document.getElementById('resetResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Resetting...\n\n';
+
+            try {
+                // Reset status to Pending
+                const statusResponse = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'Pending'
+                    })
+                });
+
+                const statusResult = await statusResponse.json();
+                
+                if (!statusResult.success) {
+                    throw new Error('Failed to reset status: ' + (statusResult.error || 'Unknown error'));
+                }
+
+                // Restore original JSON
+                const originalData = {
+                    audioUrl: "https://vllxucytucjyflsenjmz.supabase.co/storage/v1/object/public/assets/326_audio.mp3",
+                    watermark: "@e2",
+                    overlay: true,
+                    clips: [
+                        {videoUrl: "temp/black_screen.jpg", description: "Blank screen for initial textual introduction", start: 0, duration: 3}
+                    ],
+                    captions: [
+                        {text: "And that's why", start: 0, duration: 1.5}
+                    ]
+                };
+
+                const jsonResponse = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        json: JSON.stringify(originalData)
+                    })
+                });
+
+                const jsonResult = await jsonResponse.json();
+                
+                if (!jsonResult.success) {
+                    throw new Error('Failed to restore JSON: ' + (jsonResult.error || 'Unknown error'));
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ RESET COMPLETE!\n\n' +
+                    'Status set back to "Pending"\n' +
+                    'Original JSON data restored';
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += '❌ ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

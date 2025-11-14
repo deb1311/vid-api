@@ -58,7 +58,13 @@ class VideoEditor {
         
         if (notionId) {
             console.log('🔗 Loading from URL parameter:', notionId);
-            await this.loadNotionRecord(notionId, true); // silent = true for URL loads
+            try {
+                await this.loadNotionRecord(notionId, true); // silent = true for URL loads
+                console.log('✅ Successfully loaded from URL parameter');
+            } catch (error) {
+                console.error('❌ Failed to load from URL parameter:', error);
+                this.showNotification(`Failed to load record ${notionId}: ${error.message}`, 'error');
+            }
         }
     }
 
@@ -205,17 +211,28 @@ class VideoEditor {
     async loadNotionRecord(formulaId, silent = false) {
         try {
             const workerUrl = 'https://notion-reader.debabratamaitra898.workers.dev';
+            
+            if (!silent) {
+                this.showNotification('Loading record...', 'info');
+            }
+            
             const response = await fetch(`${workerUrl}/?json_id=${formulaId}`);
             
-            if (!response.ok) throw new Error('Failed to fetch record from Notion');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch record (${response.status}): ${errorText}`);
+            }
             
             const recordData = await response.json();
             
+            // Check for error in response
+            if (recordData.error) {
+                throw new Error(recordData.error);
+            }
+            
+            // Check if JSON data exists
             if (!recordData.json_parsed) {
-                if (!silent) {
-                    this.showNotification('No JSON data found in this record', 'error');
-                }
-                return;
+                throw new Error('No JSON data found in this record');
             }
 
             // Store the Notion record ID for saving later
@@ -228,22 +245,25 @@ class VideoEditor {
             // Only close modal and show notification if not silent (i.e., not from URL)
             if (!silent) {
                 this.hideNotionModal();
-                this.showNotification(`Loaded from Notion: ${recordData.username || formulaId}`, 'success');
+                this.showNotification(`✅ Loaded: ${recordData.username || formulaId}`, 'success');
             }
             
-            console.log('📊 Loaded Notion record:', {
+            console.log('📊 Loaded record from Notion + Supabase:', {
                 id: formulaId,
                 username: recordData.username,
                 status: recordData.status,
                 endpoint: recordData.endpoint,
+                clips: recordData.json_parsed?.clips?.length || 0,
+                captions: recordData.json_parsed?.captions?.length || 0,
                 loadedFrom: silent ? 'URL' : 'Modal'
             });
 
         } catch (error) {
-            console.error('Error loading Notion record:', error);
+            console.error('❌ Error loading record:', error);
             if (!silent) {
                 this.showNotification(`Error loading record: ${error.message}`, 'error');
             }
+            throw error; // Re-throw so checkUrlParameter can handle it
         }
     }
 
@@ -3196,13 +3216,13 @@ class VideoEditor {
 
         try {
             // Show saving notification
-            this.showNotification('Saving to Notion...', 'info');
+            this.showNotification('Saving to database...', 'info');
 
             // Clean up the data structure before saving
             const cleanedData = this.cleanDataForExport(this.currentData);
             const jsonString = JSON.stringify(cleanedData, null, 2);
 
-            // Update the Notion record
+            // Save JSON to Supabase via worker
             const workerUrl = 'https://notion-reader.debabratamaitra898.workers.dev';
             const response = await fetch(`${workerUrl}/?formula_id=${this.currentNotionId}`, {
                 method: 'PATCH',
@@ -3215,14 +3235,14 @@ class VideoEditor {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to save to Notion: ${response.status}`);
+                throw new Error(`Failed to save: ${response.status}`);
             }
 
             const result = await response.json();
             
             if (result.success) {
-                this.showNotification('✅ JSON data saved to Notion!', 'success');
-                console.log('💾 Saved JSON to Notion:', {
+                this.showNotification('✅ JSON data saved successfully!', 'success');
+                console.log('💾 Saved JSON to Supabase:', {
                     id: this.currentNotionId,
                     jsonLength: jsonString.length
                 });
@@ -3231,8 +3251,8 @@ class VideoEditor {
             }
 
         } catch (error) {
-            console.error('Error saving to Notion:', error);
-            this.showNotification(`❌ Error saving to Notion: ${error.message}`, 'error');
+            console.error('Error saving data:', error);
+            this.showNotification(`❌ Error saving: ${error.message}`, 'error');
         }
     }
 
@@ -3328,30 +3348,77 @@ class VideoEditor {
             this.showNotification('No data to confirm!', 'error');
             return;
         }
-        
 
-        
-        // Clean up the data structure before confirming
-        const cleanedData = this.cleanDataForExport(this.currentData);
-        
-        // If this data was loaded from Notion, update the Notion record first
-        if (this.currentNotionId) {
-            try {
-                this.showNotification('Updating Notion record...', 'info');
-                await this.updateNotionRecord(cleanedData);
-                console.log('✅ Notion record updated and status set to Confirmed');
-            } catch (error) {
-                console.error('Failed to update Notion record:', error);
-                this.showNotification(`❌ Failed to update Notion: ${error.message}`, 'error');
-                return; // Don't proceed if Notion update fails
-            }
-        } else {
-            // Local confirmation for non-Notion data
-            console.log('Confirmed data:', cleanedData);
-            this.showNotification('Data confirmed! Ready for backend integration.', 'success');
+        if (!this.currentNotionId) {
+            this.showNotification('No Notion record loaded. Use "Load from Notion" first.', 'error');
+            return;
+        }
+
+        try {
+            // Step 1: Save JSON to Supabase
+            this.showNotification('Saving to database...', 'info');
             
-            // Also log the cleaned JSON structure for easy copying
-            console.log('JSON for backend:', JSON.stringify(cleanedData, null, 2));
+            const cleanedData = this.cleanDataForExport(this.currentData);
+            const jsonString = JSON.stringify(cleanedData, null, 2);
+            const workerUrl = 'https://notion-reader.debabratamaitra898.workers.dev';
+            
+            const saveResponse = await fetch(`${workerUrl}/?formula_id=${this.currentNotionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    json: jsonString
+                })
+            });
+
+            if (!saveResponse.ok) {
+                throw new Error(`Failed to save JSON: ${saveResponse.status}`);
+            }
+
+            const saveResult = await saveResponse.json();
+            
+            if (!saveResult.success) {
+                throw new Error(saveResult.error || 'Failed to save JSON');
+            }
+
+            console.log('✅ JSON saved to Supabase:', {
+                id: this.currentNotionId,
+                jsonLength: jsonString.length
+            });
+
+            // Step 2: Update Notion status to "Confirmed"
+            this.showNotification('Updating status to Confirmed...', 'info');
+            
+            const statusResponse = await fetch(`${workerUrl}/?formula_id=${this.currentNotionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Confirmed'
+                })
+            });
+
+            if (!statusResponse.ok) {
+                throw new Error(`Failed to update status: ${statusResponse.status}`);
+            }
+
+            const statusResult = await statusResponse.json();
+            
+            if (!statusResult.success) {
+                throw new Error(statusResult.error || 'Failed to update status');
+            }
+
+            console.log('✅ Notion status updated to Confirmed:', {
+                id: this.currentNotionId
+            });
+
+            this.showNotification('✅ Data confirmed and status updated!', 'success');
+
+        } catch (error) {
+            console.error('Failed to confirm data:', error);
+            this.showNotification(`❌ Failed to confirm: ${error.message}`, 'error');
         }
     }
 

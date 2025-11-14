@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4a90e2;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left-color: #5cb85c;
+            background: #f0f9f0;
+        }
+        .error {
+            border-left-color: #d9534f;
+            background: #fff0f0;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Supabase Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Load Record from Notion + Supabase</h2>
+        <p>This will fetch metadata from Notion and JSON data from Supabase</p>
+        <button onclick="testLoad()">Load Record ID 6</button>
+        <div id="loadResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Save Modified JSON to Supabase</h2>
+        <p>This will update the JSON data in Supabase (not Notion)</p>
+        <button onclick="testSave()">Save Test Data</button>
+        <div id="saveResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Verify Save</h2>
+        <p>Load the record again to verify the save worked</p>
+        <button onclick="testVerify()">Verify Saved Data</button>
+        <div id="verifyResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Restore Original Data</h2>
+        <p>Restore the original JSON data</p>
+        <button onclick="testRestore()">Restore Original</button>
+        <div id="restoreResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'https://notion-reader.debabratamaitra898.workers.dev';
+        const TEST_ID = '6';
+        
+        let originalData = null;
+
+        async function testLoad() {
+            const resultDiv = document.getElementById('loadResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Loading...';
+
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${TEST_ID}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Store original data for restoration
+                originalData = data.json_parsed;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ SUCCESS!\n\n' + 
+                    `Username: ${data.username}\n` +
+                    `Caption: ${data.caption}\n` +
+                    `Status: ${data.status}\n` +
+                    `Endpoint: ${data.endpoint}\n\n` +
+                    `JSON Data:\n${JSON.stringify(data.json_parsed, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function testSave() {
+            const resultDiv = document.getElementById('saveResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Saving...';
+
+            try {
+                const testData = {
+                    test: 'supabase_integration_test',
+                    timestamp: new Date().toISOString(),
+                    message: 'This is a test save from the video editor'
+                };
+
+                const response = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        json: JSON.stringify(testData)
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Save failed');
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ SUCCESS!\n\n' + 
+                    `Message: ${result.message}\n` +
+                    `Formula ID: ${result.formula_id}\n\n` +
+                    `Saved Data:\n${JSON.stringify(testData, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function testVerify() {
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Verifying...';
+
+            try {
+                const response = await fetch(`${WORKER_URL}/?json_id=${TEST_ID}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const hasTestData = data.json_parsed && data.json_parsed.test === 'supabase_integration_test';
+
+                if (hasTestData) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ VERIFICATION SUCCESS!\n\n' + 
+                        'The test data was successfully saved to Supabase.\n\n' +
+                        `Current Data:\n${JSON.stringify(data.json_parsed, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ VERIFICATION FAILED!\n\n' + 
+                        'The data does not match what was saved.\n\n' +
+                        `Current Data:\n${JSON.stringify(data.json_parsed, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+
+        async function testRestore() {
+            const resultDiv = document.getElementById('restoreResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '⏳ Restoring...';
+
+            if (!originalData) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: No original data found. Please run Test 1 first.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${WORKER_URL}/?formula_id=${TEST_ID}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        json: JSON.stringify(originalData)
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Restore failed');
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ RESTORE SUCCESS!\n\n' + 
+                    'Original data has been restored to Supabase.\n\n' +
+                    `Restored Data:\n${JSON.stringify(originalData, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
