@@ -83,6 +83,7 @@
             justify-content: center;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            cursor: grab;
         }
         
         .clip-timeline-segment:hover {
@@ -309,19 +310,20 @@
     </div>
 
     <div class="test-section">
-        <h2>🎯 Draggable Handles (NEW!)</h2>
+        <h2>🎯 Interactive Dragging</h2>
         <div class="info">
             <strong>Left Handle:</strong> Drag to adjust the Begin time (moves start position)<br>
             <strong>Right Handle:</strong> Drag to adjust the Duration (changes clip length)<br>
+            <strong>Segment Body:</strong> Drag to move the entire clip (keeps duration constant)<br>
             <strong>Visual Feedback:</strong> Handles glow white when active, expand on hover
         </div>
-        <p><strong>Try it:</strong> Hover over the white handles on the left and right edges of the purple segment above, then drag them!</p>
+        <p><strong>Try it:</strong></p>
         <ul>
-            <li>Drag <strong>left handle right</strong> → Increases begin time, decreases duration</li>
-            <li>Drag <strong>left handle left</strong> → Decreases begin time, increases duration</li>
-            <li>Drag <strong>right handle right</strong> → Increases duration</li>
-            <li>Drag <strong>right handle left</strong> → Decreases duration</li>
+            <li><strong>Drag left handle</strong> → Adjusts begin time and duration</li>
+            <li><strong>Drag right handle</strong> → Adjusts duration only</li>
+            <li><strong>Drag segment body</strong> → Moves entire clip along timeline (NEW!)</li>
         </ul>
+        <p><strong>Segment Dragging:</strong> Click and drag anywhere on the purple segment (not the handles) to slide the clip left or right while keeping its duration the same. Perfect for repositioning clips!</p>
     </div>
 
     <script>
@@ -430,6 +432,20 @@
                     if (newDuration > maxDuration) {
                         newDuration = maxDuration;
                     }
+                } else if (dragHandle === 'segment') {
+                    // Dragging segment - move entire clip (adjust begin, keep duration)
+                    newBegin = startBegin + deltaTime;
+                    newDuration = startDuration; // Keep duration constant
+                    
+                    // Ensure begin is not negative
+                    if (newBegin < 0) {
+                        newBegin = 0;
+                    }
+                    
+                    // Ensure end doesn't exceed video duration
+                    if (newBegin + newDuration > videoDuration) {
+                        newBegin = videoDuration - newDuration;
+                    }
                 }
                 
                 // Directly update segment position (smooth, no reflow)
@@ -465,6 +481,15 @@
             
             leftHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'left'));
             rightHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'right'));
+            
+            // Add event listener for segment body (drag to move)
+            segment.addEventListener('mousedown', (e) => {
+                // Only trigger if not clicking on handles
+                if (e.target === segment || e.target === label) {
+                    onMouseDown(e, 'segment');
+                }
+            });
+            
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         }

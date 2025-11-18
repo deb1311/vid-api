@@ -760,8 +760,13 @@ class VideoEditor {
             startDuration = parseFloat(document.getElementById('clipDuration').value) || 5;
             videoDuration = video && video.duration && !isNaN(video.duration) ? video.duration : Math.max(startBegin + startDuration + 5, 30);
             
-            // Add dragging class for visual feedback
+            // Disable transitions for smooth dragging
             segment.style.transition = 'none';
+            
+            // Change cursor based on drag type
+            if (handle === 'segment') {
+                segment.style.cursor = 'grabbing';
+            }
             
             e.preventDefault();
             e.stopPropagation();
@@ -803,6 +808,20 @@ class VideoEditor {
                 if (newDuration > maxDuration) {
                     newDuration = maxDuration;
                 }
+            } else if (dragHandle === 'segment') {
+                // Dragging segment - move entire clip (adjust begin, keep duration)
+                newBegin = startBegin + deltaTime;
+                newDuration = startDuration; // Keep duration constant
+                
+                // Ensure begin is not negative
+                if (newBegin < 0) {
+                    newBegin = 0;
+                }
+                
+                // Ensure end doesn't exceed video duration
+                if (newBegin + newDuration > videoDuration) {
+                    newBegin = videoDuration - newDuration;
+                }
             }
             
             // Directly update segment position (smooth, no reflow)
@@ -823,8 +842,9 @@ class VideoEditor {
             if (isDragging) {
                 isDragging = false;
                 
-                // Re-enable transitions
+                // Re-enable transitions and reset cursor
                 segment.style.transition = '';
+                segment.style.cursor = '';
                 
                 // Update input fields with final values
                 if (this._dragBegin !== undefined && this._dragDuration !== undefined) {
@@ -850,9 +870,18 @@ class VideoEditor {
             }
         };
         
-        // Add event listeners
+        // Add event listeners for handles
         leftHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'left'));
         rightHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'right'));
+        
+        // Add event listener for segment body (drag to move)
+        segment.addEventListener('mousedown', (e) => {
+            // Only trigger if not clicking on handles
+            if (e.target === segment || e.target === label) {
+                onMouseDown(e, 'segment');
+            }
+        });
+        
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
         
