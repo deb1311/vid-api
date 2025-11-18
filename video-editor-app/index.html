@@ -204,6 +204,24 @@
                 <!-- Right: Clip Properties Panel -->
                 <div class="video-edit-properties">
                     <div class="clip-properties-form">
+                        <!-- Clip Timeline Visualization -->
+                        <div class="clip-timeline-view">
+                            <label>Clip Timeline Preview</label>
+                            <div class="clip-timeline-container">
+                                <div class="clip-timeline-track">
+                                    <div class="clip-timeline-total" id="clipTimelineTotal">
+                                        <div class="clip-timeline-segment" id="clipTimelineSegment">
+                                            <span class="clip-timeline-label" id="clipTimelineLabel">0.0s - 5.0s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="clip-timeline-markers">
+                                    <span class="clip-timeline-marker">0s</span>
+                                    <span class="clip-timeline-marker" id="clipTimelineEnd">10s</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="property-field">
                             <label>video url</label>
                             <input type="text" id="clipVideoUrl" readonly>

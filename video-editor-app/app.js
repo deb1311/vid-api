@@ -693,9 +693,43 @@ class VideoEditor {
             muteUnmuteBtnElement.title = 'Mute video';
         }
         
+        // Initialize clip timeline visualization
+        this.updateClipTimeline();
+        
+        // Add timeline update listeners
+        clipBeginInput.addEventListener('input', () => this.updateClipTimeline());
+        clipDurationInput.addEventListener('input', () => this.updateClipTimeline());
+        
         // Show modal (timeline will be initialized after video loads)
         modal.classList.add('active');
         console.log(`🎬 Opened video edit modal for clip ${index + 1} (begin: ${beginTime}s)`);
+    }
+    
+    updateClipTimeline() {
+        const beginTime = parseFloat(document.getElementById('clipBegin').value) || 0;
+        const duration = parseFloat(document.getElementById('clipDuration').value) || 5;
+        const video = document.getElementById('videoEditPlayer');
+        
+        // Get video duration if available, otherwise estimate
+        const videoDuration = video && video.duration && !isNaN(video.duration) ? video.duration : Math.max(beginTime + duration + 5, 30);
+        
+        const endTime = beginTime + duration;
+        
+        // Calculate percentages for positioning
+        const startPercent = (beginTime / videoDuration) * 100;
+        const widthPercent = (duration / videoDuration) * 100;
+        
+        // Update timeline segment
+        const segment = document.getElementById('clipTimelineSegment');
+        const label = document.getElementById('clipTimelineLabel');
+        const endMarker = document.getElementById('clipTimelineEnd');
+        
+        if (segment && label && endMarker) {
+            segment.style.left = `${startPercent}%`;
+            segment.style.width = `${widthPercent}%`;
+            label.textContent = `${beginTime.toFixed(1)}s - ${endTime.toFixed(1)}s`;
+            endMarker.textContent = `${videoDuration.toFixed(0)}s`;
+        }
     }
 
     hideVideoEditModal() {

@@ -1545,6 +1545,84 @@ odal Styles */
     border-color: #4a90e2;
 }
 
+/* Clip Timeline Visualization */
+.clip-timeline-view {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+}
+
+.clip-timeline-view label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.clip-timeline-container {
+    position: relative;
+}
+
+.clip-timeline-track {
+    position: relative;
+    height: 50px;
+    margin-bottom: 8px;
+}
+
+.clip-timeline-total {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.clip-timeline-segment {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.clip-timeline-segment:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    transform: scaleY(1.05);
+}
+
+.clip-timeline-label {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    padding: 0 8px;
+}
+
+.clip-timeline-markers {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-top: 4px;
+}
+
+.clip-timeline-marker {
+    font-size: 11px;
+    color: #666;
+    font-weight: 500;
+}
+
 .property-actions {
     display: flex;
     gap: 12px;

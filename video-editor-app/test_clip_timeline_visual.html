@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clip Timeline Visualization Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        /* Clip Timeline Styles (same as in styles.css) */
+        .clip-timeline-view {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .clip-timeline-view label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .clip-timeline-container {
+            position: relative;
+        }
+        
+        .clip-timeline-track {
+            position: relative;
+            height: 50px;
+            margin-bottom: 8px;
+        }
+        
+        .clip-timeline-total {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        
+        .clip-timeline-segment {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .clip-timeline-segment:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+            transform: scaleY(1.05);
+        }
+        
+        .clip-timeline-label {
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            padding: 0 8px;
+        }
+        
+        .clip-timeline-markers {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+            margin-top: 4px;
+        }
+        
+        .clip-timeline-marker {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .control-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Clip Timeline Visualization</h1>
+    
+    <div class="test-section">
+        <h2>Feature Overview</h2>
+        <div class="info">
+            <strong>What it does:</strong> Shows a visual timeline of the clip's begin parameter and duration within the source video<br>
+            <strong>Location:</strong> Video Edit Modal → Above the video URL field<br>
+            <strong>Updates:</strong> Real-time as you adjust Begin and Duration values
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Interactive Demo</h2>
+        <p>Adjust the values below to see the timeline update in real-time:</p>
+        
+        <div class="clip-timeline-view">
+            <label>Clip Timeline Preview</label>
+            <div class="clip-timeline-container">
+                <div class="clip-timeline-track">
+                    <div class="clip-timeline-total" id="demoTimelineTotal">
+                        <div class="clip-timeline-segment" id="demoTimelineSegment">
+                            <span class="clip-timeline-label" id="demoTimelineLabel">0.0s - 5.0s</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="clip-timeline-markers">
+                    <span class="clip-timeline-marker">0s</span>
+                    <span class="clip-timeline-marker" id="demoTimelineEnd">30s</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Begin (seconds)</label>
+                <input type="number" id="demoBegin" value="0" step="0.5" min="0" max="25">
+            </div>
+            <div class="control-group">
+                <label>Duration (seconds)</label>
+                <input type="number" id="demoDuration" value="5" step="0.5" min="0.5" max="30">
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Video Duration (seconds)</label>
+                <input type="number" id="demoVideoDuration" value="30" step="1" min="10" max="120">
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Example Scenarios</h2>
+        
+        <div class="example">
+            <strong>Scenario 1: Start of video</strong><br>
+            Begin: 0s, Duration: 5s<br>
+            <button onclick="setValues(0, 5, 30)">Apply</button>
+        </div>
+        
+        <div class="example">
+            <strong>Scenario 2: Middle section</strong><br>
+            Begin: 10s, Duration: 8s<br>
+            <button onclick="setValues(10, 8, 30)">Apply</button>
+        </div>
+        
+        <div class="example">
+            <strong>Scenario 3: End section</strong><br>
+            Begin: 20s, Duration: 5s<br>
+            <button onclick="setValues(20, 5, 30)">Apply</button>
+        </div>
+        
+        <div class="example">
+            <strong>Scenario 4: Long clip</strong><br>
+            Begin: 5s, Duration: 15s<br>
+            <button onclick="setValues(5, 15, 30)">Apply</button>
+        </div>
+        
+        <div class="example">
+            <strong>Scenario 5: Short clip</strong><br>
+            Begin: 12s, Duration: 2s<br>
+            <button onclick="setValues(12, 2, 30)">Apply</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>How to Test in Editor</h2>
+        <ol>
+            <li>Open the video editor: <a href="index.html?id=6" target="_blank">index.html?id=6</a></li>
+            <li>Click on any video clip in the timeline</li>
+            <li>The Video Edit Modal will open</li>
+            <li>Look at the top - you'll see the Clip Timeline Preview</li>
+            <li>Adjust the Begin or Duration values</li>
+            <li>Watch the timeline update in real-time</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Visual Indicators</h2>
+        <ul>
+            <li><strong>Gray Background:</strong> Total video duration</li>
+            <li><strong>Purple Gradient:</strong> Selected clip segment (begin to begin+duration)</li>
+            <li><strong>White Label:</strong> Shows exact time range (e.g., "5.0s - 10.0s")</li>
+            <li><strong>Markers:</strong> Show 0s and total video duration</li>
+            <li><strong>Hover Effect:</strong> Segment scales slightly on hover</li>
+        </ul>
+    </div>
+
+    <script>
+        function updateTimeline() {
+            const begin = parseFloat(document.getElementById('demoBegin').value) || 0;
+            const duration = parseFloat(document.getElementById('demoDuration').value) || 5;
+            const videoDuration = parseFloat(document.getElementById('demoVideoDuration').value) || 30;
+            
+            const end = begin + duration;
+            
+            // Calculate percentages
+            const startPercent = (begin / videoDuration) * 100;
+            const widthPercent = (duration / videoDuration) * 100;
+            
+            // Update timeline
+            const segment = document.getElementById('demoTimelineSegment');
+            const label = document.getElementById('demoTimelineLabel');
+            const endMarker = document.getElementById('demoTimelineEnd');
+            
+            segment.style.left = `${startPercent}%`;
+            segment.style.width = `${widthPercent}%`;
+            label.textContent = `${begin.toFixed(1)}s - ${end.toFixed(1)}s`;
+            endMarker.textContent = `${videoDuration.toFixed(0)}s`;
+        }
+        
+        function setValues(begin, duration, videoDuration) {
+            document.getElementById('demoBegin').value = begin;
+            document.getElementById('demoDuration').value = duration;
+            document.getElementById('demoVideoDuration').value = videoDuration;
+            updateTimeline();
+        }
+        
+        // Add event listeners
+        document.getElementById('demoBegin').addEventListener('input', updateTimeline);
+        document.getElementById('demoDuration').addEventListener('input', updateTimeline);
+        document.getElementById('demoVideoDuration').addEventListener('input', updateTimeline);
+        
+        // Initialize
+        updateTimeline();
+    </script>
+</body>
+</html>
