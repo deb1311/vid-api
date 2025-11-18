@@ -97,6 +97,42 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             white-space: nowrap;
             padding: 0 8px;
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        /* Clip Timeline Handles */
+        .clip-timeline-handle {
+            position: absolute;
+            top: 0;
+            width: 8px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: ew-resize;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        
+        .clip-timeline-handle:hover {
+            background: white;
+            width: 12px;
+        }
+        
+        .clip-timeline-handle-left {
+            left: 0;
+            border-radius: 4px 0 0 4px;
+            border-right: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .clip-timeline-handle-right {
+            right: 0;
+            border-radius: 0 4px 4px 0;
+            border-left: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .clip-timeline-handle:active {
+            background: #fff;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
         }
         
         .clip-timeline-markers {
@@ -183,7 +219,9 @@
                 <div class="clip-timeline-track">
                     <div class="clip-timeline-total" id="demoTimelineTotal">
                         <div class="clip-timeline-segment" id="demoTimelineSegment">
+                            <div class="clip-timeline-handle clip-timeline-handle-left" id="demoHandleLeft"></div>
                             <span class="clip-timeline-label" id="demoTimelineLabel">0.0s - 5.0s</span>
+                            <div class="clip-timeline-handle clip-timeline-handle-right" id="demoHandleRight"></div>
                         </div>
                     </div>
                 </div>
@@ -270,6 +308,22 @@
         </ul>
     </div>
 
+    <div class="test-section">
+        <h2>🎯 Draggable Handles (NEW!)</h2>
+        <div class="info">
+            <strong>Left Handle:</strong> Drag to adjust the Begin time (moves start position)<br>
+            <strong>Right Handle:</strong> Drag to adjust the Duration (changes clip length)<br>
+            <strong>Visual Feedback:</strong> Handles glow white when active, expand on hover
+        </div>
+        <p><strong>Try it:</strong> Hover over the white handles on the left and right edges of the purple segment above, then drag them!</p>
+        <ul>
+            <li>Drag <strong>left handle right</strong> → Increases begin time, decreases duration</li>
+            <li>Drag <strong>left handle left</strong> → Decreases begin time, increases duration</li>
+            <li>Drag <strong>right handle right</strong> → Increases duration</li>
+            <li>Drag <strong>right handle left</strong> → Decreases duration</li>
+        </ul>
+    </div>
+
     <script>
         function updateTimeline() {
             const begin = parseFloat(document.getElementById('demoBegin').value) || 0;
@@ -305,8 +359,90 @@
         document.getElementById('demoDuration').addEventListener('input', updateTimeline);
         document.getElementById('demoVideoDuration').addEventListener('input', updateTimeline);
         
+        // Setup draggable handles
+        setupDraggableHandles();
+        
         // Initialize
         updateTimeline();
+        
+        function setupDraggableHandles() {
+            const leftHandle = document.getElementById('demoHandleLeft');
+            const rightHandle = document.getElementById('demoHandleRight');
+            const timelineTotal = document.getElementById('demoTimelineTotal');
+            
+            let isDragging = false;
+            let dragHandle = null;
+            let startX = 0;
+            let startBegin = 0;
+            let startDuration = 0;
+            
+            const onMouseDown = (e, handle) => {
+                isDragging = true;
+                dragHandle = handle;
+                startX = e.clientX;
+                startBegin = parseFloat(document.getElementById('demoBegin').value) || 0;
+                startDuration = parseFloat(document.getElementById('demoDuration').value) || 5;
+                e.preventDefault();
+            };
+            
+            const onMouseMove = (e) => {
+                if (!isDragging || !dragHandle) return;
+                
+                const rect = timelineTotal.getBoundingClientRect();
+                const deltaX = e.clientX - startX;
+                const deltaPercent = (deltaX / rect.width) * 100;
+                
+                const videoDuration = parseFloat(document.getElementById('demoVideoDuration').value) || 30;
+                const deltaTime = (deltaPercent / 100) * videoDuration;
+                
+                const beginInput = document.getElementById('demoBegin');
+                const durationInput = document.getElementById('demoDuration');
+                
+                if (dragHandle === 'left') {
+                    // Dragging left handle - adjust begin time
+                    let newBegin = Math.max(0, startBegin + deltaTime);
+                    let newDuration = startDuration - deltaTime;
+                    
+                    // Ensure minimum duration
+                    if (newDuration < 0.5) {
+                        newDuration = 0.5;
+                        newBegin = startBegin + startDuration - 0.5;
+                    }
+                    
+                    // Ensure begin doesn't exceed video duration
+                    if (newBegin >= videoDuration - 0.5) {
+                        newBegin = videoDuration - 0.5;
+                        newDuration = 0.5;
+                    }
+                    
+                    beginInput.value = newBegin.toFixed(1);
+                    durationInput.value = newDuration.toFixed(1);
+                } else if (dragHandle === 'right') {
+                    // Dragging right handle - adjust duration
+                    let newDuration = Math.max(0.5, startDuration + deltaTime);
+                    
+                    // Ensure end doesn't exceed video duration
+                    const maxDuration = videoDuration - startBegin;
+                    if (newDuration > maxDuration) {
+                        newDuration = maxDuration;
+                    }
+                    
+                    durationInput.value = newDuration.toFixed(1);
+                }
+                
+                updateTimeline();
+            };
+            
+            const onMouseUp = () => {
+                isDragging = false;
+                dragHandle = null;
+            };
+            
+            leftHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'left'));
+            rightHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'right'));
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
     </script>
 </body>
 </html>

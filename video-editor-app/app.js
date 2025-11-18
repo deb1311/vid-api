@@ -700,6 +700,9 @@ class VideoEditor {
         clipBeginInput.addEventListener('input', () => this.updateClipTimeline());
         clipDurationInput.addEventListener('input', () => this.updateClipTimeline());
         
+        // Setup draggable handles for timeline
+        this.setupClipTimelineHandles();
+        
         // Show modal (timeline will be initialized after video loads)
         modal.classList.add('active');
         console.log(`🎬 Opened video edit modal for clip ${index + 1} (begin: ${beginTime}s)`);
@@ -730,6 +733,107 @@ class VideoEditor {
             label.textContent = `${beginTime.toFixed(1)}s - ${endTime.toFixed(1)}s`;
             endMarker.textContent = `${videoDuration.toFixed(0)}s`;
         }
+    }
+    
+    setupClipTimelineHandles() {
+        const leftHandle = document.getElementById('clipTimelineHandleLeft');
+        const rightHandle = document.getElementById('clipTimelineHandleRight');
+        const timelineTotal = document.getElementById('clipTimelineTotal');
+        const video = document.getElementById('videoEditPlayer');
+        
+        if (!leftHandle || !rightHandle || !timelineTotal) return;
+        
+        let isDragging = false;
+        let dragHandle = null;
+        let startX = 0;
+        let startBegin = 0;
+        let startDuration = 0;
+        
+        const onMouseDown = (e, handle) => {
+            isDragging = true;
+            dragHandle = handle;
+            startX = e.clientX;
+            startBegin = parseFloat(document.getElementById('clipBegin').value) || 0;
+            startDuration = parseFloat(document.getElementById('clipDuration').value) || 5;
+            e.preventDefault();
+            e.stopPropagation();
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging || !dragHandle) return;
+            
+            const rect = timelineTotal.getBoundingClientRect();
+            const deltaX = e.clientX - startX;
+            const deltaPercent = (deltaX / rect.width) * 100;
+            
+            // Get video duration
+            const videoDuration = video && video.duration && !isNaN(video.duration) ? video.duration : Math.max(startBegin + startDuration + 5, 30);
+            const deltaTime = (deltaPercent / 100) * videoDuration;
+            
+            const clipBeginInput = document.getElementById('clipBegin');
+            const clipDurationInput = document.getElementById('clipDuration');
+            
+            if (dragHandle === 'left') {
+                // Dragging left handle - adjust begin time
+                let newBegin = Math.max(0, startBegin + deltaTime);
+                let newDuration = startDuration - deltaTime;
+                
+                // Ensure minimum duration of 0.1s
+                if (newDuration < 0.1) {
+                    newDuration = 0.1;
+                    newBegin = startBegin + startDuration - 0.1;
+                }
+                
+                // Ensure begin doesn't exceed video duration
+                if (newBegin >= videoDuration - 0.1) {
+                    newBegin = videoDuration - 0.1;
+                    newDuration = 0.1;
+                }
+                
+                clipBeginInput.value = newBegin.toFixed(1);
+                clipDurationInput.value = newDuration.toFixed(1);
+            } else if (dragHandle === 'right') {
+                // Dragging right handle - adjust duration
+                let newDuration = Math.max(0.1, startDuration + deltaTime);
+                
+                // Ensure end doesn't exceed video duration
+                const maxDuration = videoDuration - startBegin;
+                if (newDuration > maxDuration) {
+                    newDuration = maxDuration;
+                }
+                
+                clipDurationInput.value = newDuration.toFixed(1);
+            }
+            
+            // Update timeline visualization
+            this.updateClipTimeline();
+            
+            // Update video preview to new begin time
+            if (video && video.readyState >= 2) {
+                const currentBegin = parseFloat(clipBeginInput.value) || 0;
+                video.currentTime = currentBegin;
+            }
+        };
+        
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                dragHandle = null;
+                console.log('🎯 Timeline handle drag complete');
+            }
+        };
+        
+        // Add event listeners
+        leftHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'left'));
+        rightHandle.addEventListener('mousedown', (e) => onMouseDown(e, 'right'));
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        // Store cleanup function
+        this.cleanupTimelineHandles = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
     }
 
     hideVideoEditModal() {
@@ -793,6 +897,12 @@ class VideoEditor {
         if (this.currentTimeUpdateHandler) {
             video.removeEventListener('timeupdate', this.currentTimeUpdateHandler);
             this.currentTimeUpdateHandler = null;
+        }
+        
+        // Clean up timeline handle listeners
+        if (this.cleanupTimelineHandles) {
+            this.cleanupTimelineHandles();
+            this.cleanupTimelineHandles = null;
         }
         
         // Clean up duration limit handler

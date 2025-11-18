@@ -1608,6 +1608,42 @@ odal Styles */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
     padding: 0 8px;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Clip Timeline Handles */
+.clip-timeline-handle {
+    position: absolute;
+    top: 0;
+    width: 8px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: ew-resize;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.clip-timeline-handle:hover {
+    background: white;
+    width: 12px;
+}
+
+.clip-timeline-handle-left {
+    left: 0;
+    border-radius: 4px 0 0 4px;
+    border-right: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.clip-timeline-handle-right {
+    right: 0;
+    border-radius: 0 4px 4px 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.clip-timeline-handle:active {
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
 }
 
 .clip-timeline-markers {
