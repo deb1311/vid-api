@@ -903,17 +903,50 @@ class VideoEditor {
         this.isPlaying = false;
         
         this.calculateTotalDuration();
-        await this.preloadMedia();
-        await this.loadAudio();
         
-        // Ensure all videos start paused
-        this.pauseAllVideos();
-        
+        // Show UI immediately - don't wait for media
+        console.log('🚀 Rendering UI (media loading in background)...');
         this.renderProperties();
         this.renderTimeline();
         this.showPreview();
         
+        // Count media files
+        const mediaCount = this.countMediaFiles();
+        if (mediaCount > 0) {
+            console.log(`📦 Loading ${mediaCount} media files in background...`);
+        }
+        
+        // Load media in background (non-blocking)
+        this.preloadMedia().then(() => {
+            console.log('✅ All media loaded');
+            this.pauseAllVideos();
+        }).catch(error => {
+            console.error('❌ Media preloading failed:', error);
+        });
+        
+        this.loadAudio().catch(error => {
+            console.error('❌ Audio loading failed:', error);
+        });
+        
         this.autoSave();
+    }
+    
+    countMediaFiles() {
+        if (!this.currentData) return 0;
+        
+        const mediaUrls = new Set();
+        if (this.currentData.imageUrl) mediaUrls.add(this.currentData.imageUrl);
+        if (this.currentData.videoUrl) mediaUrls.add(this.currentData.videoUrl);
+        
+        if (this.currentData.clips) {
+            this.currentData.clips.forEach(clip => {
+                if (clip.videourl) mediaUrls.add(clip.videourl);
+                if (clip.imageurl) mediaUrls.add(clip.imageurl);
+                if (clip.videoUrl) mediaUrls.add(clip.videoUrl);
+            });
+        }
+        
+        return mediaUrls.size;
     }
 
     calculateTotalDuration() {
@@ -983,27 +1016,26 @@ class VideoEditor {
         }
         
         if (mediaUrls.size > 0) {
-            console.log(`🔄 Loading ${mediaUrls.size} media files...`);
-            let loaded = 0;
-            let failed = 0;
+            console.log(`🔄 Loading ${mediaUrls.size} media files in background...`);
             
-            for (const url of mediaUrls) {
-                try {
-                    if (this.isImageUrl(url)) {
-                        await this.loadImage(url);
-                    } else {
-                        await this.loadVideo(url);
-                    }
-                    loaded++;
-                } catch (error) {
-                    console.warn(`Failed to preload media: ${url}`, error);
-                    failed++;
-                }
-            }
+            // Load all media in parallel (non-blocking)
+            const loadPromises = Array.from(mediaUrls).map(url => {
+                return (this.isImageUrl(url) ? this.loadImage(url) : this.loadVideo(url))
+                    .then(() => ({ url, success: true }))
+                    .catch(error => {
+                        console.warn(`Failed to preload: ${url.substring(0, 50)}...`, error.message);
+                        return { url, success: false, error };
+                    });
+            });
             
-            console.log(`📊 Media loading complete: ${loaded} loaded, ${failed} failed`);
+            // Wait for all to complete (but don't block UI)
+            const results = await Promise.all(loadPromises);
+            const loaded = results.filter(r => r.success).length;
+            const failed = results.filter(r => !r.success).length;
+            
+            console.log(`📊 Media loading complete: ${loaded}/${mediaUrls.size} loaded`);
             if (failed > 0) {
-                this.showNotification(`⚠️ ${failed} media files failed to load`, 'warning');
+                console.warn(`⚠️ ${failed} media files failed to load`);
             }
         }
     }
