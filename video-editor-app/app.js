@@ -738,16 +738,19 @@ class VideoEditor {
     setupClipTimelineHandles() {
         const leftHandle = document.getElementById('clipTimelineHandleLeft');
         const rightHandle = document.getElementById('clipTimelineHandleRight');
+        const segment = document.getElementById('clipTimelineSegment');
+        const label = document.getElementById('clipTimelineLabel');
         const timelineTotal = document.getElementById('clipTimelineTotal');
         const video = document.getElementById('videoEditPlayer');
         
-        if (!leftHandle || !rightHandle || !timelineTotal) return;
+        if (!leftHandle || !rightHandle || !timelineTotal || !segment) return;
         
         let isDragging = false;
         let dragHandle = null;
         let startX = 0;
         let startBegin = 0;
         let startDuration = 0;
+        let videoDuration = 30;
         
         const onMouseDown = (e, handle) => {
             isDragging = true;
@@ -755,6 +758,11 @@ class VideoEditor {
             startX = e.clientX;
             startBegin = parseFloat(document.getElementById('clipBegin').value) || 0;
             startDuration = parseFloat(document.getElementById('clipDuration').value) || 5;
+            videoDuration = video && video.duration && !isNaN(video.duration) ? video.duration : Math.max(startBegin + startDuration + 5, 30);
+            
+            // Add dragging class for visual feedback
+            segment.style.transition = 'none';
+            
             e.preventDefault();
             e.stopPropagation();
         };
@@ -765,18 +773,15 @@ class VideoEditor {
             const rect = timelineTotal.getBoundingClientRect();
             const deltaX = e.clientX - startX;
             const deltaPercent = (deltaX / rect.width) * 100;
-            
-            // Get video duration
-            const videoDuration = video && video.duration && !isNaN(video.duration) ? video.duration : Math.max(startBegin + startDuration + 5, 30);
             const deltaTime = (deltaPercent / 100) * videoDuration;
             
-            const clipBeginInput = document.getElementById('clipBegin');
-            const clipDurationInput = document.getElementById('clipDuration');
+            let newBegin = startBegin;
+            let newDuration = startDuration;
             
             if (dragHandle === 'left') {
                 // Dragging left handle - adjust begin time
-                let newBegin = Math.max(0, startBegin + deltaTime);
-                let newDuration = startDuration - deltaTime;
+                newBegin = Math.max(0, startBegin + deltaTime);
+                newDuration = startDuration - deltaTime;
                 
                 // Ensure minimum duration of 0.1s
                 if (newDuration < 0.1) {
@@ -789,37 +794,59 @@ class VideoEditor {
                     newBegin = videoDuration - 0.1;
                     newDuration = 0.1;
                 }
-                
-                clipBeginInput.value = newBegin.toFixed(1);
-                clipDurationInput.value = newDuration.toFixed(1);
             } else if (dragHandle === 'right') {
                 // Dragging right handle - adjust duration
-                let newDuration = Math.max(0.1, startDuration + deltaTime);
+                newDuration = Math.max(0.1, startDuration + deltaTime);
                 
                 // Ensure end doesn't exceed video duration
                 const maxDuration = videoDuration - startBegin;
                 if (newDuration > maxDuration) {
                     newDuration = maxDuration;
                 }
-                
-                clipDurationInput.value = newDuration.toFixed(1);
             }
             
-            // Update timeline visualization
-            this.updateClipTimeline();
+            // Directly update segment position (smooth, no reflow)
+            const startPercent = (newBegin / videoDuration) * 100;
+            const widthPercent = (newDuration / videoDuration) * 100;
+            const endTime = newBegin + newDuration;
             
-            // Update video preview to new begin time
-            if (video && video.readyState >= 2) {
-                const currentBegin = parseFloat(clipBeginInput.value) || 0;
-                video.currentTime = currentBegin;
-            }
+            segment.style.left = `${startPercent}%`;
+            segment.style.width = `${widthPercent}%`;
+            label.textContent = `${newBegin.toFixed(1)}s - ${endTime.toFixed(1)}s`;
+            
+            // Store current values for drag end
+            this._dragBegin = newBegin;
+            this._dragDuration = newDuration;
         };
         
         const onMouseUp = () => {
             if (isDragging) {
                 isDragging = false;
+                
+                // Re-enable transitions
+                segment.style.transition = '';
+                
+                // Update input fields with final values
+                if (this._dragBegin !== undefined && this._dragDuration !== undefined) {
+                    const clipBeginInput = document.getElementById('clipBegin');
+                    const clipDurationInput = document.getElementById('clipDuration');
+                    
+                    clipBeginInput.value = this._dragBegin.toFixed(1);
+                    clipDurationInput.value = this._dragDuration.toFixed(1);
+                    
+                    // Update video preview to new begin time
+                    if (video && video.readyState >= 2) {
+                        video.currentTime = this._dragBegin;
+                    }
+                    
+                    console.log(`🎯 Timeline drag complete: begin=${this._dragBegin.toFixed(1)}s, duration=${this._dragDuration.toFixed(1)}s`);
+                    
+                    // Clean up
+                    delete this._dragBegin;
+                    delete this._dragDuration;
+                }
+                
                 dragHandle = null;
-                console.log('🎯 Timeline handle drag complete');
             }
         };
         
