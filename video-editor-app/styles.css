@@ -464,6 +464,14 @@ body {
     border-radius: 6px;
     margin-bottom: 8px;
     border-left: 4px solid #4a90e2;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clip-item:hover,
+.caption-item:hover {
+    background: #e8e8e8;
+    transform: translateX(2px);
 }
 
 .caption-item {

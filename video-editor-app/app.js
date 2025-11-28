@@ -2427,6 +2427,42 @@ class VideoEditor {
             }
         }
     }
+    
+    jumpToClip(index, type, event) {
+        // Prevent triggering when clicking on buttons or inputs
+        if (event && (event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT' || 
+            event.target.tagName === 'TEXTAREA' || event.target.closest('button'))) {
+            return;
+        }
+        
+        // Get the clip data
+        let clip;
+        if (type === 'video' && this.currentData.clips && this.currentData.clips[index]) {
+            clip = this.currentData.clips[index];
+        } else if (type === 'text' && this.currentData.captions && this.currentData.captions[index]) {
+            clip = this.currentData.captions[index];
+        }
+        
+        if (!clip) return;
+        
+        // Jump playhead to clip start position
+        this.currentTime = clip.start || 0;
+        this.updatePlayheadPosition();
+        this.updateTimeDisplay();
+        
+        // Highlight the corresponding timeline clip
+        document.querySelectorAll('.timeline-clip').forEach(el => el.classList.remove('selected'));
+        
+        const timelineClips = document.querySelectorAll(`.timeline-clip[data-index="${index}"][data-type="${type}"]`);
+        if (timelineClips.length > 0) {
+            timelineClips[0].classList.add('selected');
+        }
+        
+        // Highlight this clip in properties
+        this.highlightPropertiesClip(index, type);
+        
+        console.log(`🎯 Jumped to ${type} clip ${index + 1} at ${this.currentTime}s`);
+    }
 
     makeDraggable(clipEl, item, index, type) {
         let isDragging = false;
@@ -3002,7 +3038,7 @@ class VideoEditor {
             const clipTypeClass = isImage ? 'image-clip' : 'video-clip';
             
             html += `
-                <div class="clip-item ${clipTypeClass}">
+                <div class="clip-item ${clipTypeClass}" onclick="videoEditor.jumpToClip(${index}, 'video', event)">
                     <div class="clip-item-header">
                         <span><i class="${clipIcon}"></i> ${clipType} Clip ${index + 1}</span>
                         <div class="clip-header-actions">
@@ -3068,7 +3104,7 @@ class VideoEditor {
         
         this.currentData.captions.forEach((caption, index) => {
             html += `
-                <div class="caption-item">
+                <div class="caption-item" onclick="videoEditor.jumpToClip(${index}, 'text', event)">
                     <div class="clip-item-header">
                         <span><i class="fas fa-comment"></i> Caption ${index + 1}</span>
                         <button class="btn-icon delete" onclick="videoEditor.deleteCaption(${index})">
