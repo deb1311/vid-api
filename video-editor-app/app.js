@@ -2381,6 +2381,9 @@ class VideoEditor {
             document.querySelectorAll('.timeline-clip').forEach(el => el.classList.remove('selected'));
             clipEl.classList.add('selected');
             
+            // Highlight corresponding clip in properties panel
+            this.highlightPropertiesClip(index, type);
+            
             // Jump playhead to clip start position
             this.currentTime = item.start || 0;
             this.updatePlayheadPosition();
@@ -2399,6 +2402,30 @@ class VideoEditor {
         
         this.makeDraggable(clipEl, item, index, type);
         this.makeResizable(clipEl, item, index, type);
+    }
+    
+    highlightPropertiesClip(index, type) {
+        // Remove highlight from all property clips
+        document.querySelectorAll('.clip-item, .caption-item').forEach(el => {
+            el.classList.remove('highlighted');
+        });
+        
+        // Add highlight to the corresponding clip in properties panel
+        if (type === 'video') {
+            const clipItems = document.querySelectorAll('.clip-item');
+            if (clipItems[index]) {
+                clipItems[index].classList.add('highlighted');
+                // Scroll into view
+                clipItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } else if (type === 'text') {
+            const captionItems = document.querySelectorAll('.caption-item');
+            if (captionItems[index]) {
+                captionItems[index].classList.add('highlighted');
+                // Scroll into view
+                captionItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
     }
 
     makeDraggable(clipEl, item, index, type) {

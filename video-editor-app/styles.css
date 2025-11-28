@@ -470,6 +470,31 @@ body {
     border-left-color: #ff9800;
 }
 
+/* Highlighted state when selected in timeline */
+.clip-item.highlighted,
+.caption-item.highlighted {
+    background: #fff3cd;
+    border-left-width: 6px;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+}
+
+.clip-item.image-clip.highlighted {
+    background: #f3e5f5;
+    box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.3);
+}
+
+.clip-item.video-clip.highlighted {
+    background: #e3f2fd;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+
+.caption-item.highlighted {
+    background: #fff3e0;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.3);
+}
+
 /* Differentiate between image and video clips */
 .clip-item.image-clip {
     border-left-color: #9c27b0; /* Purple for images */
