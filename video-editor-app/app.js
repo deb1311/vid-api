@@ -1155,9 +1155,15 @@ class VideoEditor {
         // If there's audio, use its duration as the primary constraint
         let audioDuration = null;
         if (this.currentData.audioUrl || this.currentData.instagramUrl) {
-            audioDuration = this.currentData.duration || 15;
+            // Try to get duration from audio element first, then from data, then fallback to 15
+            if (this.audioElement && this.audioElement.duration && !isNaN(this.audioElement.duration)) {
+                audioDuration = this.audioElement.duration;
+                console.log(`🎵 Audio duration from audio element: ${audioDuration.toFixed(2)}s`);
+            } else {
+                audioDuration = this.currentData.duration || 15;
+                console.log(`🎵 Audio duration from data (or fallback): ${audioDuration}s`);
+            }
             maxDuration = audioDuration;
-            console.log(`🎵 Audio duration set as timeline maximum: ${audioDuration}s`);
         } else if (this.currentData.duration) {
             maxDuration = Math.max(maxDuration, this.currentData.duration);
         }
@@ -1274,7 +1280,21 @@ class VideoEditor {
                 if (audioLoadResolved) return;
                 audioLoadResolved = true;
                 this.audioLoaded = true;
-                console.log('✅ Audio loaded successfully - readyState:', this.audioElement.readyState);
+                
+                // Update duration from actual audio file
+                if (this.audioElement && this.audioElement.duration && !isNaN(this.audioElement.duration)) {
+                    this.currentData.duration = this.audioElement.duration;
+                    console.log(`✅ Audio loaded successfully - duration: ${this.audioElement.duration.toFixed(2)}s`);
+                    
+                    // Recalculate total duration with actual audio duration
+                    this.calculateTotalDuration();
+                    
+                    // Re-render timeline with correct audio duration
+                    this.renderTimeline();
+                } else {
+                    console.log('✅ Audio loaded successfully - readyState:', this.audioElement.readyState);
+                }
+                
                 this.showNotification('🎵 Audio loaded and ready to play!', 'success');
             };
             
