@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Comprehensive B2 Video Test</title>
+    <style>
+        body { font-family: monospace; background: #000; color: #0f0; padding: 20px; }
+        video { width: 100%; max-width: 640px; display: block; margin: 20px 0; background: #111; }
+        .test { background: #111; padding: 15px; margin: 10px 0; border-left: 3px solid #0f0; }
+        .error { border-color: #f00; color: #f00; }
+        .success { border-color: #0f0; color: #0f0; }
+        button { background: #0f0; color: #000; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🎥 B2 Worker Comprehensive Test</h1>
+    
+    <div id="results"></div>
+    
+    <h2>Video Player</h2>
+    <video id="player" controls></video>
+    <div id="playerStatus"></div>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="playVideo()">Play Video</button>
+    
+    <script>
+        const WORKER_URL = 'http://127.0.0.1:8787';
+        const TEST_FILE = 'Motion Monarchy 1.mp4';
+        const FILE_URL = `${WORKER_URL}/assets-3234/${encodeURIComponent(TEST_FILE)}`;
+        
+        const results = document.getElementById('results');
+        const player = document.getElementById('player');
+        const playerStatus = document.getElementById('playerStatus');
+        
+        function addResult(title, message, isError = false) {
+            const div = document.createElement('div');
+            div.className = 'test ' + (isError ? 'error' : 'success');
+            div.innerHTML = `<strong>${title}</strong><br>${message}`;
+            results.appendChild(div);
+        }
+        
+        async function test1_BasicFetch() {
+            try {
+                const response = await fetch(FILE_URL);
+                const status = `${response.status} ${response.statusText}`;
+                const contentType = response.headers.get('content-type');
+                const contentLength = response.headers.get('content-length');
+                const cors = response.headers.get('access-control-allow-origin');
+                
+                if (response.ok) {
+                    addResult('✅ Test 1: Basic Fetch', 
+                        `Status: ${status}<br>` +
+                        `Content-Type: ${contentType}<br>` +
+                        `Content-Length: ${contentLength} bytes (${(contentLength/1024/1024).toFixed(2)} MB)<br>` +
+                        `CORS: ${cors}`
+                    );
+                } else {
+                    const text = await response.text();
+                    addResult('❌ Test 1: Basic Fetch FAILED', `Status: ${status}<br>Error: ${text}`, true);
+                }
+            } catch (error) {
+                addResult('❌ Test 1: Basic Fetch ERROR', error.message, true);
+            }
+        }
+        
+        async function test2_RangeRequest() {
+            try {
+                const response = await fetch(FILE_URL, {
+                    headers: { 'Range': 'bytes=0-1023' }
+                });
+                
+                const status = `${response.status} ${response.statusText}`;
+                const contentRange = response.headers.get('content-range');
+                const acceptRanges = response.headers.get('accept-ranges');
+                
+                if (response.status === 206) {
+                    addResult('✅ Test 2: Range Request', 
+                        `Status: ${status} (Partial Content)<br>` +
+                        `Content-Range: ${contentRange}<br>` +
+                        `Accept-Ranges: ${acceptRanges}`
+                    );
+                } else {
+                    addResult('⚠️ Test 2: Range Request', 
+                        `Status: ${status}<br>` +
+                        `Range requests may not be supported<br>` +
+                        `Accept-Ranges: ${acceptRanges}`, 
+                        response.status !== 200
+                    );
+                }
+            } catch (error) {
+                addResult('❌ Test 2: Range Request ERROR', error.message, true);
+            }
+        }
+        
+        async function test3_VideoElement() {
+            return new Promise((resolve) => {
+                const testVideo = document.createElement('video');
+                testVideo.style.display = 'none';
+                document.body.appendChild(testVideo);
+                
+                let loaded = false;
+                
+                testVideo.addEventListener('loadedmetadata', () => {
+                    loaded = true;
+                    addResult('✅ Test 3: Video Element', 
+                        `Video metadata loaded successfully<br>` +
+                        `Duration: ${testVideo.duration.toFixed(2)}s<br>` +
+                        `Video dimensions: ${testVideo.videoWidth}x${testVideo.videoHeight}`
+                    );
+                    document.body.removeChild(testVideo);
+                    resolve();
+                });
+                
+                testVideo.addEventListener('error', (e) => {
+                    if (!loaded) {
+                        const errorCode = testVideo.error ? testVideo.error.code : 'unknown';
+                        const errorMsg = testVideo.error ? testVideo.error.message : 'Unknown error';
+                        addResult('❌ Test 3: Video Element FAILED', 
+                            `Error Code: ${errorCode}<br>` +
+                            `Error Message: ${errorMsg}<br>` +
+                            `This means the browser cannot play the video from the worker`, 
+                            true
+                        );
+                        document.body.removeChild(testVideo);
+                        resolve();
+                    }
+                });
+                
+                testVideo.src = FILE_URL;
+                testVideo.load();
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    if (!loaded) {
+                        addResult('⚠️ Test 3: Video Element TIMEOUT', 
+                            'Video did not load within 10 seconds', 
+                            true
+                        );
+                        document.body.removeChild(testVideo);
+                        resolve();
+                    }
+                }, 10000);
+            });
+        }
+        
+        async function runAllTests() {
+            results.innerHTML = '<div class="test">Running tests...</div>';
+            await test1_BasicFetch();
+            await test2_RangeRequest();
+            await test3_VideoElement();
+            addResult('🏁 Tests Complete', 'All tests finished');
+        }
+        
+        function playVideo() {
+            playerStatus.innerHTML = 'Loading video...';
+            player.src = FILE_URL;
+            
+            player.addEventListener('loadedmetadata', () => {
+                playerStatus.innerHTML = `✅ Video loaded! Duration: ${player.duration.toFixed(2)}s`;
+                playerStatus.style.color = '#0f0';
+            }, { once: true });
+            
+            player.addEventListener('error', () => {
+                playerStatus.innerHTML = `❌ Video error: ${player.error ? player.error.message : 'Unknown'}`;
+                playerStatus.style.color = '#f00';
+            }, { once: true });
+            
+            player.load();
+            player.play().catch(e => {
+                playerStatus.innerHTML += `<br>⚠️ Autoplay blocked: ${e.message}`;
+            });
+        }
+        
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

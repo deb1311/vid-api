@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2 Worker Test - assets-3234</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        video, img {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .file-row {
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .file-row:hover {
+            background: #f8f9fa;
+        }
+        .thumbnail {
+            width: 120px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #000;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .file-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .file-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 B2 Worker Test - assets-3234 Bucket</h1>
+        
+        <div class="info">
+            <strong>Bucket:</strong> assets-3234<br>
+            <strong>Worker URL:</strong> <span id="workerUrl">http://localhost:8787</span>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Configuration</h3>
+            <label>Worker Base URL:</label>
+            <input type="text" id="baseUrl" value="http://localhost:8787" placeholder="http://localhost:8787 or https://your-worker.workers.dev">
+            
+            <label>File Path in assets-3234 bucket:</label>
+            <input type="text" id="filePath" value="test.mp4" placeholder="e.g., videos/sample.mp4 or images/photo.jpg">
+            
+            <button onclick="testFetch()">Test Fetch</button>
+            <button onclick="testVideo()">Test as Video</button>
+            <button onclick="testImage()">Test as Image</button>
+        </div>
+
+        <div class="test-section">
+            <h3>List Files</h3>
+            <button onclick="listFiles()">📋 List All Files in assets-3234</button>
+            <button onclick="listFiles('videos/')">📋 List videos/</button>
+            <button onclick="listFiles('images/')">📋 List images/</button>
+        </div>
+
+        <div class="test-section" id="fileListSection" style="display: none;">
+            <h3>Available Files</h3>
+            <div id="fileList"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Result</h3>
+            <div id="result" class="result">Waiting for test...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Media Preview</h3>
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update worker URL display
+        document.getElementById('baseUrl').addEventListener('input', (e) => {
+            document.getElementById('workerUrl').textContent = e.target.value;
+        });
+
+        async function testFetch() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const filePath = document.getElementById('filePath').value.trim();
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('preview');
+            
+            if (!baseUrl || !filePath) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter both Worker URL and file path';
+                return;
+            }
+
+            // Construct full URL: baseUrl/assets-3234/filePath
+            const fullUrl = `${baseUrl}/assets-3234/${filePath}`;
+            
+            resultDiv.className = 'result';
+            resultDiv.textContent = `Testing: ${fullUrl}\n\nFetching...`;
+            previewDiv.innerHTML = '';
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(fullUrl);
+                const duration = Date.now() - startTime;
+
+                let resultText = `URL: ${fullUrl}\n`;
+                resultText += `Status: ${response.status} ${response.statusText}\n`;
+                resultText += `Duration: ${duration}ms\n\n`;
+                resultText += `Headers:\n`;
+                
+                for (const [key, value] of response.headers.entries()) {
+                    resultText += `  ${key}: ${value}\n`;
+                }
+
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    const contentLength = response.headers.get('content-length');
+                    
+                    resultText += `\nContent-Type: ${contentType}\n`;
+                    resultText += `Content-Length: ${contentLength ? (contentLength / 1024).toFixed(2) + ' KB' : 'unknown'}\n`;
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = resultText + '\n✅ Success! File fetched successfully.';
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = resultText + `\n❌ Error:\n${errorText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Fetch Error:\n${error.message}\n\nMake sure:\n1. Worker is running (wrangler dev)\n2. URL is correct\n3. File exists in assets-3234 bucket`;
+            }
+        }
+
+        async function testVideo() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const filePath = document.getElementById('filePath').value.trim();
+            const previewDiv = document.getElementById('preview');
+            
+            const fullUrl = `${baseUrl}/assets-3234/${filePath}`;
+            
+            previewDiv.innerHTML = `
+                <h4>Video Preview:</h4>
+                <video controls width="640">
+                    <source src="${fullUrl}" type="video/mp4">
+                    Your browser doesn't support video playback.
+                </video>
+                <p>Source: ${fullUrl}</p>
+            `;
+            
+            await testFetch();
+        }
+
+        async function testImage() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const filePath = document.getElementById('filePath').value.trim();
+            const previewDiv = document.getElementById('preview');
+            
+            const fullUrl = `${baseUrl}/assets-3234/${filePath}`;
+            
+            previewDiv.innerHTML = `
+                <h4>Image Preview:</h4>
+                <img src="${fullUrl}" alt="Test image" onload="console.log('Image loaded')" onerror="console.error('Image failed to load')">
+                <p>Source: ${fullUrl}</p>
+            `;
+            
+            await testFetch();
+        }
+
+        function quickTest(path) {
+            document.getElementById('filePath').value = path;
+            testFetch();
+        }
+
+        function playFile(fileName) {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const encodedName = encodeURIComponent(fileName);
+            const fileUrl = `${baseUrl}/assets-3234/${encodedName}`;
+            const previewDiv = document.getElementById('preview');
+            const resultDiv = document.getElementById('result');
+            
+            previewDiv.innerHTML = `
+                <h4>Now Playing: ${fileName}</h4>
+                <video controls autoplay width="100%" style="max-width: 800px;">
+                    <source src="${fileUrl}" type="video/mp4">
+                    Your browser doesn't support video playback.
+                </video>
+                <p style="font-size: 12px; color: #666; word-break: break-all;">URL: ${fileUrl}</p>
+            `;
+            
+            resultDiv.className = 'result success';
+            resultDiv.textContent = `✅ Playing: ${fileName}\nURL: ${fileUrl}`;
+            
+            // Scroll to preview
+            previewDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function copyUrl(fileName) {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const encodedName = encodeURIComponent(fileName);
+            const fileUrl = `${baseUrl}/assets-3234/${encodedName}`;
+            
+            navigator.clipboard.writeText(fileUrl).then(() => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ URL copied to clipboard!\n\n${fileUrl}`;
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        async function listFiles(prefix = '') {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const resultDiv = document.getElementById('result');
+            const fileListSection = document.getElementById('fileListSection');
+            const fileListDiv = document.getElementById('fileList');
+            
+            if (!baseUrl) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter Worker URL';
+                return;
+            }
+
+            const listUrl = `${baseUrl}/assets-3234?list${prefix ? '&prefix=' + prefix : ''}`;
+            
+            resultDiv.className = 'result';
+            resultDiv.textContent = `Listing files from assets-3234...\nURL: ${listUrl}`;
+            fileListSection.style.display = 'none';
+
+            try {
+                const response = await fetch(listUrl);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Found ${data.fileCount} files in bucket: ${data.bucket}`;
+                    
+                    if (data.files.length > 0) {
+                        fileListSection.style.display = 'block';
+                        
+                        let html = '<div style="max-height: 600px; overflow-y: auto;">';
+                        
+                        data.files.forEach((file, index) => {
+                            const encodedName = encodeURIComponent(file.name);
+                            const fileUrl = `${baseUrl}/assets-3234/${encodedName}`;
+                            const isVideo = file.contentType && file.contentType.startsWith('video/');
+                            const isImage = file.contentType && file.contentType.startsWith('image/');
+                            
+                            html += '<div class="file-row">';
+                            
+                            // Thumbnail
+                            if (isVideo) {
+                                html += `<video class="thumbnail" src="${fileUrl}" muted preload="metadata"></video>`;
+                            } else if (isImage) {
+                                html += `<img class="thumbnail" src="${fileUrl}" alt="${file.name}">`;
+                            } else {
+                                html += `<div class="thumbnail" style="display: flex; align-items: center; justify-content: center; color: white;">📄</div>`;
+                            }
+                            
+                            // File info
+                            html += '<div class="file-info">';
+                            html += `<div class="file-name">${file.name}</div>`;
+                            html += `<div class="file-meta">${file.sizeFormatted} • ${file.contentType || 'unknown'}</div>`;
+                            html += '</div>';
+                            
+                            // Actions
+                            html += '<div class="file-actions">';
+                            html += `<button onclick="playFile('${file.name.replace(/'/g, "\\'")}')">▶️ Play</button>`;
+                            html += `<button onclick="copyUrl('${file.name.replace(/'/g, "\\'")}')">📋 Copy URL</button>`;
+                            html += '</div>';
+                            
+                            html += '</div>';
+                        });
+                        
+                        html += '</div>';
+                        fileListDiv.innerHTML = html;
+                    } else {
+                        fileListDiv.innerHTML = '<p>No files found.</p>';
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Error listing files:\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error:\n${error.message}`;
+            }
+        }
+
+        // Auto-detect if running on deployed worker
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            const deployedUrl = `${window.location.protocol}//${window.location.hostname}`;
+            document.getElementById('baseUrl').value = deployedUrl;
+            document.getElementById('workerUrl').textContent = deployedUrl;
+        }
+        
+        // Auto-list files on load
+        window.addEventListener('load', () => {
+            setTimeout(() => listFiles(), 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Playback Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        video {
+            width: 100%;
+            max-width: 800px;
+            background: #000;
+            border-radius: 8px;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #1e5f3a; }
+        .error { background: #5f1e1e; }
+        button {
+            background: #0066cc;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0052a3; }
+    </style>
+</head>
+<body>
+    <h1>🎥 Video Playback Test</h1>
+    
+    <div class="info">
+        <strong>Testing:</strong> Motion Monarchy 1.mp4<br>
+        <strong>Worker URL:</strong> http://127.0.0.1:8787
+    </div>
+
+    <div id="status"></div>
+
+    <video id="testVideo" controls>
+        <source src="http://127.0.0.1:8787/assets-3234/Motion%20Monarchy%201.mp4" type="video/mp4">
+        Your browser doesn't support video playback.
+    </video>
+
+    <div class="info">
+        <button onclick="testVideo()">🔄 Reload Video</button>
+        <button onclick="testFetch()">🧪 Test Fetch</button>
+        <button onclick="testRange()">📊 Test Range Request</button>
+    </div>
+
+    <div id="logs" class="info" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+
+    <script>
+        const video = document.getElementById('testVideo');
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#fff';
+            logsDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Video event listeners
+        video.addEventListener('loadstart', () => log('Video: loadstart'));
+        video.addEventListener('loadedmetadata', () => log('Video: loadedmetadata - Duration: ' + video.duration + 's', 'success'));
+        video.addEventListener('loadeddata', () => log('Video: loadeddata', 'success'));
+        video.addEventListener('canplay', () => log('Video: canplay', 'success'));
+        video.addEventListener('canplaythrough', () => log('Video: canplaythrough', 'success'));
+        video.addEventListener('playing', () => log('Video: playing', 'success'));
+        video.addEventListener('error', (e) => {
+            log('Video ERROR: ' + (video.error ? video.error.message : 'Unknown error'), 'error');
+            statusDiv.innerHTML = '<div class="status error">❌ Video failed to load</div>';
+        });
+        video.addEventListener('stalled', () => log('Video: stalled', 'error'));
+        video.addEventListener('waiting', () => log('Video: waiting'));
+
+        async function testVideo() {
+            log('Reloading video...');
+            video.load();
+        }
+
+        async function testFetch() {
+            const url = 'http://127.0.0.1:8787/assets-3234/Motion%20Monarchy%201.mp4';
+            log('Testing fetch: ' + url);
+            
+            try {
+                const response = await fetch(url);
+                log(`Fetch response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                log(`Content-Type: ${response.headers.get('content-type')}`);
+                log(`Content-Length: ${response.headers.get('content-length')} bytes`);
+                log(`Accept-Ranges: ${response.headers.get('accept-ranges')}`);
+                log(`CORS: ${response.headers.get('access-control-allow-origin')}`);
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = '<div class="status success">✅ Fetch successful</div>';
+                } else {
+                    const text = await response.text();
+                    log('Error response: ' + text, 'error');
+                    statusDiv.innerHTML = '<div class="status error">❌ Fetch failed</div>';
+                }
+            } catch (error) {
+                log('Fetch error: ' + error.message, 'error');
+                statusDiv.innerHTML = '<div class="status error">❌ Fetch error: ' + error.message + '</div>';
+            }
+        }
+
+        async function testRange() {
+            const url = 'http://127.0.0.1:8787/assets-3234/Motion%20Monarchy%201.mp4';
+            log('Testing Range request: bytes=0-1023');
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Range': 'bytes=0-1023'
+                    }
+                });
+                
+                log(`Range response: ${response.status} ${response.statusText}`, response.status === 206 ? 'success' : 'error');
+                log(`Content-Range: ${response.headers.get('content-range')}`);
+                log(`Content-Length: ${response.headers.get('content-length')} bytes`);
+                
+                if (response.status === 206) {
+                    statusDiv.innerHTML = '<div class="status success">✅ Range requests supported</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">⚠️ Range requests not supported (status: ' + response.status + ')</div>';
+                }
+            } catch (error) {
+                log('Range request error: ' + error.message, 'error');
+                statusDiv.innerHTML = '<div class="status error">❌ Range request error</div>';
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            log('Page loaded, testing video playback...');
+            setTimeout(testFetch, 500);
+        });
+    </script>
+</body>
+</html>

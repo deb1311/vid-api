@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2 Video Browser - assets-3234</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+        }
+        .status {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .status.loading { background: #1e3a5f; }
+        .status.success { background: #1e5f3a; }
+        .status.error { background: #5f1e1e; }
+        
+        .controls {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input {
+            background: #3a3a3a;
+            color: #fff;
+            width: 400px;
+            margin-right: 10px;
+        }
+        button {
+            background: #0066cc;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover { background: #0052a3; }
+        
+        .player {
+            background: #000;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .player.active { display: block; }
+        .player video {
+            width: 100%;
+            max-height: 600px;
+            border-radius: 4px;
+        }
+        .player-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .video-card {
+            background: #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .video-thumb {
+            width: 100%;
+            height: 160px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+        .video-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .video-card:hover .play-overlay {
+            opacity: 1;
+        }
+        .video-info {
+            padding: 12px;
+        }
+        .video-name {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .video-meta {
+            font-size: 11px;
+            color: #999;
+        }
+        .copy-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin-top: 8px;
+            background: #3a3a3a;
+        }
+        .copy-btn:hover {
+            background: #4a4a4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 B2 Video Browser</h1>
+        
+        <div id="status" class="status loading">
+            Loading files from assets-3234...
+        </div>
+
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search videos..." oninput="filterVideos()">
+            <button onclick="loadFiles()">🔄 Refresh</button>
+            <span style="margin-left: 15px; color: #999;" id="countDisplay"></span>
+        </div>
+
+        <div id="player" class="player">
+            <video id="videoPlayer" controls autoplay></video>
+            <div class="player-info">
+                <div id="playerTitle" style="font-size: 16px; margin-bottom: 5px;"></div>
+                <div id="playerUrl" style="word-break: break-all;"></div>
+            </div>
+        </div>
+
+        <div id="grid" class="grid"></div>
+    </div>
+
+    <script>
+        const WORKER_URL = 'http://127.0.0.1:8787';
+        const BUCKET = 'assets-3234';
+        let allFiles = [];
+        let filteredFiles = [];
+
+        async function loadFiles() {
+            const status = document.getElementById('status');
+            status.className = 'status loading';
+            status.textContent = 'Loading files from assets-3234...';
+
+            try {
+                const response = await fetch(`${WORKER_URL}/${BUCKET}?list`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    allFiles = data.files;
+                    filteredFiles = allFiles;
+                    status.className = 'status success';
+                    status.textContent = `✅ Loaded ${data.fileCount} files from ${data.bucket}`;
+                    updateCountDisplay();
+                    renderGrid();
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            filteredFiles.forEach((file, index) => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                
+                const encodedName = encodeURIComponent(file.name);
+                const fileUrl = `${WORKER_URL}/${BUCKET}/${encodedName}`;
+
+                card.innerHTML = `
+                    <div class="video-thumb">
+                        <video src="${fileUrl}#t=0.5" preload="metadata" muted></video>
+                        <div class="play-overlay">▶</div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-name" title="${file.name}">${file.name}</div>
+                        <div class="video-meta">${file.sizeFormatted}</div>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyUrl('${file.name.replace(/'/g, "\\'")}')">
+                            📋 Copy URL
+                        </button>
+                    </div>
+                `;
+
+                card.onclick = () => playVideo(file.name, fileUrl);
+                grid.appendChild(card);
+            });
+        }
+
+        function playVideo(fileName, fileUrl) {
+            const player = document.getElementById('player');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const playerTitle = document.getElementById('playerTitle');
+            const playerUrl = document.getElementById('playerUrl');
+
+            player.className = 'player active';
+            videoPlayer.src = fileUrl;
+            playerTitle.textContent = fileName;
+            playerUrl.textContent = `URL: ${fileUrl}`;
+
+            player.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function copyUrl(fileName) {
+            const encodedName = encodeURIComponent(fileName);
+            const fileUrl = `${WORKER_URL}/${BUCKET}/${encodedName}`;
+            
+            navigator.clipboard.writeText(fileUrl).then(() => {
+                const status = document.getElementById('status');
+                status.className = 'status success';
+                status.textContent = `✅ URL copied: ${fileName}`;
+                setTimeout(() => {
+                    status.className = 'status success';
+                    status.textContent = `✅ Loaded ${allFiles.length} files from ${BUCKET}`;
+                }, 2000);
+            });
+        }
+
+        function filterVideos() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            filteredFiles = allFiles.filter(file => 
+                file.name.toLowerCase().includes(search)
+            );
+            updateCountDisplay();
+            renderGrid();
+        }
+
+        function updateCountDisplay() {
+            const display = document.getElementById('countDisplay');
+            if (filteredFiles.length !== allFiles.length) {
+                display.textContent = `Showing ${filteredFiles.length} of ${allFiles.length} videos`;
+            } else {
+                display.textContent = `${allFiles.length} videos`;
+            }
+        }
+
+        // Load files on page load
+        loadFiles();
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+name = "b2-media-fetcher"
+main = "filebase-fetcher.js"
+compatibility_date = "2024-01-01"
+
+# Routes - configure after deployment
+# routes = [
+#   { pattern = "media.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]
+
+# Or use workers.dev subdomain
+workers_dev = true
