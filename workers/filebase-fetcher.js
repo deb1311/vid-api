@@ -21,6 +21,9 @@ async function handleRequest(request) {
     return handleCORS();
   }
 
+  // Support HEAD requests (used by FFmpeg and other tools)
+  const method = request.method === 'HEAD' ? 'GET' : request.method;
+
   try {
     const url = new URL(request.url);
 
@@ -61,7 +64,7 @@ async function handleRequest(request) {
     }
 
     const response = await fetch(downloadUrl, {
-      method: 'GET',
+      method: method,
       headers: fetchHeaders
     });
 
@@ -86,6 +89,15 @@ async function handleRequest(request) {
     // Don't override cache control if B2 already set it
     if (!headers.has('Cache-Control')) {
       headers.set('Cache-Control', 'public, max-age=31536000');
+    }
+
+    // For HEAD requests, return without body
+    if (request.method === 'HEAD') {
+      return new Response(null, {
+        status: response.status,
+        statusText: response.statusText,
+        headers
+      });
     }
 
     return new Response(response.body, {
