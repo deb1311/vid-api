@@ -364,10 +364,10 @@ body {
     font-size: 12px;
 }
 
-/* Overlay Toggle Styles */
+/* Overlay Toggle Styles - Shadcn Design */
 .overlay-toggle {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 2px solid #4a90e2;
+    background: #18181b;
+    border: 1px solid #27272a;
 }
 
 .toggle-label {
@@ -375,8 +375,9 @@ body {
     align-items: center;
     cursor: pointer;
     margin-bottom: 0;
-    color: white;
-    font-weight: 600;
+    color: #fafafa;
+    font-weight: 500;
+    font-size: 13px;
 }
 
 .toggle-label input[type="checkbox"] {
@@ -385,12 +386,13 @@ body {
 
 .toggle-slider {
     position: relative;
-    width: 50px;
+    width: 44px;
     height: 24px;
-    background: rgba(255, 255, 255, 0.3);
+    background: #3f3f46;
     border-radius: 12px;
     margin-right: 12px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    border: 1px solid #52525b;
 }
 
 .toggle-slider::before {
@@ -398,40 +400,41 @@ body {
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 20px;
-    height: 20px;
-    background: white;
+    width: 18px;
+    height: 18px;
+    background: #fafafa;
     border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .toggle-label input[type="checkbox"]:checked + .toggle-slider {
-    background: rgba(255, 255, 255, 0.8);
+    background: #3b82f6;
+    border-color: #3b82f6;
 }
 
 .toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
-    transform: translateX(26px);
-    background: #4a90e2;
+    transform: translateX(20px);
+    background: #ffffff;
 }
 
 .toggle-text {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .overlay-description {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #27272a;
 }
 
 .overlay-description small {
-    color: rgba(255, 255, 255, 0.8);
+    color: #a1a1aa;
     font-size: 12px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 /* Clips and Captions Sections */
@@ -1641,37 +1644,40 @@ odal Styles */
     color: #f44336;
 }
 
-/* Video Edit Modal Specific Styles */
+/* Video Edit Modal Specific Styles - Shadcn Design */
 .video-edit-modal .modal-content {
     max-width: 1200px;
     width: 95%;
-    height: 100vh; /* Full screen height */
+    height: 100vh;
     max-height: 100vh;
 }
 
 .video-edit-content {
-    background: #2d2d2d;
+    background: #09090b;
     border-radius: 8px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Full screen height */
+    height: 100vh;
     max-height: 100vh;
+    border: 1px solid #27272a;
 }
 
 .video-edit-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #444;
-    background: #4a90e2;
+    padding: 16px 20px;
+    border-bottom: 1px solid #27272a;
+    background: #18181b;
     flex-shrink: 0;
 }
 
 .video-edit-header h3 {
-    color: #ffffff;
+    color: #fafafa;
     margin: 0;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .video-edit-container {
@@ -1685,12 +1691,12 @@ odal Styles */
 
 /* Left: Video Preview Area */
 .video-edit-preview {
-    background: #999999;
+    background: #18181b;
     display: flex;
-    align-items: flex-start; /* Align to top instead of center */
+    align-items: flex-start;
     justify-content: center;
-    padding: 20px 10px 10px 10px; /* More padding at top, less at bottom */
-    border-right: 2px solid #444;
+    padding: 20px 10px 10px 10px;
+    border-right: 1px solid #27272a;
 }
 
 .video-preview-area {
@@ -1716,32 +1722,34 @@ odal Styles */
 
 /* Right: Properties Panel */
 .video-edit-properties {
-    background: #f5f5f5;
+    background: #09090b;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .clip-timeline-header {
-    background: #333;
-    color: white;
-    padding: 15px 20px;
-    border-bottom: 2px solid #444;
+    background: #18181b;
+    color: #fafafa;
+    padding: 12px 20px;
+    border-bottom: 1px solid #27272a;
     text-align: center;
 }
 
 .clip-timeline-header h4 {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    text-transform: lowercase;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #e4e4e7;
 }
 
 .clip-properties-form {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    background: #f5f5f5;
+    background: #09090b;
 }
 
 .property-field {
@@ -1750,36 +1758,37 @@ odal Styles */
 
 .property-field label {
     display: block;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #333;
-    font-size: 14px;
-    text-transform: capitalize;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #e4e4e7;
+    font-size: 13px;
 }
 
 .property-field input,
 .property-field textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #27272a;
     border-radius: 6px;
     font-size: 14px;
     font-family: inherit;
     transition: border-color 0.2s, box-shadow 0.2s;
-    background: white;
+    background: #18181b;
+    color: #fafafa;
 }
 
 .property-field input:focus,
 .property-field textarea:focus {
     outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .property-field input[readonly] {
-    background: #f8f9fa;
-    color: #666;
+    background: #27272a;
+    color: #a1a1aa;
     cursor: not-allowed;
+    border-color: #3f3f46;
 }
 
 .property-field textarea {
@@ -1788,34 +1797,21 @@ odal Styles */
     font-family: inherit;
 }
 
-/* Property field styling to match your template */
-.property-field input {
-    background: #e0e0e0;
-    border: 1px solid #ccc;
-    color: #333;
-    font-weight: 500;
-}
-
-.property-field input:not([readonly]):focus {
-    background: white;
-    border-color: #4a90e2;
-}
-
 /* Clip Timeline Visualization */
 .clip-timeline-view {
     margin-bottom: 20px;
     padding: 16px;
-    background: white;
+    background: #18181b;
     border-radius: 8px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid #27272a;
 }
 
 .clip-timeline-view label {
     display: block;
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: 12px;
-    color: #333;
-    font-size: 13px;
+    color: #e4e4e7;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1834,16 +1830,16 @@ odal Styles */
     position: relative;
     width: 100%;
     height: 100%;
-    background: #f0f0f0;
+    background: #27272a;
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid #ddd;
+    border: 1px solid #3f3f46;
 }
 
 .clip-timeline-segment {
     position: absolute;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #3b82f6;
     border-radius: 4px;
     display: flex;
     align-items: center;

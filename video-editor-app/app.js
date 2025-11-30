@@ -43,6 +43,11 @@ class VideoEditor {
         this.audioWaveformData = null;
         this.detectedBeats = [];
         
+        // Undo/Redo history
+        this.history = [];
+        this.historyIndex = -1;
+        this.maxHistorySize = 50;
+        
         this.init();
     }
 
@@ -84,6 +89,7 @@ class VideoEditor {
         document.getElementById('notionStatusFilter').addEventListener('change', () => this.loadNotionRecords());
         
         document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlayPause());
+        document.getElementById('splitClipBtn').addEventListener('click', () => this.splitClipAtPlayhead());
         document.getElementById('fullscreenBtn').addEventListener('click', () => this.showFullscreenModal());
         
         document.getElementById('notionModal').addEventListener('click', (e) => {
@@ -126,6 +132,17 @@ class VideoEditor {
         
         this.setupTimelineInteractions();
         document.getElementById('videoTitle').addEventListener('input', () => this.autoSave());
+        
+        // Keyboard shortcuts for undo/redo
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.undo();
+            } else if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
+                e.preventDefault();
+                this.redo();
+            }
+        });
     }
 
 
@@ -985,6 +1002,10 @@ class VideoEditor {
         this.currentData = data;
         this.currentFileName = fileName;
         
+        // Initialize history with loaded data
+        this.history = [JSON.parse(JSON.stringify(data))];
+        this.historyIndex = 0;
+        
         // Clear Notion ID if this is not a Notion load (to prevent accidental overwrites)
         if (!fileName.startsWith('Notion:')) {
             this.currentNotionId = null;
@@ -1383,6 +1404,7 @@ class VideoEditor {
         document.getElementById('previewPlaceholder').style.display = 'none';
         document.getElementById('previewCanvasContainer').style.display = 'block';
         document.getElementById('playPauseBtn').disabled = false;
+        document.getElementById('splitClipBtn').disabled = false;
         document.getElementById('fullscreenBtn').disabled = false;
     }
 
@@ -3248,6 +3270,8 @@ class VideoEditor {
     }
 
     addClip() {
+        this.saveToHistory();
+        
         if (!this.currentData.clips) this.currentData.clips = [];
         
         // Find next available position that doesn't overlap with existing clips
@@ -3390,6 +3414,7 @@ class VideoEditor {
 
     deleteClip(index) {
         if (this.currentData.clips && confirm('Delete this clip?')) {
+            this.saveToHistory();
             this.currentData.clips.splice(index, 1);
             this.calculateTotalDuration();
             this.renderProperties();
@@ -3399,6 +3424,8 @@ class VideoEditor {
     }
 
     addCaption() {
+        this.saveToHistory();
+        
         if (!this.currentData.captions) this.currentData.captions = [];
         
         // Find next available position that doesn't overlap with existing captions
@@ -3427,6 +3454,7 @@ class VideoEditor {
 
     deleteCaption(index) {
         if (this.currentData.captions && confirm('Delete this caption?')) {
+            this.saveToHistory();
             this.currentData.captions.splice(index, 1);
             this.calculateTotalDuration();
             this.renderProperties();
@@ -3522,7 +3550,10 @@ class VideoEditor {
             
             const deltaX = e.clientX - startX;
             const deltaTime = deltaX / this.timelineZoom;
-            const newTime = Math.max(0, Math.min(startTime + deltaTime, this.totalDuration));
+            let newTime = Math.max(0, Math.min(startTime + deltaTime, this.totalDuration));
+            
+            // Apply magnetic snapping to beats/tones
+            newTime = this.snapToNearestMarker(newTime);
             
             this.currentTime = newTime;
             
@@ -3545,6 +3576,154 @@ class VideoEditor {
         playhead.addEventListener('mousedown', onMouseDown);
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
+    }
+    
+    snapToNearestMarker(time) {
+        // Only snap if we have detected beats/tones
+        if (!this.detectedBeats || this.detectedBeats.length === 0) {
+            return time;
+        }
+        
+        // Snap threshold: 0.2 seconds (200ms)
+        const snapThreshold = 0.2;
+        
+        // Find the nearest marker
+        let nearestMarker = null;
+        let minDistance = snapThreshold;
+        
+        for (const marker of this.detectedBeats) {
+            const distance = Math.abs(marker.time - time);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestMarker = marker;
+            }
+        }
+        
+        // Snap to the nearest marker if found
+        return nearestMarker ? nearestMarker.time : time;
+    }
+    
+    splitClipAtPlayhead() {
+        if (!this.currentData || !this.currentData.clips) {
+            this.showNotification('No clips to split!', 'error');
+            return;
+        }
+        
+        // Save state before splitting
+        this.saveToHistory();
+        
+        const playheadTime = this.currentTime;
+        
+        // Find which clip the playhead is over
+        let clipToSplit = null;
+        let clipIndex = -1;
+        
+        for (let i = 0; i < this.currentData.clips.length; i++) {
+            const clip = this.currentData.clips[i];
+            const clipStart = clip.start || 0;
+            const clipEnd = clipStart + (clip.duration || 5);
+            
+            if (playheadTime > clipStart && playheadTime < clipEnd) {
+                clipToSplit = clip;
+                clipIndex = i;
+                break;
+            }
+        }
+        
+        if (!clipToSplit) {
+            this.showNotification('Playhead is not over any clip!', 'warning');
+            return;
+        }
+        
+        // Calculate split point relative to clip start
+        const clipStart = clipToSplit.start || 0;
+        const splitPoint = playheadTime - clipStart;
+        
+        // Create first part (before split)
+        const firstPart = { ...clipToSplit };
+        firstPart.duration = splitPoint;
+        
+        // Create second part (after split)
+        const secondPart = { ...clipToSplit };
+        secondPart.start = playheadTime;
+        secondPart.duration = (clipToSplit.duration || 5) - splitPoint;
+        
+        // If it's a video clip with begin time, adjust the second part's begin time
+        if (clipToSplit.begin !== undefined) {
+            secondPart.begin = (clipToSplit.begin || 0) + splitPoint;
+        }
+        
+        // Replace the original clip with the two new clips
+        this.currentData.clips.splice(clipIndex, 1, firstPart, secondPart);
+        
+        // Update UI
+        this.calculateTotalDuration();
+        this.renderProperties();
+        this.renderTimeline();
+        this.autoSave();
+        
+        this.showNotification(`✂️ Clip split at ${playheadTime.toFixed(2)}s`, 'success');
+        console.log('🎬 Clip split:', { clipIndex, splitPoint, firstPart, secondPart });
+    }
+
+    saveToHistory() {
+        if (!this.currentData) return;
+        
+        // Create a deep copy of current state
+        const state = JSON.parse(JSON.stringify(this.currentData));
+        
+        // Remove any future history if we're not at the end
+        if (this.historyIndex < this.history.length - 1) {
+            this.history = this.history.slice(0, this.historyIndex + 1);
+        }
+        
+        // Add new state
+        this.history.push(state);
+        
+        // Limit history size
+        if (this.history.length > this.maxHistorySize) {
+            this.history.shift();
+        } else {
+            this.historyIndex++;
+        }
+        
+        console.log(`📝 History saved (${this.historyIndex + 1}/${this.history.length})`);
+    }
+    
+    undo() {
+        if (this.historyIndex <= 0) {
+            this.showNotification('Nothing to undo', 'info');
+            return;
+        }
+        
+        this.historyIndex--;
+        this.restoreFromHistory();
+        this.showNotification(`↩️ Undo (${this.historyIndex + 1}/${this.history.length})`, 'info');
+    }
+    
+    redo() {
+        if (this.historyIndex >= this.history.length - 1) {
+            this.showNotification('Nothing to redo', 'info');
+            return;
+        }
+        
+        this.historyIndex++;
+        this.restoreFromHistory();
+        this.showNotification(`↪️ Redo (${this.historyIndex + 1}/${this.history.length})`, 'info');
+    }
+    
+    restoreFromHistory() {
+        if (this.historyIndex < 0 || this.historyIndex >= this.history.length) return;
+        
+        // Restore state from history
+        this.currentData = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+        
+        // Update UI
+        this.calculateTotalDuration();
+        this.renderProperties();
+        this.renderTimeline();
+        this.preloadMedia();
+        this.autoSave();
     }
 
     autoSave() {
