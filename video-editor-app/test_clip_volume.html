@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Clip Volume</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clip Volume Test</h1>
+    
+    <div class="test-section">
+        <h2>Test JSON with Volume Settings</h2>
+        <p>This test will load a JSON with clips that have different volume levels.</p>
+        <button onclick="loadTestJSON()">Load Test JSON</button>
+        <div id="status" class="status">Ready to test...</div>
+    </div>
+
+    <script>
+        function loadTestJSON() {
+            const testData = {
+                "style": "vid-1.3",
+                "duration": 15,
+                "clips": [
+                    {
+                        "videourl": "https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4",
+                        "start": 0,
+                        "duration": 5,
+                        "begin": 0,
+                        "volume": 100,
+                        "description": "Normal volume (100%)"
+                    },
+                    {
+                        "videourl": "https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4",
+                        "start": 5,
+                        "duration": 5,
+                        "begin": 5,
+                        "volume": 10,
+                        "description": "Very low volume (10%)"
+                    },
+                    {
+                        "videourl": "https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4",
+                        "start": 10,
+                        "duration": 5,
+                        "begin": 10,
+                        "volume": 50,
+                        "description": "Half volume (50%)"
+                    }
+                ]
+            };
+
+            // Store in localStorage
+            localStorage.setItem('videoEditorData', JSON.stringify(testData));
+            
+            document.getElementById('status').innerHTML = `
+                <strong>✅ Test JSON loaded!</strong><br>
+                - Clip 1 (0-5s): Volume 100% (normal/full)<br>
+                - Clip 2 (5-10s): Volume 10% (very quiet - barely audible)<br>
+                - Clip 3 (10-15s): Volume 50% (half volume)<br>
+                <br>
+                <strong>Instructions:</strong><br>
+                1. <a href="index.html" target="_blank">Open Editor</a><br>
+                2. Press Play and listen carefully<br>
+                3. Check browser console for volume logs (🔊)<br>
+                4. The volume should change noticeably between clips<br>
+                <br>
+                <strong>Expected behavior:</strong><br>
+                - First 5 seconds: Full volume<br>
+                - Next 5 seconds: Very quiet (10%)<br>
+                - Last 5 seconds: Half volume (50%)<br>
+                <br>
+                <strong>Note:</strong> HTML5 video.volume is limited to 0-100%. 
+                Volumes > 100% would require Web Audio API (not yet implemented).
+            `;
+        }
+    </script>
+</body>
+</html>

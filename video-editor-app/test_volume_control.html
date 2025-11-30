@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Volume Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-info h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .test-info ul {
+            line-height: 1.8;
+        }
+        .test-info code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>✅ Volume Control Fix Applied</h2>
+        <p><strong>What was fixed:</strong></p>
+        <ul>
+            <li>Volume is now applied to <strong>all video clips</strong> based on their individual <code>volume</code> parameter</li>
+            <li>Volume is set on <strong>every frame</strong>, not just when the video becomes active</li>
+            <li>Volume range supports 0-200% (0% = mute, 100% = normal, 200% = boost)</li>
+            <li>The <code>currentClip</code> object is now properly used to get the volume setting</li>
+        </ul>
+        
+        <p><strong>How to test:</strong></p>
+        <ol>
+            <li>Open <code>index.html</code> in your browser</li>
+            <li>Load a JSON file with multiple video clips</li>
+            <li>Click on a video clip in the timeline to edit it</li>
+            <li>Change the <strong>Volume</strong> parameter (0-200)</li>
+            <li>Click "Apply Changes"</li>
+            <li>Play the video preview - the volume should now match the clip's volume setting</li>
+            <li>Check the browser console for volume change logs: <code>🔊 VOLUME SET: XX%</code></li>
+        </ol>
+        
+        <p><strong>Technical changes:</strong></p>
+        <ul>
+            <li>Moved volume calculation outside the <code>isCurrentlyPlaying</code> condition</li>
+            <li>Volume is now set using: <code>video.volume = targetVolume</code> for all clips</li>
+            <li>Added better debug logging to track volume changes</li>
+            <li>Volume range changed from 0-1.0 to 0-2.0 to support boost up to 200%</li>
+        </ul>
+    </div>
+    
+    <div class="test-info">
+        <h2>🎯 Expected Behavior</h2>
+        <ul>
+            <li>Each clip's volume parameter should independently control that clip's audio level</li>
+            <li>Setting volume to 0% should mute the clip completely</li>
+            <li>Setting volume to 50% should play at half volume</li>
+            <li>Setting volume to 100% should play at normal volume</li>
+            <li>Setting volume to 200% should boost the volume (may cause distortion)</li>
+            <li>Volume changes should take effect immediately in the preview</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volume Control Fix V2 - Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 5px 0;
+            color: #aaa;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4CAF50;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #4CAF50;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h3 {
+            color: #66BB6A;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .changes-list {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .changes-list li {
+            margin: 12px 0;
+            padding-left: 10px;
+        }
+        .changes-list code {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #81C784;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .test-steps {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+        .test-steps li {
+            counter-increment: step-counter;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            position: relative;
+            padding-left: 60px;
+        }
+        .test-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4CAF50;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .highlight {
+            background: rgba(255, 193, 7, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #FFD54F;
+            font-weight: bold;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FF9800;
+            font-weight: bold;
+        }
+        .technical-note {
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .technical-note strong {
+            color: #64B5F6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔊 Volume Control Fix V2</h1>
+            <p>Approach: Volume Property Instead of Mute/Unmute</p>
+            <p class="success">✅ Implementation Complete</p>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Problem Identified</h2>
+            <p>The previous approach used <code>video.muted = true/false</code> to control audio, but this was unreliable because:</p>
+            <ul class="changes-list">
+                <li>Muted videos ignore the <code>volume</code> property completely</li>
+                <li>Browser autoplay policies can interfere with unmuting</li>
+                <li>The timing of mute/unmute vs volume setting was inconsistent</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔧 New Approach</h2>
+            <h3>Key Changes:</h3>
+            <ul class="changes-list">
+                <li><span class="highlight">Active videos</span>: Set <code>video.muted = false</code> FIRST, then set <code>video.volume = targetVolume</code></li>
+                <li><span class="highlight">Inactive videos</span>: Set <code>video.volume = 0</code> instead of muting (no more mute property)</li>
+                <li><span class="highlight">Volume range</span>: 0.0 to 2.0 (0% to 200%)</li>
+                <li><span class="highlight">Logging</span>: Better debug output showing volume changes</li>
+            </ul>
+
+            <div class="technical-note">
+                <strong>Why this works better:</strong> By keeping videos unmuted and controlling audio via the volume property, we avoid browser autoplay restrictions and ensure the volume setting is always respected.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Code Changes</h2>
+            <h3>1. drawMedia() function:</h3>
+            <ul class="changes-list">
+                <li>Removed conditional volume setting</li>
+                <li>Always unmute active videos: <code>video.muted = false</code></li>
+                <li>Set volume directly: <code>video.volume = targetVolume</code></li>
+                <li>Inactive videos: <code>video.volume = 0</code> (no muting)</li>
+            </ul>
+
+            <h3>2. updateVideoAudioStates() function:</h3>
+            <ul class="changes-list">
+                <li>Active video: <code>video.muted = false</code></li>
+                <li>Inactive videos: <code>video.volume = 0</code></li>
+            </ul>
+
+            <h3>3. muteAllVideoAudio() function:</h3>
+            <ul class="changes-list">
+                <li>Changed from <code>video.muted = true</code> to <code>video.volume = 0</code></li>
+            </ul>
+
+            <h3>4. loadVideo() function:</h3>
+            <ul class="changes-list">
+                <li>Added <code>video.volume = 1.0</code> on creation</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🧪 How to Test</h2>
+            <ol class="test-steps">
+                <li>
+                    <strong>Open index.html</strong><br>
+                    Navigate to the video editor app
+                </li>
+                <li>
+                    <strong>Load a JSON with video clips</strong><br>
+                    Use a test file with multiple video clips (e.g., test_vid13_*.json)
+                </li>
+                <li>
+                    <strong>Open browser console</strong><br>
+                    Press F12 to see volume change logs
+                </li>
+                <li>
+                    <strong>Edit a clip's volume</strong><br>
+                    Click a video clip → Change volume parameter (try 0%, 50%, 100%, 150%)
+                </li>
+                <li>
+                    <strong>Apply changes</strong><br>
+                    Click "Apply Changes" button
+                </li>
+                <li>
+                    <strong>Play the preview</strong><br>
+                    Click play and listen - volume should match the clip setting
+                </li>
+                <li>
+                    <strong>Check console logs</strong><br>
+                    Look for: <code>🔊 VOLUME: XX%</code> messages
+                </li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>✅ Expected Results</h2>
+            <ul class="changes-list">
+                <li><span class="success">Volume = 0%</span>: Complete silence</li>
+                <li><span class="success">Volume = 50%</span>: Half volume</li>
+                <li><span class="success">Volume = 100%</span>: Normal volume</li>
+                <li><span class="success">Volume = 150%</span>: Boosted volume</li>
+                <li><span class="success">Volume = 200%</span>: Maximum boost (may distort)</li>
+                <li><span class="success">Console logs</span>: Show volume changes in real-time</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🐛 Debugging Tips</h2>
+            <ul class="changes-list">
+                <li>If no audio: Check if browser blocked autoplay (click play button)</li>
+                <li>If volume doesn't change: Check console for <code>🔊 VOLUME:</code> logs</li>
+                <li>If logs show correct volume but no audio: Check browser audio mixer</li>
+                <li>Test with different browsers (Chrome, Firefox, Edge)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,13 +1,14 @@
-# Backblaze B2 Media Fetcher Worker
+# Filebase S3 Media Fetcher Worker
 
-Cloudflare Worker that fetches images and videos from Backblaze B2 with proper authentication and CORS support.
+Cloudflare Worker that fetches images and videos from Filebase S3 with proper authentication and CORS support.
 
 ## Features
 
-- Backblaze B2 API authentication with token caching
+- AWS Signature V4 authentication for Filebase S3
 - CORS enabled for browser access
+- Range request support for video streaming
+- File listing endpoint
 - Caching headers for optimal performance
-- Error handling
 
 ## Deployment
 
@@ -30,59 +31,71 @@ wrangler deploy --config filebase-fetcher-wrangler.toml
 ### 4. Get Your Worker URL
 After deployment, you'll receive a URL like:
 ```
-https://b2-media-fetcher.your-subdomain.workers.dev
+https://filebase-media-fetcher.your-subdomain.workers.dev
 ```
 
 ## Usage
 
-### Fetch a file from B2
+### List files in a bucket
 ```
-GET https://b2-media-fetcher.your-subdomain.workers.dev/{bucket}/{path/to/file}
+GET https://filebase-media-fetcher.your-subdomain.workers.dev/{bucket}?list
+GET https://filebase-media-fetcher.your-subdomain.workers.dev/{bucket}?list&prefix=videos/
+```
+
+Returns JSON:
+```json
+{
+  "bucket": "my-bucket",
+  "fileCount": 10,
+  "files": [
+    {
+      "name": "video.mp4",
+      "size": 1810000,
+      "sizeFormatted": "1.73 MB",
+      "lastModified": "2024-01-01T00:00:00.000Z",
+      "url": "https://s3.filebase.com/my-bucket/video.mp4"
+    }
+  ]
+}
+```
+
+### Fetch a file
+```
+GET https://filebase-media-fetcher.your-subdomain.workers.dev/{bucket}/{path/to/file}
 ```
 
 ### Example
 ```javascript
-// Fetch an image
-const imageUrl = 'https://b2-media-fetcher.your-subdomain.workers.dev/my-bucket/images/photo.jpg';
+// List files
+const response = await fetch('https://filebase-media-fetcher.your-subdomain.workers.dev/my-bucket?list');
+const data = await response.json();
 
 // Fetch a video
-const videoUrl = 'https://b2-media-fetcher.your-subdomain.workers.dev/my-bucket/videos/clip.mp4';
+const videoUrl = 'https://filebase-media-fetcher.your-subdomain.workers.dev/my-bucket/videos/clip.mp4';
 
 // Use in HTML
-<img src="https://b2-media-fetcher.your-subdomain.workers.dev/my-bucket/images/photo.jpg" />
-<video src="https://b2-media-fetcher.your-subdomain.workers.dev/my-bucket/videos/clip.mp4" />
+<video src="https://filebase-media-fetcher.your-subdomain.workers.dev/my-bucket/videos/clip.mp4" controls></video>
 ```
 
-## Security Notes
+## Credentials
 
-⚠️ **Important**: The credentials are currently hardcoded in the worker. For production:
+Current credentials (hardcoded):
+- Access Key: E234F4F851C48943BE64
+- Secret Key: PNrYfAS81syqS4gO0GBXq2gje3OJYG2khzHGMTq1
+- Endpoint: https://s3.filebase.com
 
-1. Use Wrangler secrets:
+### Security Best Practice
+
+For production, use Wrangler secrets:
 ```bash
-wrangler secret put B2_KEY_ID
-wrangler secret put B2_APPLICATION_KEY
+wrangler secret put S3_ACCESS_KEY
+wrangler secret put S3_SECRET_KEY
 ```
 
-2. Update the worker code to use environment variables:
+Then update the worker code:
 ```javascript
-const B2_KEY_ID = env.B2_KEY_ID;
-const B2_APPLICATION_KEY = env.B2_APPLICATION_KEY;
-```
-
-## Custom Domain (Optional)
-
-To use a custom domain:
-
-1. Add a route in `filebase-fetcher-wrangler.toml`:
-```toml
-routes = [
-  { pattern = "media.yourdomain.com/*", zone_name = "yourdomain.com" }
-]
-```
-
-2. Redeploy:
-```bash
-wrangler deploy --config filebase-fetcher-wrangler.toml
+const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
+const S3_SECRET_KEY = env.S3_SECRET_KEY;
 ```
 
 ## Testing Locally
@@ -96,8 +109,19 @@ Then access: `http://localhost:8787/{bucket}/{path}`
 ## How It Works
 
 1. Worker receives request with bucket and file path
-2. Authenticates with Backblaze B2 API (caches token for 23 hours)
-3. Fetches file from B2 using download URL
+2. Creates AWS Signature V4 authentication headers
+3. Fetches file from Filebase S3
 4. Returns file with CORS headers for browser access
 
-The B2 authorization token is cached to avoid repeated API calls, improving performance.
+The worker implements AWS Signature V4 signing process:
+- Creates canonical request
+- Generates string to sign
+- Calculates HMAC-SHA256 signature
+- Adds Authorization header
+
+## Differences from B2 Worker
+
+- Uses S3-compatible API instead of B2 API
+- Implements AWS Signature V4 instead of Basic Auth
+- No token caching needed (signature generated per request)
+- XML response parsing for list operations

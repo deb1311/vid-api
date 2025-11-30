@@ -36,6 +36,15 @@ class VideoEditor {
         this.loadedImages = new Map();
         this.loadedVideos = new Map();
         
+        // Volume tracking
+        this.currentActiveVideoUrl = null;
+        this.lastAppliedVolume = null;
+        this.lastAppliedVolumeKey = null;
+        
+        // Web Audio API for volume control
+        this.audioContext = null;
+        this.videoAudioNodes = new Map(); // Map of video URL -> {source, gain}
+        
         this.init();
     }
 
@@ -1088,11 +1097,20 @@ class VideoEditor {
             this.currentNotionId = null;
         }
         
-        // Ensure all clips have a description parameter
+        // Ensure all clips have description and volume parameters
         if (this.currentData.clips && Array.isArray(this.currentData.clips)) {
             this.currentData.clips.forEach(clip => {
                 if (clip.description === undefined) {
                     clip.description = '';
+                }
+                // Initialize volume to 100 if not set (for video clips)
+                if (clip.volume === undefined) {
+                    const hasVideoUrl = (clip.videourl && clip.videourl.trim() !== '') || (clip.videoUrl && clip.videoUrl.trim() !== '');
+                    const hasImageUrl = clip.imageurl && clip.imageurl.trim() !== '';
+                    // Only set volume for video clips, not images
+                    if (hasVideoUrl && !hasImageUrl) {
+                        clip.volume = 100;
+                    }
                 }
             });
         }
@@ -1404,6 +1422,33 @@ class VideoEditor {
         });
     }
 
+    setupVideoAudio(video, url) {
+        // Set up Web Audio API for this video to control volume
+        try {
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🎵 Created AudioContext for video volume control');
+            }
+            
+            if (!this.videoAudioNodes.has(url)) {
+                // Create audio source from video element
+                const source = this.audioContext.createMediaElementSource(video);
+                const gainNode = this.audioContext.createGain();
+                
+                // Connect: video -> gain -> destination
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // Store nodes for later volume control
+                this.videoAudioNodes.set(url, { source, gainNode });
+                
+                console.log(`🔊 Set up Web Audio for video: ...${url.substring(url.length - 30)}`);
+            }
+        } catch (error) {
+            console.warn('Failed to set up Web Audio API:', error);
+        }
+    }
+
     loadVideo(url) {
         return new Promise((resolve, reject) => {
             if (this.loadedVideos.has(url)) {
@@ -1412,7 +1457,8 @@ class VideoEditor {
             }
             
             const video = document.createElement('video');
-            video.muted = true;
+            video.muted = false; // DON'T mute - we'll control volume via Web Audio API
+            video.volume = 1.0; // Set default volume
             video.preload = 'metadata';
             video.playsInline = true; // Better mobile support
             
@@ -1425,6 +1471,10 @@ class VideoEditor {
                 if (resolved) return;
                 resolved = true;
                 this.loadedVideos.set(url, video);
+                
+                // Set up Web Audio API for volume control
+                this.setupVideoAudio(video, url);
+                
                 console.log(`✅ Video loaded: ${url.substring(0, 50)}...`);
                 resolve(video);
             };
@@ -1650,18 +1700,16 @@ class VideoEditor {
     }
 
     updateVideoAudioStates(activeVideoUrl) {
-        // Mute all videos except the currently active one
+        // Set volume to 0 for all videos except the currently active one
         if (this.loadedVideos && this.loadedVideos.size > 0) {
             for (const [url, video] of this.loadedVideos) {
                 if (video) {
                     if (url === activeVideoUrl) {
-                        // This video will be unmuted in drawMedia if it's playing
-                        continue;
+                        // This video's volume will be set in drawMedia based on clip settings
+                        video.muted = false; // Ensure it's unmuted
                     } else {
-                        // Mute videos that are not currently active
-                        if (!video.muted) {
-                            video.muted = true;
-                        }
+                        // Silence videos that are not currently active
+                        video.volume = 0;
                     }
                 }
             }
@@ -1669,11 +1717,11 @@ class VideoEditor {
     }
 
     muteAllVideoAudio() {
-        // Mute all video audio (used when no clip is active)
+        // Silence all video audio (used when no clip is active)
         if (this.loadedVideos && this.loadedVideos.size > 0) {
             for (const [url, video] of this.loadedVideos) {
-                if (video && !video.muted) {
-                    video.muted = true;
+                if (video) {
+                    video.volume = 0;
                 }
             }
         }
@@ -1708,8 +1756,11 @@ class VideoEditor {
         
         // Manage video audio states when active video changes
         if (this.currentActiveVideoUrl !== currentVideoUrl) {
+            console.log(`🎬 Active video changed: "${currentVideoUrl ? currentVideoUrl.substring(0, 60) : 'none'}"`);
             this.updateVideoAudioStates(currentVideoUrl);
             this.currentActiveVideoUrl = currentVideoUrl;
+            this.lastAppliedVolume = null; // Reset volume tracking
+            this.lastAppliedVolumeKey = null; // Reset volume key tracking
         }
         
         // If no video is currently active, make sure all are muted
@@ -1860,37 +1911,47 @@ class VideoEditor {
                     if (Math.abs(video.currentTime - videoTime) > 0.5) {
                         video.currentTime = videoTime;
                     }
-                    // Apply volume control only if this is the current active video
-                    if (url === this.currentActiveVideoUrl && currentClip) {
-                        // Apply volume control first
-                        if (currentClip.volume !== undefined) {
-                            const clipVolume = Math.max(0, Math.min(2.0, (currentClip.volume || 100) / 100));
-                            if (Math.abs(video.volume - clipVolume) > 0.1) { // Less frequent updates
-                                video.volume = clipVolume;
-                            }
+                    
+                    // VOLUME CONTROL - Apply clip volume settings
+                    const isCurrentlyPlaying = url === this.currentActiveVideoUrl;
+                    
+                    // Get volume from currentClip parameter (0-200%)
+                    const clipVolumePercent = currentClip && currentClip.volume !== undefined ? currentClip.volume : 100;
+                    const targetVolume = Math.max(0, Math.min(2.0, clipVolumePercent / 100)); // 0.0 to 2.0
+                    
+                    if (isCurrentlyPlaying) {
+                        // This is the active video clip
+                        
+                        // Use Web Audio API to control volume
+                        const audioNode = this.videoAudioNodes.get(url);
+                        if (audioNode && audioNode.gainNode) {
+                            const oldGain = audioNode.gainNode.gain.value;
+                            audioNode.gainNode.gain.value = targetVolume;
+                            console.log(`🔊 VOLUME via Web Audio | ${clipVolumePercent}% | gain: ${oldGain.toFixed(2)} → ${targetVolume.toFixed(2)}`);
                         } else {
-                            // Default volume
-                            if (Math.abs(video.volume - 1.0) > 0.1) {
-                                video.volume = 1.0;
-                            }
+                            // Fallback to video.volume if Web Audio not available
+                            video.volume = targetVolume;
+                            console.log(`🔊 VOLUME via video.volume | ${clipVolumePercent}% | ${targetVolume.toFixed(2)}`);
                         }
                         
-                        // Enable audio for this video clip (only when playing)
-                        if (this.isPlaying && video.muted) {
-                            video.muted = false;
+                        // Play/pause control
+                        if (this.isPlaying && video.paused) {
+                            console.log(`▶️ Starting video playback`);
+                            video.play().catch(e => console.warn('Play failed:', e));
+                        } else if (!this.isPlaying && !video.paused) {
+                            video.pause();
                         }
                     } else {
-                        // Mute videos that are not currently active
-                        if (!video.muted) {
-                            video.muted = true;
+                        // Not the active video - set volume to 0 and pause
+                        const audioNode = this.videoAudioNodes.get(url);
+                        if (audioNode && audioNode.gainNode) {
+                            audioNode.gainNode.gain.value = 0;
+                        } else {
+                            video.volume = 0;
                         }
-                    }
-                    
-                    // Simple video playback control
-                    if (this.isPlaying && video.paused) {
-                        video.play().catch(() => {});
-                    } else if (!this.isPlaying && !video.paused) {
-                        video.pause();
+                        if (!video.paused) {
+                            video.pause();
+                        }
                     }
                     this.drawMediaWithAspectRatio(ctx, video, canvasWidth, canvasHeight);
                     mediaDrawn = true;
@@ -3077,10 +3138,10 @@ class VideoEditor {
                         <label>Duration (seconds)</label>
                         <input type="number" value="${clip.duration || 5}" min="0.1" step="0.1" onchange="videoEditor.updateClip(${index}, 'duration', parseFloat(this.value))">
                     </div>
-                    ${clip.volume !== undefined ? `
+                    ${!isImage ? `
                     <div class="clip-field">
-                        <label>Volume (%)</label>
-                        <input type="number" value="${clip.volume || 100}" min="0" max="200" step="1" onchange="videoEditor.updateClip(${index}, 'volume', parseFloat(this.value))">
+                        <label>Volume (%) <small style="color: #666;">- 0=mute, 100=normal</small></label>
+                        <input type="number" value="${clip.volume !== undefined ? clip.volume : 100}" min="0" max="100" step="1" onchange="videoEditor.updateClip(${index}, 'volume', parseInt(this.value))">
                     </div>
                     ` : ''}
                 </div>
@@ -3203,7 +3264,8 @@ class VideoEditor {
             description: '',
             begin: 0, // NEW: Begin parameter for source video start position
             start: newStart,
-            duration: 5
+            duration: 5,
+            volume: 100 // Default volume for video clips
         });
         
         this.calculateTotalDuration();

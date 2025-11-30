@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Volume Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            display: block;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .status {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct HTML5 Video Volume Test</h1>
+    <p>This tests if HTML5 video.volume property works in your browser.</p>
+    
+    <video id="testVideo" controls>
+        <source src="https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4" type="video/mp4">
+    </video>
+    
+    <div class="controls">
+        <h3>Volume Controls</h3>
+        <button onclick="setVolume(1.0)">100% Volume</button>
+        <button onclick="setVolume(0.5)">50% Volume</button>
+        <button onclick="setVolume(0.2)">20% Volume</button>
+        <button onclick="setVolume(0.1)">10% Volume</button>
+        <button onclick="setVolume(0.0)">0% (Mute)</button>
+    </div>
+    
+    <div class="status" id="status">
+        Click a button to test volume control...
+    </div>
+    
+    <script>
+        const video = document.getElementById('testVideo');
+        const status = document.getElementById('status');
+        
+        function setVolume(level) {
+            video.volume = level;
+            const percent = (level * 100).toFixed(0);
+            status.innerHTML = `
+                <strong>Volume set to ${percent}%</strong><br>
+                video.volume = ${video.volume.toFixed(2)}<br>
+                video.muted = ${video.muted}<br>
+                <br>
+                <em>You should hear the volume change immediately if the video is playing.</em>
+            `;
+            console.log(`Volume set to ${percent}%:`, {
+                requested: level,
+                actual: video.volume,
+                muted: video.muted
+            });
+        }
+        
+        // Log when video plays
+        video.addEventListener('play', () => {
+            console.log('Video started playing, volume:', video.volume);
+        });
+        
+        // Log volume changes
+        video.addEventListener('volumechange', () => {
+            console.log('Volume changed:', video.volume, 'muted:', video.muted);
+        });
+    </script>
+</body>
+</html>
