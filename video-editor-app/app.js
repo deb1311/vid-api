@@ -85,9 +85,11 @@ class VideoEditor {
 
     setupEventListeners() {
         document.getElementById('loadNotionBtn').addEventListener('click', () => this.showNotionModal());
+        document.getElementById('renderBtn').addEventListener('click', () => this.showRenderModal());
         document.getElementById('saveBtn').addEventListener('click', () => this.saveJson());
         document.getElementById('confirmBtn').addEventListener('click', () => this.confirmData());
         document.getElementById('closeNotionModal').addEventListener('click', () => this.hideNotionModal());
+        document.getElementById('closeRenderModal').addEventListener('click', () => this.hideRenderModal());
         document.getElementById('refreshNotionBtn').addEventListener('click', () => this.loadNotionRecords());
         document.getElementById('notionStatusFilter').addEventListener('change', () => this.loadNotionRecords());
         
@@ -97,6 +99,10 @@ class VideoEditor {
         
         document.getElementById('notionModal').addEventListener('click', (e) => {
             if (e.target.id === 'notionModal') this.hideNotionModal();
+        });
+        
+        document.getElementById('renderModal').addEventListener('click', (e) => {
+            if (e.target.id === 'renderModal') this.hideRenderModal();
         });
         
         document.getElementById('fullscreenModal').addEventListener('click', (e) => {
@@ -133,6 +139,12 @@ class VideoEditor {
         document.getElementById('applyClipChanges').addEventListener('click', () => this.applyClipChanges());
         document.getElementById('cancelClipChanges').addEventListener('click', () => this.hideVideoEditModal());
         document.getElementById('lockDurationBtn').addEventListener('click', () => this.toggleDurationLock());
+        
+        // Render modal handlers
+        document.getElementById('startRenderBtn').addEventListener('click', () => this.startRender());
+        document.getElementById('cancelRenderBtn').addEventListener('click', () => this.hideRenderModal());
+        document.getElementById('downloadRenderBtn').addEventListener('click', () => this.downloadRenderedVideo());
+        document.getElementById('copyRenderUrlBtn').addEventListener('click', () => this.copyRenderUrl());
         
         this.setupTimelineInteractions();
         document.getElementById('videoTitle').addEventListener('input', () => this.autoSave());
@@ -263,8 +275,10 @@ class VideoEditor {
                 throw new Error('No JSON data found in this record');
             }
 
-            // Store the Notion record ID for saving later
+            // Store the Notion record ID and endpoint for saving/rendering later
             this.currentNotionId = formulaId;
+            // Remove leading slash from endpoint if present
+            this.currentEndpoint = recordData.endpoint ? recordData.endpoint.replace(/^\//, '') : null;
             
             // Load the JSON data into the editor
             const jsonData = recordData.json_parsed;
@@ -1044,9 +1058,10 @@ class VideoEditor {
         this.history = [JSON.parse(JSON.stringify(data))];
         this.historyIndex = 0;
         
-        // Clear Notion ID if this is not a Notion load (to prevent accidental overwrites)
+        // Clear Notion ID and endpoint if this is not a Notion load (to prevent accidental overwrites)
         if (!fileName.startsWith('Notion:')) {
             this.currentNotionId = null;
+            this.currentEndpoint = null;
         }
         
         // Ensure all clips have description and volume parameters
@@ -2144,7 +2159,7 @@ class VideoEditor {
         }
         
         ctx.fillStyle = color;
-        ctx.font = `bold ${fontSize}px Impact, Arial, sans-serif`; // Match backend Impact font
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`; // Match backend Arial Bold font
         ctx.textAlign = textAlign;
         ctx.textBaseline = 'top';
         
@@ -4294,6 +4309,167 @@ class VideoEditor {
         this.renderBeatDetectionUI();
         this.renderTimeline();
         this.showNotification('Beats cleared', 'info');
+    }
+    
+    // Render Modal Methods
+    showRenderModal() {
+        if (!this.currentData) {
+            this.showNotification('No video data loaded! Please load a JSON file first.', 'error');
+            return;
+        }
+        
+        // Check if endpoint is loaded from Notion
+        const endpointSelect = document.getElementById('renderEndpoint');
+        const endpointSource = document.getElementById('endpointSource');
+        
+        if (this.currentEndpoint) {
+            // Endpoint loaded from Notion - set it and disable selection
+            endpointSelect.value = this.currentEndpoint;
+            endpointSelect.disabled = true;
+            endpointSource.style.display = 'block';
+            console.log('🎬 Using endpoint from Notion:', this.currentEndpoint);
+        } else {
+            // No endpoint from Notion - allow manual selection
+            endpointSelect.disabled = false;
+            endpointSource.style.display = 'none';
+            // Try to use endpoint from data as fallback
+            if (this.currentData.endpoint) {
+                endpointSelect.value = this.currentData.endpoint;
+            }
+        }
+        
+        // Reset modal state
+        document.getElementById('renderStatus').style.display = 'none';
+        document.getElementById('renderResult').style.display = 'none';
+        document.getElementById('startRenderBtn').disabled = false;
+        
+        document.getElementById('renderModal').classList.add('active');
+        console.log('🎬 Opened render modal');
+    }
+    
+    hideRenderModal() {
+        document.getElementById('renderModal').classList.remove('active');
+        console.log('🎬 Closed render modal');
+    }
+    
+    async startRender() {
+        // Use endpoint from Notion if available, otherwise from dropdown
+        const endpoint = this.currentEndpoint || document.getElementById('renderEndpoint').value;
+        const serverUrl = document.getElementById('renderServerUrl').value.trim();
+        
+        if (!endpoint) {
+            this.showNotification('Please select an endpoint!', 'error');
+            return;
+        }
+        
+        if (!serverUrl) {
+            this.showNotification('Please enter a server URL!', 'error');
+            return;
+        }
+        
+        // Show status
+        const statusDiv = document.getElementById('renderStatus');
+        const statusMessage = document.getElementById('renderStatusMessage');
+        const progressDiv = document.getElementById('renderProgress');
+        const resultDiv = document.getElementById('renderResult');
+        
+        statusDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+        progressDiv.style.display = 'block';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering video...';
+        
+        document.getElementById('startRenderBtn').disabled = true;
+        
+        try {
+            // Prepare the payload
+            const payload = {
+                endpoint: endpoint,
+                data: this.currentData
+            };
+            
+            console.log('🎬 Starting render:', { endpoint, serverUrl, payload });
+            
+            // Make the API call
+            const response = await fetch(`${serverUrl}/master`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error (${response.status}): ${errorText}`);
+            }
+            
+            const result = await response.json();
+            
+            console.log('✅ Render complete:', result);
+            
+            // Show success
+            statusMessage.innerHTML = '<i class="fas fa-check-circle"></i> Render complete!';
+            progressDiv.style.display = 'none';
+            
+            // Show result
+            resultDiv.style.display = 'block';
+            const videoUrl = result.videoUrl || result.video_url || result.url;
+            
+            if (videoUrl) {
+                // Handle relative URLs
+                const fullVideoUrl = videoUrl.startsWith('http') ? videoUrl : `${serverUrl}/${videoUrl}`;
+                document.getElementById('renderResultSource').src = fullVideoUrl;
+                document.getElementById('renderResultVideo').load();
+                
+                // Store for download/copy
+                this.lastRenderedVideoUrl = fullVideoUrl;
+                
+                this.showNotification('✅ Video rendered successfully!', 'success');
+            } else {
+                throw new Error('No video URL in response');
+            }
+            
+        } catch (error) {
+            console.error('❌ Render failed:', error);
+            statusMessage.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Render failed: ${error.message}`;
+            progressDiv.style.display = 'none';
+            this.showNotification(`Render failed: ${error.message}`, 'error');
+        } finally {
+            document.getElementById('startRenderBtn').disabled = false;
+        }
+    }
+    
+    downloadRenderedVideo() {
+        if (!this.lastRenderedVideoUrl) {
+            this.showNotification('No video to download!', 'error');
+            return;
+        }
+        
+        // Create a temporary link and trigger download
+        const a = document.createElement('a');
+        a.href = this.lastRenderedVideoUrl;
+        a.download = `rendered-video-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        this.showNotification('Download started!', 'success');
+        console.log('📥 Downloading video:', this.lastRenderedVideoUrl);
+    }
+    
+    copyRenderUrl() {
+        if (!this.lastRenderedVideoUrl) {
+            this.showNotification('No video URL to copy!', 'error');
+            return;
+        }
+        
+        navigator.clipboard.writeText(this.lastRenderedVideoUrl).then(() => {
+            this.showNotification('✅ URL copied to clipboard!', 'success');
+            console.log('📋 Copied URL:', this.lastRenderedVideoUrl);
+        }).catch(err => {
+            this.showNotification('Failed to copy URL', 'error');
+            console.error('Failed to copy:', err);
+        });
     }
     
     // Clip timeline functions removed - feature disabled for now

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Render Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; font-size: 18px; }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #2196f3;
+        }
+        .instructions ol {
+            margin: 10px 0 0 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Render Button Test Guide</h1>
+    
+    <div class="test-section">
+        <h2>New Feature: Direct Video Rendering</h2>
+        <p>A new <strong>"Render Video"</strong> button has been added to the video editor that allows you to render videos directly by calling the available endpoints.</p>
+        
+        <h3>Features Added:</h3>
+        <ul class="feature-list">
+            <li>Render button in the top header (purple gradient)</li>
+            <li>Modal dialog with endpoint selection</li>
+            <li><strong>Automatic endpoint loading from Notion records</strong></li>
+            <li>Support for all available endpoints (vid-1.2 through vid-1.5, style1-4)</li>
+            <li>Server URL configuration (local or production)</li>
+            <li>Real-time render status and progress</li>
+            <li>Video preview after successful render</li>
+            <li>Download and copy URL functionality</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>How to Test:</h2>
+        <div class="instructions">
+            <ol>
+                <li>Open the video editor: <code>video-editor-app/index.html</code></li>
+                <li>Load a record from Notion (click "Load from Notion" button)
+                    <ul>
+                        <li><strong>The endpoint will be automatically loaded from the Notion record</strong></li>
+                        <li>You'll see a green checkmark "Loaded from Notion" indicator</li>
+                        <li>The endpoint dropdown will be disabled (read-only)</li>
+                    </ul>
+                </li>
+                <li>Click the <strong>"Render Video"</strong> button (purple button with film icon)</li>
+                <li>In the modal:
+                    <ul>
+                        <li>Endpoint is pre-selected from Notion (cannot be changed)</li>
+                        <li>Set server URL (default: http://localhost:3000)</li>
+                        <li>Click "Start Render"</li>
+                    </ul>
+                </li>
+                <li>Wait for the render to complete</li>
+                <li>Preview the video in the modal</li>
+                <li>Download or copy the URL</li>
+            </ol>
+            <p><strong>Note:</strong> If you load a local JSON file (not from Notion), you can manually select the endpoint.</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Available Endpoints:</h2>
+        <ul>
+            <li><code>vid-1.5</code> - Multi-clip with captions & overlay support</li>
+            <li><code>vid-1.4</code> - Multi-clip with timed captions</li>
+            <li><code>vid-1.3</code> - Multi-clip with smart aspect ratio</li>
+            <li><code>vid-1.2</code> - Multi-clip with transitions</li>
+            <li><code>style1</code> - Two-step approach, bottom text</li>
+            <li><code>style2</code> - Single-step approach, bottom text</li>
+            <li><code>style3</code> - Two-step approach, top text</li>
+            <li><code>style4</code> - Single-step approach, top text</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Server URLs:</h2>
+        <ul>
+            <li><strong>Local:</strong> <code>http://localhost:3000</code></li>
+            <li><strong>Production:</strong> <code>https://video-editor-api-519298355551.us-central1.run.app</code></li>
+        </ul>
+        <p><em>Note: Make sure your server is running before attempting to render!</em></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Notion Integration:</h2>
+        <p>When you load a record from Notion, the system automatically:</p>
+        <ul>
+            <li>Fetches the <code>endpoint</code> field from the Notion database</li>
+            <li>Stores it in <code>this.currentEndpoint</code></li>
+            <li>Pre-selects it in the render modal</li>
+            <li>Disables manual endpoint selection to prevent errors</li>
+            <li>Shows a visual indicator that the endpoint came from Notion</li>
+        </ul>
+        <p><strong>Why this matters:</strong> Each Notion record is configured for a specific endpoint. Using the wrong endpoint could cause rendering errors or unexpected results.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Technical Details:</h2>
+        <p>The render button calls the <code>/master</code> endpoint with the following payload:</p>
+        <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>{
+  "endpoint": "vid-1.5",  // Loaded from Notion record
+  "data": {
+    // Your current video data (clips, captions, etc.)
+  }
+}</code></pre>
+    </div>
+</body>
+</html>

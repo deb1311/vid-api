@@ -35,19 +35,19 @@ async function createVideoStyle2(imagePath, audioPath, quote, author, watermark,
       // Add quote if provided and not empty
       if (quote && quote.trim() !== '') {
         const cleanQuote = quote.replace(/'/g, "\\'");
-        textFilterArray.push(`drawtext=text='${cleanQuote}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
+        textFilterArray.push(`drawtext=text='${cleanQuote}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
       }
       
       // Add author if provided and not empty
       if (author && author.trim() !== '') {
         const cleanAuthor = author.replace(/'/g, "\\'");
-        textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
+        textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
       }
 
       // Add watermark if provided and not empty
       if (watermark && watermark.trim() !== '') {
         const cleanWatermark = watermark.replace(/'/g, "\\'");
-        textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+        textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
       }
 
       // Build final text filter

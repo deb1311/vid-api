@@ -288,7 +288,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
         const cleanText = layout.lines[i].replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
         if (cleanText.trim() !== '') { // Only add non-empty lines
           textFilters.push(
-            `drawtext=text='${cleanText}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
+            `drawtext=text='${cleanText}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
           );
         }
       }
@@ -300,7 +300,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
       const cleanAuthor = author.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
       if (cleanAuthor.trim() !== '') { // Only add non-empty author
         textFilters.push(
-          `drawtext=text='${cleanAuthor}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
+          `drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
         );
       }
     }
@@ -310,7 +310,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
       const cleanWatermark = watermark.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
       if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
         textFilters.push(
-          `drawtext=text='${cleanWatermark}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
+          `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
         );
       }
     }

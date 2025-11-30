@@ -33,7 +33,7 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
         const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
         const cleanLine = layout.lines[i].replace(/'/g, "\\'");
         if (cleanLine.trim() !== '') { // Only add non-empty lines
-          textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
+          textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
         }
       }
     }
@@ -42,13 +42,13 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
     if (author && author.trim() !== '') {
       const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
       const cleanAuthor = author.replace(/'/g, "\\'");
-      textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
+      textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
     }
 
     // Add watermark if provided and not empty
     if (watermark && watermark.trim() !== '') {
       const cleanWatermark = watermark.replace(/'/g, "\\'");
-      textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+      textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
     }
 
     // Build final text filter
