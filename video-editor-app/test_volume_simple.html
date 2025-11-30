@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Volume Control Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        .section {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #333;
+        }
+        h2 {
+            color: #66BB6A;
+            margin-top: 0;
+        }
+        .code {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+        ul {
+            line-height: 2;
+        }
+        .highlight {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 Volume Control - Complete Rewrite</h1>
+        
+        <div class="section">
+            <h2>✨ What Changed</h2>
+            <p>Completely removed all complex volume logic and rewrote from scratch with a simple approach:</p>
+            <ul>
+                <li>Removed Web Audio API complexity</li>
+                <li>Removed volume tracking variables</li>
+                <li>Removed gain nodes and audio contexts</li>
+                <li>Simple: <span class="highlight">unmute + set video.volume</span> for active clips</li>
+                <li>Simple: <span class="highlight">mute</span> for inactive clips</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🎯 New Logic</h2>
+            <div class="code">
+if (isActiveClip && this.isPlaying) {<br>
+&nbsp;&nbsp;video.muted = false;<br>
+&nbsp;&nbsp;video.volume = clipVolume / 100;<br>
+&nbsp;&nbsp;video.play();<br>
+} else {<br>
+&nbsp;&nbsp;video.muted = true;<br>
+&nbsp;&nbsp;video.pause();<br>
+}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 How to Test</h2>
+            <ol style="line-height: 2;">
+                <li>Open <strong>index.html</strong></li>
+                <li>Load a JSON with video clips</li>
+                <li>Click a video clip to edit it</li>
+                <li>Change the <strong>Volume</strong> field (0-200)</li>
+                <li>Click <strong>Apply Changes</strong></li>
+                <li>Click <strong>Play</strong> button</li>
+                <li>Listen - volume should match the setting</li>
+                <li>Check console for: <code>🔊 Clip volume: XX%</code></li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>📋 Expected Behavior</h2>
+            <ul>
+                <li><strong>0%</strong>: Silent (volume = 0.0)</li>
+                <li><strong>50%</strong>: Half volume (volume = 0.5)</li>
+                <li><strong>100%</strong>: Normal volume (volume = 1.0)</li>
+                <li><strong>150%</strong>: Boosted (volume = 1.5)</li>
+                <li><strong>200%</strong>: Max boost (volume = 2.0)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Key Differences</h2>
+            <p><strong>Old approach:</strong> Complex Web Audio API with gain nodes, multiple tracking variables, conditional unmuting</p>
+            <p><strong>New approach:</strong> Direct video element control - unmute active clip, set volume, mute others</p>
+            <p style="margin-top: 20px; color: #4CAF50;"><strong>Result:</strong> Simpler, more reliable, easier to debug</p>
+        </div>
+    </div>
+</body>
+</html>

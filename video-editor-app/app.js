@@ -36,14 +36,8 @@ class VideoEditor {
         this.loadedImages = new Map();
         this.loadedVideos = new Map();
         
-        // Volume tracking
+        // Video clip audio control - SIMPLIFIED
         this.currentActiveVideoUrl = null;
-        this.lastAppliedVolume = null;
-        this.lastAppliedVolumeKey = null;
-        
-        // Web Audio API for volume control
-        this.audioContext = null;
-        this.videoAudioNodes = new Map(); // Map of video URL -> {source, gain}
         
         this.init();
     }
@@ -1422,33 +1416,6 @@ class VideoEditor {
         });
     }
 
-    setupVideoAudio(video, url) {
-        // Set up Web Audio API for this video to control volume
-        try {
-            if (!this.audioContext) {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('🎵 Created AudioContext for video volume control');
-            }
-            
-            if (!this.videoAudioNodes.has(url)) {
-                // Create audio source from video element
-                const source = this.audioContext.createMediaElementSource(video);
-                const gainNode = this.audioContext.createGain();
-                
-                // Connect: video -> gain -> destination
-                source.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                // Store nodes for later volume control
-                this.videoAudioNodes.set(url, { source, gainNode });
-                
-                console.log(`🔊 Set up Web Audio for video: ...${url.substring(url.length - 30)}`);
-            }
-        } catch (error) {
-            console.warn('Failed to set up Web Audio API:', error);
-        }
-    }
-
     loadVideo(url) {
         return new Promise((resolve, reject) => {
             if (this.loadedVideos.has(url)) {
@@ -1457,10 +1424,10 @@ class VideoEditor {
             }
             
             const video = document.createElement('video');
-            video.muted = false; // DON'T mute - we'll control volume via Web Audio API
-            video.volume = 1.0; // Set default volume
             video.preload = 'metadata';
-            video.playsInline = true; // Better mobile support
+            video.playsInline = true;
+            video.muted = true; // Start muted for autoplay
+            video.volume = 1.0;
             
             // Don't set crossOrigin initially - let browser handle it naturally
             // This matches how the video edit modal works
@@ -1471,10 +1438,6 @@ class VideoEditor {
                 if (resolved) return;
                 resolved = true;
                 this.loadedVideos.set(url, video);
-                
-                // Set up Web Audio API for volume control
-                this.setupVideoAudio(video, url);
-                
                 console.log(`✅ Video loaded: ${url.substring(0, 50)}...`);
                 resolve(video);
             };
@@ -1700,28 +1663,22 @@ class VideoEditor {
     }
 
     updateVideoAudioStates(activeVideoUrl) {
-        // Set volume to 0 for all videos except the currently active one
+        // Mute all videos except the active one
         if (this.loadedVideos && this.loadedVideos.size > 0) {
             for (const [url, video] of this.loadedVideos) {
-                if (video) {
-                    if (url === activeVideoUrl) {
-                        // This video's volume will be set in drawMedia based on clip settings
-                        video.muted = false; // Ensure it's unmuted
-                    } else {
-                        // Silence videos that are not currently active
-                        video.volume = 0;
-                    }
+                if (video && url !== activeVideoUrl) {
+                    video.muted = true;
                 }
             }
         }
     }
 
     muteAllVideoAudio() {
-        // Silence all video audio (used when no clip is active)
+        // Mute all video audio
         if (this.loadedVideos && this.loadedVideos.size > 0) {
             for (const [url, video] of this.loadedVideos) {
                 if (video) {
-                    video.volume = 0;
+                    video.muted = true;
                 }
             }
         }
@@ -1759,8 +1716,6 @@ class VideoEditor {
             console.log(`🎬 Active video changed: "${currentVideoUrl ? currentVideoUrl.substring(0, 60) : 'none'}"`);
             this.updateVideoAudioStates(currentVideoUrl);
             this.currentActiveVideoUrl = currentVideoUrl;
-            this.lastAppliedVolume = null; // Reset volume tracking
-            this.lastAppliedVolumeKey = null; // Reset volume key tracking
         }
         
         // If no video is currently active, make sure all are muted
@@ -1912,43 +1867,29 @@ class VideoEditor {
                         video.currentTime = videoTime;
                     }
                     
-                    // VOLUME CONTROL - Apply clip volume settings
-                    const isCurrentlyPlaying = url === this.currentActiveVideoUrl;
+                    // SIMPLE VOLUME CONTROL - Rewritten from scratch
+                    const isActiveClip = (url === this.currentActiveVideoUrl);
                     
-                    // Get volume from currentClip parameter (0-200%)
-                    const clipVolumePercent = currentClip && currentClip.volume !== undefined ? currentClip.volume : 100;
-                    const targetVolume = Math.max(0, Math.min(2.0, clipVolumePercent / 100)); // 0.0 to 2.0
-                    
-                    if (isCurrentlyPlaying) {
-                        // This is the active video clip
+                    if (isActiveClip && this.isPlaying) {
+                        // This is the currently playing clip
                         
-                        // Use Web Audio API to control volume
-                        const audioNode = this.videoAudioNodes.get(url);
-                        if (audioNode && audioNode.gainNode) {
-                            const oldGain = audioNode.gainNode.gain.value;
-                            audioNode.gainNode.gain.value = targetVolume;
-                            console.log(`🔊 VOLUME via Web Audio | ${clipVolumePercent}% | gain: ${oldGain.toFixed(2)} → ${targetVolume.toFixed(2)}`);
-                        } else {
-                            // Fallback to video.volume if Web Audio not available
-                            video.volume = targetVolume;
-                            console.log(`🔊 VOLUME via video.volume | ${clipVolumePercent}% | ${targetVolume.toFixed(2)}`);
-                        }
+                        // Get volume from clip (0-200%)
+                        const clipVolume = currentClip && currentClip.volume !== undefined ? currentClip.volume : 100;
+                        const volumeValue = Math.max(0, Math.min(2.0, clipVolume / 100));
                         
-                        // Play/pause control
-                        if (this.isPlaying && video.paused) {
-                            console.log(`▶️ Starting video playback`);
+                        // Unmute and set volume
+                        video.muted = false;
+                        video.volume = volumeValue;
+                        
+                        console.log(`🔊 Clip volume: ${clipVolume}% (${volumeValue.toFixed(2)})`);
+                        
+                        // Play if paused
+                        if (video.paused) {
                             video.play().catch(e => console.warn('Play failed:', e));
-                        } else if (!this.isPlaying && !video.paused) {
-                            video.pause();
                         }
                     } else {
-                        // Not the active video - set volume to 0 and pause
-                        const audioNode = this.videoAudioNodes.get(url);
-                        if (audioNode && audioNode.gainNode) {
-                            audioNode.gainNode.gain.value = 0;
-                        } else {
-                            video.volume = 0;
-                        }
+                        // Not active or not playing - mute and pause
+                        video.muted = true;
                         if (!video.paused) {
                             video.pause();
                         }
