@@ -39,6 +39,9 @@ class VideoEditor {
         // Video clip audio control - SIMPLIFIED
         this.currentActiveVideoUrl = null;
         
+        // Audio waveform data
+        this.audioWaveformData = null;
+        
         this.init();
     }
 
@@ -1193,11 +1196,19 @@ class VideoEditor {
                     this.currentData.duration = this.audioElement.duration;
                     console.log(`✅ Audio loaded successfully - duration: ${this.audioElement.duration.toFixed(2)}s`);
                     
-                    // Recalculate total duration with actual audio duration
-                    this.calculateTotalDuration();
-                    
-                    // Re-render timeline with correct audio duration
-                    this.renderTimeline();
+                    // Generate waveform from audio
+                    this.generateAudioWaveform(audioUrl).then(() => {
+                        // Recalculate total duration with actual audio duration
+                        this.calculateTotalDuration();
+                        
+                        // Re-render timeline with correct audio duration and waveform
+                        this.renderTimeline();
+                    }).catch(err => {
+                        console.warn('⚠️ Waveform generation failed:', err);
+                        // Still render timeline without waveform
+                        this.calculateTotalDuration();
+                        this.renderTimeline();
+                    });
                 } else {
                     console.log('✅ Audio loaded successfully - readyState:', this.audioElement.readyState);
                 }
@@ -2224,11 +2235,35 @@ class VideoEditor {
         
         if (this.currentData.audioUrl || this.currentData.instagramUrl) {
             const duration = this.currentData.duration || 15;
+            const width = duration * this.timelineZoom;
+            
+            // Create clip element
             const clipEl = document.createElement('div');
             clipEl.className = 'timeline-clip audio';
             clipEl.style.left = '0px';
-            clipEl.style.width = `${duration * this.timelineZoom}px`;
-            clipEl.innerHTML = `<i class="fas fa-music"></i> Audio (${duration}s)`;
+            clipEl.style.width = `${width}px`;
+            
+            // Create SVG waveform
+            const svg = this.createWaveformSVG(width, 40, duration);
+            svg.style.position = 'absolute';
+            svg.style.left = '0';
+            svg.style.top = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.opacity = '0.6';
+            
+            // Create text content
+            const textSpan = document.createElement('span');
+            textSpan.style.position = 'relative';
+            textSpan.style.zIndex = '1';
+            textSpan.style.display = 'flex';
+            textSpan.style.alignItems = 'center';
+            textSpan.style.gap = '6px';
+            textSpan.innerHTML = `<i class="fas fa-music"></i> Audio (${duration}s)`;
+            
+            clipEl.appendChild(svg);
+            clipEl.appendChild(textSpan);
             container.appendChild(clipEl);
         }
         
@@ -2236,6 +2271,91 @@ class VideoEditor {
             container.innerHTML = '<div style="color: #666; padding: 8px; font-size: 12px;">No audio</div>';
         }
     }
+    
+    createWaveformSVG(width, height, duration) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        
+        const centerY = height / 2;
+        const barCount = Math.min(Math.floor(width / 3), 200);
+        const barWidth = width / barCount;
+        
+        // Use real waveform data if available, otherwise generate pseudo-random
+        for (let i = 0; i < barCount; i++) {
+            let amplitude;
+            
+            if (this.audioWaveformData && this.audioWaveformData.length > 0) {
+                const dataIndex = Math.floor((i / barCount) * this.audioWaveformData.length);
+                amplitude = this.audioWaveformData[dataIndex];
+            } else {
+                const seed = (i * 12345 + duration * 67890) % 1000;
+                amplitude = (Math.sin(seed) * 0.5 + 0.5) * 0.8 + 0.2;
+            }
+            
+            const barHeight = amplitude * (height * 0.8);
+            const x = i * barWidth;
+            const y = centerY - barHeight / 2;
+            
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', Math.max(1, barWidth - 1));
+            rect.setAttribute('height', barHeight);
+            rect.setAttribute('fill', 'rgba(255, 255, 255, 0.8)');
+            
+            svg.appendChild(rect);
+        }
+        
+        return svg;
+    }
+    
+    async generateAudioWaveform(audioUrl) {
+        try {
+            console.log('🎨 Generating waveform from audio file...');
+            
+            // Fetch audio file
+            const response = await fetch(audioUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            
+            // Create audio context
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Get audio data from first channel
+            const channelData = audioBuffer.getChannelData(0);
+            const samples = 200; // Number of bars in waveform
+            const blockSize = Math.floor(channelData.length / samples);
+            
+            // Calculate amplitude for each bar
+            const waveformData = [];
+            for (let i = 0; i < samples; i++) {
+                const start = blockSize * i;
+                let sum = 0;
+                
+                // Calculate RMS (root mean square) for this block
+                for (let j = 0; j < blockSize; j++) {
+                    sum += channelData[start + j] ** 2;
+                }
+                const rms = Math.sqrt(sum / blockSize);
+                waveformData.push(rms);
+            }
+            
+            // Normalize waveform data
+            const max = Math.max(...waveformData);
+            this.audioWaveformData = waveformData.map(val => val / max);
+            
+            console.log('✅ Waveform generated successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to generate waveform:', error);
+            this.audioWaveformData = null;
+            throw error;
+        }
+    }
+    
+
 
     createTimelineClip(item, index, type) {
         const start = item.start || 0;

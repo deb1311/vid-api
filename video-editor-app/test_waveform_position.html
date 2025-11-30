@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waveform Position Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            padding: 40px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+        }
+        
+        .timeline-track {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 56px;
+        }
+        
+        .timeline-clip {
+            position: absolute;
+            background: #2563eb;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: move;
+            user-select: none;
+            border: 1px solid #1d4ed8;
+            transition: all 0.2s ease;
+            top: 8px;
+            height: 40px;
+        }
+        
+        .timeline-clip.audio {
+            background: #8b5cf6;
+            border-color: #7c3aed;
+            color: #ffffff;
+            position: absolute;
+            overflow: hidden;
+        }
+        
+        .audio-waveform {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none;
+            opacity: 0.7;
+            z-index: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .timeline-clip.audio i,
+        .timeline-clip.audio > span {
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+        
+        .test-label {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+        
+        .reference-line {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ef4444;
+            z-index: 100;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 Waveform Position Test</h1>
+        
+        <div class="test-label">Without Waveform (Reference):</div>
+        <div class="timeline-track">
+            <div class="reference-line"></div>
+            <div class="timeline-clip audio" style="left: 0px; width: 600px;">
+                <i class="fas fa-music"></i>
+                <span>Audio (10s)</span>
+            </div>
+        </div>
+        
+        <div class="test-label">With Waveform (Should align at same position):</div>
+        <div class="timeline-track">
+            <div class="reference-line"></div>
+            <div id="audioWithWaveform" class="timeline-clip audio" style="left: 0px; width: 600px;">
+                <i class="fas fa-music"></i>
+                <span>Audio (10s)</span>
+            </div>
+        </div>
+        
+        <div class="test-label">Multiple clips with different widths:</div>
+        <div class="timeline-track">
+            <div class="reference-line"></div>
+            <div id="audio1" class="timeline-clip audio" style="left: 0px; width: 300px;">
+                <i class="fas fa-music"></i>
+                <span>Audio (5s)</span>
+            </div>
+        </div>
+        
+        <div class="timeline-track">
+            <div class="reference-line"></div>
+            <div id="audio2" class="timeline-clip audio" style="left: 0px; width: 900px;">
+                <i class="fas fa-music"></i>
+                <span>Audio (15s)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateWaveform(canvas, duration) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const barCount = Math.min(width / 2, 200);
+            const barWidth = width / barCount;
+            const centerY = height / 2;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            
+            for (let i = 0; i < barCount; i++) {
+                const seed = (i * 12345 + duration * 67890) % 1000;
+                const amplitude = (Math.sin(seed) * 0.5 + 0.5) * 0.8 + 0.2;
+                const barHeight = amplitude * (height * 0.8);
+                
+                const x = i * barWidth;
+                const y = centerY - barHeight / 2;
+                
+                ctx.fillRect(x, y, Math.max(1, barWidth - 1), barHeight);
+            }
+        }
+        
+        function addWaveform(elementId, duration) {
+            const clipEl = document.getElementById(elementId);
+            const width = clipEl.offsetWidth;
+            
+            const canvas = document.createElement('canvas');
+            canvas.className = 'audio-waveform';
+            canvas.width = width;
+            canvas.height = 40;
+            
+            generateWaveform(canvas, duration);
+            
+            // Insert canvas as first child (before icon and text)
+            clipEl.insertBefore(canvas, clipEl.firstChild);
+        }
+        
+        window.addEventListener('load', () => {
+            addWaveform('audioWithWaveform', 10);
+            addWaveform('audio1', 5);
+            addWaveform('audio2', 15);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Audio Waveform Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            padding: 40px;
+        }
+        
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+            background: #141414;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .input-section input {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            color: #e5e5e5;
+            font-size: 14px;
+        }
+        
+        .btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .timeline-clip {
+            position: relative;
+            background: #8b5cf6;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #7c3aed;
+            margin-bottom: 20px;
+            height: 60px;
+            overflow: hidden;
+        }
+        
+        .audio-waveform {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.7;
+            z-index: 0;
+        }
+        
+        .timeline-clip i,
+        .timeline-clip > span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background: #141414;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .status.loading {
+            color: #fbbf24;
+        }
+        
+        .status.success {
+            color: #10b981;
+        }
+        
+        .status.error {
+            color: #ef4444;
+        }
+        
+        .waveform-container {
+            margin-top: 30px;
+        }
+        
+        .test-label {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 Real Audio Waveform Test</h1>
+        
+        <div class="input-section">
+            <label for="audioUrl">Audio URL (must support CORS):</label>
+            <input 
+                type="text" 
+                id="audioUrl" 
+                placeholder="https://example.com/audio.mp3"
+                value="https://cdn.pixabay.com/download/audio/2022/03/10/audio_d1718ab41b.mp3"
+            >
+            <button class="btn" id="generateBtn">Generate Waveform</button>
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+        
+        <div class="waveform-container" id="waveformContainer" style="display: none;">
+            <div class="test-label">Generated Waveform:</div>
+            <div id="audioClip" class="timeline-clip" style="width: 100%;">
+                <i class="fas fa-music"></i> <span id="audioLabel">Audio</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioWaveformData = null;
+
+        async function generateAudioWaveform(audioUrl) {
+            try {
+                console.log('🎨 Generating waveform from audio file...');
+                
+                // Fetch audio file
+                const response = await fetch(audioUrl);
+                if (!response.ok) throw new Error('Failed to fetch audio file');
+                
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Create audio context
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Get audio data from first channel
+                const channelData = audioBuffer.getChannelData(0);
+                const samples = 200; // Number of bars in waveform
+                const blockSize = Math.floor(channelData.length / samples);
+                
+                // Calculate amplitude for each bar
+                const waveformData = [];
+                for (let i = 0; i < samples; i++) {
+                    const start = blockSize * i;
+                    let sum = 0;
+                    
+                    // Calculate RMS (root mean square) for this block
+                    for (let j = 0; j < blockSize; j++) {
+                        sum += channelData[start + j] ** 2;
+                    }
+                    const rms = Math.sqrt(sum / blockSize);
+                    waveformData.push(rms);
+                }
+                
+                // Normalize waveform data
+                const max = Math.max(...waveformData);
+                audioWaveformData = waveformData.map(val => val / max);
+                
+                console.log('✅ Waveform generated successfully');
+                return { duration: audioBuffer.duration, waveformData: audioWaveformData };
+                
+            } catch (error) {
+                console.error('❌ Failed to generate waveform:', error);
+                throw error;
+            }
+        }
+        
+        function drawWaveform(canvas, waveformData) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            const centerY = height / 2;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            
+            const barCount = Math.min(waveformData.length, Math.floor(width / 2));
+            const barWidth = width / barCount;
+            
+            for (let i = 0; i < barCount; i++) {
+                const dataIndex = Math.floor((i / barCount) * waveformData.length);
+                const amplitude = waveformData[dataIndex];
+                const barHeight = amplitude * (height * 0.8);
+                
+                const x = i * barWidth;
+                const y = centerY - barHeight / 2;
+                
+                ctx.fillRect(x, y, Math.max(1, barWidth - 1), barHeight);
+            }
+        }
+        
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const audioUrl = document.getElementById('audioUrl').value.trim();
+            const statusEl = document.getElementById('status');
+            const generateBtn = document.getElementById('generateBtn');
+            const waveformContainer = document.getElementById('waveformContainer');
+            const audioClip = document.getElementById('audioClip');
+            const audioLabel = document.getElementById('audioLabel');
+            
+            if (!audioUrl) {
+                statusEl.textContent = '❌ Please enter an audio URL';
+                statusEl.className = 'status error';
+                statusEl.style.display = 'block';
+                return;
+            }
+            
+            // Show loading
+            statusEl.textContent = '⏳ Loading and analyzing audio...';
+            statusEl.className = 'status loading';
+            statusEl.style.display = 'block';
+            generateBtn.disabled = true;
+            waveformContainer.style.display = 'none';
+            
+            try {
+                const result = await generateAudioWaveform(audioUrl);
+                
+                // Remove old canvas if exists
+                const oldCanvas = audioClip.querySelector('.audio-waveform');
+                if (oldCanvas) oldCanvas.remove();
+                
+                // Create new canvas
+                const canvas = document.createElement('canvas');
+                canvas.className = 'audio-waveform';
+                canvas.width = audioClip.offsetWidth;
+                canvas.height = 60;
+                
+                // Draw waveform
+                drawWaveform(canvas, result.waveformData);
+                
+                // Update label
+                audioLabel.textContent = `Audio (${result.duration.toFixed(1)}s)`;
+                
+                // Add canvas to clip
+                audioClip.appendChild(canvas);
+                
+                // Show success
+                statusEl.textContent = `✅ Waveform generated successfully! Duration: ${result.duration.toFixed(2)}s`;
+                statusEl.className = 'status success';
+                waveformContainer.style.display = 'block';
+                
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status error';
+            } finally {
+                generateBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
