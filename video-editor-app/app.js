@@ -41,6 +41,7 @@ class VideoEditor {
         
         // Audio waveform data
         this.audioWaveformData = null;
+        this.detectedBeats = [];
         
         this.init();
     }
@@ -2243,7 +2244,7 @@ class VideoEditor {
             clipEl.style.left = '0px';
             clipEl.style.width = `${width}px`;
             
-            // Create SVG waveform
+            // Create SVG waveform that fills entire width
             const svg = this.createWaveformSVG(width, 40, duration);
             svg.style.position = 'absolute';
             svg.style.left = '0';
@@ -2251,19 +2252,54 @@ class VideoEditor {
             svg.style.width = '100%';
             svg.style.height = '100%';
             svg.style.pointerEvents = 'none';
-            svg.style.opacity = '0.6';
+            svg.style.opacity = '0.5';
             
-            // Create text content
-            const textSpan = document.createElement('span');
-            textSpan.style.position = 'relative';
-            textSpan.style.zIndex = '1';
-            textSpan.style.display = 'flex';
-            textSpan.style.alignItems = 'center';
-            textSpan.style.gap = '6px';
-            textSpan.innerHTML = `<i class="fas fa-music"></i> Audio (${duration}s)`;
+            // Create text overlay with semi-transparent background
+            const textOverlay = document.createElement('div');
+            textOverlay.style.position = 'absolute';
+            textOverlay.style.left = '8px';
+            textOverlay.style.top = '50%';
+            textOverlay.style.transform = 'translateY(-50%)';
+            textOverlay.style.zIndex = '2';
+            textOverlay.style.display = 'flex';
+            textOverlay.style.alignItems = 'center';
+            textOverlay.style.gap = '6px';
+            textOverlay.style.padding = '4px 8px';
+            textOverlay.style.background = 'rgba(0, 0, 0, 0.3)';
+            textOverlay.style.borderRadius = '4px';
+            textOverlay.innerHTML = `<i class="fas fa-music"></i> Audio (${duration}s)`;
+            
+            // Add click handler to show beat detection panel
+            clipEl.addEventListener('click', () => {
+                this.showBeatDetectionPanel();
+            });
             
             clipEl.appendChild(svg);
-            clipEl.appendChild(textSpan);
+            clipEl.appendChild(textOverlay);
+            
+            // Add markers if detected
+            if (this.detectedBeats && this.detectedBeats.length > 0) {
+                this.detectedBeats.forEach(marker => {
+                    const markerEl = document.createElement('div');
+                    markerEl.className = marker.type === 'beat' ? 'beat-marker' : 'tone-marker';
+                    markerEl.style.position = 'absolute';
+                    markerEl.style.left = `${marker.time * this.timelineZoom}px`;
+                    markerEl.style.top = '0';
+                    markerEl.style.width = '2px';
+                    markerEl.style.height = '100%';
+                    markerEl.style.background = marker.type === 'beat' ? '#fbbf24' : '#60a5fa';
+                    markerEl.style.zIndex = '3';
+                    markerEl.style.pointerEvents = 'none';
+                    markerEl.style.boxShadow = marker.type === 'beat' 
+                        ? '0 0 4px rgba(251, 191, 36, 0.5)' 
+                        : '0 0 4px rgba(96, 165, 250, 0.5)';
+                    markerEl.title = marker.type === 'beat' 
+                        ? `Beat at ${marker.time.toFixed(2)}s` 
+                        : `Tone change at ${marker.time.toFixed(2)}s`;
+                    clipEl.appendChild(markerEl);
+                });
+            }
+            
             container.appendChild(clipEl);
         }
         
@@ -2279,7 +2315,8 @@ class VideoEditor {
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         
         const centerY = height / 2;
-        const barCount = Math.min(Math.floor(width / 3), 200);
+        // Increase bar density for better beat detection - 1 bar per 2 pixels
+        const barCount = Math.min(Math.floor(width / 2), 500);
         const barWidth = width / barCount;
         
         // Use real waveform data if available, otherwise generate pseudo-random
@@ -3788,6 +3825,235 @@ class VideoEditor {
         }, duration);
     }
 
+    // Beat Detection Feature
+    showBeatDetectionPanel() {
+        // Scroll to properties section
+        const propertiesContent = document.querySelector('.properties-content');
+        if (propertiesContent) {
+            propertiesContent.scrollTop = 0;
+        }
+        
+        // Render beat detection UI
+        this.renderBeatDetectionUI();
+    }
+    
+    renderBeatDetectionUI() {
+        const propertiesContent = document.querySelector('.properties-content');
+        if (!propertiesContent) return;
+        
+        // Remove existing beat detection panel if any
+        const existingPanel = document.getElementById('beatDetectionPanel');
+        if (existingPanel) {
+            existingPanel.remove();
+        }
+        
+        // Create beat detection panel with shadcn colors
+        const panel = document.createElement('div');
+        panel.id = 'beatDetectionPanel';
+        panel.className = 'form-group';
+        panel.style.background = '#18181b';
+        panel.style.border = '1px solid #27272a';
+        
+        const beatsDetected = this.detectedBeats.filter(b => b.type === 'beat').length;
+        const tonesDetected = this.detectedBeats.filter(b => b.type === 'tone').length;
+        
+        const beatsList = this.detectedBeats.length > 0 
+            ? this.detectedBeats.slice(0, 20).map(b => {
+                const icon = b.type === 'beat' ? '🥁' : '🎵';
+                return `${icon} ${b.time.toFixed(2)}s`;
+            }).join(', ') + (this.detectedBeats.length > 20 ? '...' : '')
+            : 'No markers detected yet';
+        
+        panel.innerHTML = `
+            <h3 style="color: #fafafa; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                <i class="fas fa-waveform-lines"></i> Audio Analysis
+            </h3>
+            <p style="color: #a1a1aa; font-size: 12px; margin-bottom: 16px; line-height: 1.5;">
+                Detect beats and tone changes to sync your video clips with the music
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                <div style="background: #27272a; padding: 12px; border-radius: 6px; border: 1px solid #3f3f46;">
+                    <div style="color: #fbbf24; font-size: 20px; font-weight: 700;">${beatsDetected}</div>
+                    <div style="color: #a1a1aa; font-size: 11px;">Beats</div>
+                </div>
+                <div style="background: #27272a; padding: 12px; border-radius: 6px; border: 1px solid #3f3f46;">
+                    <div style="color: #60a5fa; font-size: 20px; font-weight: 700;">${tonesDetected}</div>
+                    <div style="color: #a1a1aa; font-size: 11px;">Tone Changes</div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="color: #e4e4e7; font-size: 12px; margin-bottom: 8px; display: block; font-weight: 500;">
+                    Detection Sensitivity
+                </label>
+                <input type="range" id="beatSensitivity" min="0.3" max="0.9" step="0.1" value="0.6" 
+                    style="width: 100%; accent-color: #3b82f6;">
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #71717a; margin-top: 4px;">
+                    <span>More</span>
+                    <span>Fewer</span>
+                </div>
+            </div>
+            
+            <button id="detectBeatsBtn" class="btn" style="width: 100%; background: #3b82f6; color: white; font-weight: 500; margin-bottom: 8px; border: none; font-size: 13px;">
+                <i class="fas fa-sparkles"></i> Analyze Audio
+            </button>
+            <button id="clearBeatsBtn" class="btn" style="width: 100%; background: #27272a; color: #e4e4e7; font-weight: 500; border: 1px solid #3f3f46; font-size: 13px; ${this.detectedBeats.length === 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                <i class="fas fa-trash"></i> Clear All (${this.detectedBeats.length})
+            </button>
+            
+            <div id="beatsList" style="margin-top: 12px; padding: 10px; background: #09090b; border-radius: 6px; max-height: 120px; overflow-y: auto; border: 1px solid #27272a;">
+                <small style="color: #a1a1aa; font-size: 11px; line-height: 1.6;">${beatsList}</small>
+            </div>
+        `;
+        
+        // Insert at the top of properties
+        propertiesContent.insertBefore(panel, propertiesContent.firstChild);
+        
+        // Add event listeners
+        document.getElementById('detectBeatsBtn').addEventListener('click', () => this.detectBeats());
+        document.getElementById('clearBeatsBtn').addEventListener('click', () => this.clearBeats());
+    }
+    
+    async detectBeats() {
+        if (!this.audioElement || !this.audioLoaded) {
+            this.showNotification('Please load audio first!', 'error');
+            return;
+        }
+        
+        const btn = document.getElementById('detectBeatsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        
+        try {
+            const audioUrl = this.currentData.audioUrl || this.currentData.instagramUrl;
+            const sensitivity = parseFloat(document.getElementById('beatSensitivity').value);
+            
+            // Fetch and analyze audio
+            const response = await fetch(audioUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Detect beats and tone changes
+            const beats = this.analyzeBeatsfromAudioBuffer(audioBuffer, sensitivity);
+            const toneChanges = this.analyzeToneChanges(audioBuffer, sensitivity);
+            
+            // Combine and sort by time
+            this.detectedBeats = [...beats, ...toneChanges].sort((a, b) => a.time - b.time);
+            
+            const beatCount = beats.length;
+            const toneCount = toneChanges.length;
+            this.showNotification(`✅ Found ${beatCount} beats, ${toneCount} tone changes`, 'success');
+            this.renderBeatDetectionUI();
+            this.renderTimeline(); // Re-render to show markers
+            
+        } catch (error) {
+            console.error('Audio analysis error:', error);
+            this.showNotification('Failed to analyze audio', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sparkles"></i> Analyze Audio';
+        }
+    }
+    
+    analyzeBeatsfromAudioBuffer(audioBuffer, sensitivity) {
+        const channelData = audioBuffer.getChannelData(0);
+        const sampleRate = audioBuffer.sampleRate;
+        const beats = [];
+        
+        // Calculate energy in windows
+        const windowSize = Math.floor(sampleRate * 0.05); // 50ms windows
+        const hopSize = Math.floor(windowSize / 2);
+        const energies = [];
+        
+        for (let i = 0; i < channelData.length - windowSize; i += hopSize) {
+            let energy = 0;
+            for (let j = 0; j < windowSize; j++) {
+                energy += channelData[i + j] ** 2;
+            }
+            energies.push({ time: i / sampleRate, energy: energy / windowSize });
+        }
+        
+        // Calculate average energy
+        const avgEnergy = energies.reduce((sum, e) => sum + e.energy, 0) / energies.length;
+        const threshold = avgEnergy * (1 + sensitivity);
+        
+        // Find peaks above threshold with minimum spacing
+        const minBeatSpacing = 0.3; // 300ms minimum between beats
+        let lastBeatTime = -1;
+        
+        for (let i = 1; i < energies.length - 1; i++) {
+            const curr = energies[i];
+            const prev = energies[i - 1];
+            const next = energies[i + 1];
+            
+            // Check if it's a local maximum above threshold
+            if (curr.energy > threshold && 
+                curr.energy > prev.energy && 
+                curr.energy > next.energy &&
+                (lastBeatTime === -1 || curr.time - lastBeatTime >= minBeatSpacing)) {
+                beats.push({ time: curr.time, type: 'beat' });
+                lastBeatTime = curr.time;
+            }
+        }
+        
+        return beats;
+    }
+    
+    analyzeToneChanges(audioBuffer, sensitivity) {
+        const channelData = audioBuffer.getChannelData(0);
+        const sampleRate = audioBuffer.sampleRate;
+        const toneChanges = [];
+        
+        // Use larger windows for spectral analysis
+        const windowSize = Math.floor(sampleRate * 0.2); // 200ms windows
+        const hopSize = Math.floor(windowSize / 2);
+        const spectralCentroids = [];
+        
+        // Calculate spectral centroid for each window (indicates brightness/tone)
+        for (let i = 0; i < channelData.length - windowSize; i += hopSize) {
+            let weightedSum = 0;
+            let magnitudeSum = 0;
+            
+            for (let j = 0; j < windowSize; j++) {
+                const magnitude = Math.abs(channelData[i + j]);
+                weightedSum += j * magnitude;
+                magnitudeSum += magnitude;
+            }
+            
+            const centroid = magnitudeSum > 0 ? weightedSum / magnitudeSum : 0;
+            spectralCentroids.push({ time: i / sampleRate, centroid });
+        }
+        
+        // Find significant changes in spectral centroid
+        const avgCentroid = spectralCentroids.reduce((sum, s) => sum + s.centroid, 0) / spectralCentroids.length;
+        const minToneSpacing = 1.0; // 1 second minimum between tone changes
+        let lastToneTime = -1;
+        
+        for (let i = 5; i < spectralCentroids.length - 5; i++) {
+            const curr = spectralCentroids[i].centroid;
+            const prev = spectralCentroids[i - 5].centroid;
+            const change = Math.abs(curr - prev) / avgCentroid;
+            
+            // Detect significant tone changes
+            if (change > (0.5 * sensitivity) && 
+                (lastToneTime === -1 || spectralCentroids[i].time - lastToneTime >= minToneSpacing)) {
+                toneChanges.push({ time: spectralCentroids[i].time, type: 'tone' });
+                lastToneTime = spectralCentroids[i].time;
+            }
+        }
+        
+        return toneChanges;
+    }
+    
+    clearBeats() {
+        this.detectedBeats = [];
+        this.renderBeatDetectionUI();
+        this.renderTimeline();
+        this.showNotification('Beats cleared', 'info');
+    }
+    
     // Clip timeline functions removed - feature disabled for now
 }
 

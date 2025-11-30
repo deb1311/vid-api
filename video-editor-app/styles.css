@@ -751,6 +751,8 @@ body {
     background: #8b5cf6;
     border-color: #7c3aed;
     color: #ffffff;
+    padding: 0;
+    display: block;
 }
 
 .timeline-clip.dragging {
