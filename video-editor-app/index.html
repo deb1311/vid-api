@@ -248,7 +248,12 @@
                         
                         <div class="property-field">
                             <label>Duration</label>
-                            <input type="number" id="clipDuration" step="0.1" min="0.1">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="clipDuration" step="0.1" min="0.1" style="flex: 1;">
+                                <button class="btn btn-small" id="lockDurationBtn" title="Lock/Unlock duration">
+                                    <i class="fas fa-lock-open"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="property-field">

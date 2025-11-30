@@ -48,6 +48,9 @@ class VideoEditor {
         this.historyIndex = -1;
         this.maxHistorySize = 50;
         
+        // Clip duration lock state
+        this.isDurationLocked = false;
+        
         this.init();
     }
 
@@ -129,6 +132,7 @@ class VideoEditor {
         document.getElementById('closeVideoEditModal').addEventListener('click', () => this.hideVideoEditModal());
         document.getElementById('applyClipChanges').addEventListener('click', () => this.applyClipChanges());
         document.getElementById('cancelClipChanges').addEventListener('click', () => this.hideVideoEditModal());
+        document.getElementById('lockDurationBtn').addEventListener('click', () => this.toggleDurationLock());
         
         this.setupTimelineInteractions();
         document.getElementById('videoTitle').addEventListener('input', () => this.autoSave());
@@ -731,28 +735,39 @@ class VideoEditor {
             
             if (dragHandle === 'left') {
                 // Dragging left handle - adjust begin time
-                newBegin = Math.max(0, startBegin + deltaTime);
-                newDuration = startDuration - deltaTime;
-                
-                // Ensure minimum duration of 0.1s
-                if (newDuration < 0.1) {
-                    newDuration = 0.1;
-                    newBegin = startBegin + startDuration - 0.1;
-                }
-                
-                // Ensure begin doesn't exceed video duration
-                if (newBegin >= videoDuration - 0.1) {
-                    newBegin = videoDuration - 0.1;
-                    newDuration = 0.1;
+                if (this.isDurationLocked) {
+                    // If locked, move both begin and end together (shift the clip)
+                    newBegin = Math.max(0, Math.min(videoDuration - startDuration, startBegin + deltaTime));
+                    newDuration = startDuration; // Keep duration locked
+                } else {
+                    newBegin = Math.max(0, startBegin + deltaTime);
+                    newDuration = startDuration - deltaTime;
+                    
+                    // Ensure minimum duration of 0.1s
+                    if (newDuration < 0.1) {
+                        newDuration = 0.1;
+                        newBegin = startBegin + startDuration - 0.1;
+                    }
+                    
+                    // Ensure begin doesn't exceed video duration
+                    if (newBegin >= videoDuration - 0.1) {
+                        newBegin = videoDuration - 0.1;
+                        newDuration = 0.1;
+                    }
                 }
             } else if (dragHandle === 'right') {
                 // Dragging right handle - adjust duration
-                newDuration = Math.max(0.1, startDuration + deltaTime);
-                
-                // Ensure end doesn't exceed video duration
-                const maxDuration = videoDuration - startBegin;
-                if (newDuration > maxDuration) {
-                    newDuration = maxDuration;
+                if (this.isDurationLocked) {
+                    // If locked, don't allow duration changes
+                    newDuration = startDuration;
+                } else {
+                    newDuration = Math.max(0.1, startDuration + deltaTime);
+                    
+                    // Ensure end doesn't exceed video duration
+                    const maxDuration = videoDuration - startBegin;
+                    if (newDuration > maxDuration) {
+                        newDuration = maxDuration;
+                    }
                 }
             } else if (dragHandle === 'segment') {
                 // Dragging segment - move entire clip (adjust begin, keep duration)
@@ -838,10 +853,33 @@ class VideoEditor {
         };
     }
 
+    toggleDurationLock() {
+        this.isDurationLocked = !this.isDurationLocked;
+        const lockBtn = document.getElementById('lockDurationBtn');
+        const icon = lockBtn.querySelector('i');
+        
+        if (this.isDurationLocked) {
+            icon.className = 'fas fa-lock';
+            lockBtn.style.background = '#3b82f6';
+            lockBtn.style.color = 'white';
+            lockBtn.title = 'Duration locked - Click to unlock';
+            this.showNotification('🔒 Duration locked', 'info');
+        } else {
+            icon.className = 'fas fa-lock-open';
+            lockBtn.style.background = '';
+            lockBtn.style.color = '';
+            lockBtn.title = 'Lock/Unlock duration';
+            this.showNotification('🔓 Duration unlocked', 'info');
+        }
+    }
+    
     hideVideoEditModal() {
         const modal = document.getElementById('videoEditModal');
         const video = document.getElementById('videoEditPlayer');
         const clipBeginInput = document.getElementById('clipBegin');
+        
+        // Reset lock state when closing modal
+        this.isDurationLocked = false;
         
         // Pause video when closing modal
         video.pause();
@@ -4141,42 +4179,67 @@ class VideoEditor {
         const sampleRate = audioBuffer.sampleRate;
         const beats = [];
         
-        // Calculate energy in windows
-        const windowSize = Math.floor(sampleRate * 0.05); // 50ms windows
-        const hopSize = Math.floor(windowSize / 2);
-        const energies = [];
+        // High-precision onset detection using energy envelope
+        const windowSize = Math.floor(sampleRate * 0.0116); // ~11.6ms (512 samples at 44.1kHz)
+        const hopSize = Math.floor(windowSize / 4); // 75% overlap for precision
         
+        // Calculate energy envelope
+        const energyEnvelope = [];
         for (let i = 0; i < channelData.length - windowSize; i += hopSize) {
             let energy = 0;
             for (let j = 0; j < windowSize; j++) {
                 energy += channelData[i + j] ** 2;
             }
-            energies.push({ time: i / sampleRate, energy: energy / windowSize });
+            energyEnvelope.push({
+                time: i / sampleRate,
+                energy: Math.sqrt(energy / windowSize) // RMS
+            });
         }
         
-        // Calculate average energy
-        const avgEnergy = energies.reduce((sum, e) => sum + e.energy, 0) / energies.length;
-        const threshold = avgEnergy * (1 + sensitivity);
+        // Calculate first-order difference (rate of change)
+        const differences = [];
+        for (let i = 1; i < energyEnvelope.length; i++) {
+            const diff = energyEnvelope[i].energy - energyEnvelope[i - 1].energy;
+            differences.push({
+                time: energyEnvelope[i].time,
+                diff: Math.max(0, diff) // Only positive changes (onsets)
+            });
+        }
         
-        // Find peaks above threshold with minimum spacing
-        const minBeatSpacing = 0.3; // 300ms minimum between beats
+        // Calculate global statistics for better threshold
+        const allDiffs = differences.map(d => d.diff);
+        const sortedDiffs = [...allDiffs].sort((a, b) => a - b);
+        const percentile90 = sortedDiffs[Math.floor(sortedDiffs.length * 0.9)];
+        const mean = allDiffs.reduce((sum, d) => sum + d, 0) / allDiffs.length;
+        
+        // Much stricter threshold
+        const globalThreshold = Math.max(percentile90, mean * 3);
+        const minBeatSpacing = 0.15; // 150ms minimum - prevents too many detections
         let lastBeatTime = -1;
         
-        for (let i = 1; i < energies.length - 1; i++) {
-            const curr = energies[i];
-            const prev = energies[i - 1];
-            const next = energies[i + 1];
+        for (let i = 3; i < differences.length - 3; i++) {
+            const curr = differences[i];
+            const prev1 = differences[i - 1];
+            const prev2 = differences[i - 2];
+            const prev3 = differences[i - 3];
+            const next1 = differences[i + 1];
+            const next2 = differences[i + 2];
             
-            // Check if it's a local maximum above threshold
-            if (curr.energy > threshold && 
-                curr.energy > prev.energy && 
-                curr.energy > next.energy &&
-                (lastBeatTime === -1 || curr.time - lastBeatTime >= minBeatSpacing)) {
+            // Very strict onset detection: must be a strong, clear peak
+            const isStrongPeak = curr.diff > globalThreshold * (0.8 + sensitivity * 0.5) &&
+                                curr.diff > prev1.diff * 1.8 &&
+                                curr.diff > prev2.diff * 1.5 &&
+                                curr.diff > prev3.diff * 1.3 &&
+                                curr.diff > next1.diff &&
+                                curr.diff > next2.diff;
+            
+            if (isStrongPeak && (lastBeatTime === -1 || curr.time - lastBeatTime >= minBeatSpacing)) {
                 beats.push({ time: curr.time, type: 'beat' });
                 lastBeatTime = curr.time;
             }
         }
         
+        console.log(`🥁 Detected ${beats.length} transients/onsets`);
         return beats;
     }
     
