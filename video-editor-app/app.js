@@ -533,27 +533,10 @@ class VideoEditor {
             }
         };
         
-        // Add real-time volume updates
-        const clipVolumeInput = document.getElementById('clipVolume');
-        const volumeIndicator = document.getElementById('volumeIndicator');
-        this.currentVolumeUpdater = () => {
-            const newVolume = parseFloat(clipVolumeInput.value) || 100;
-            const volumeDecimal = Math.max(0, Math.min(2.0, newVolume / 100)); // Convert to 0-2.0 range
-            if (video.readyState >= 2) {
-                video.volume = volumeDecimal;
-                volumeIndicator.textContent = `Volume: ${newVolume}%`;
-                console.log(`🔊 Video edit modal: Updated volume to ${newVolume}% (${volumeDecimal.toFixed(2)})`);
-            }
-        };
-        
         // Remove any existing event listeners to prevent duplicates
         if (this.previousVideoPreviewUpdater) {
             clipBeginInput.removeEventListener('input', this.previousVideoPreviewUpdater);
             clipBeginInput.removeEventListener('change', this.previousVideoPreviewUpdater);
-        }
-        if (this.previousVolumeUpdater) {
-            clipVolumeInput.removeEventListener('input', this.previousVolumeUpdater);
-            clipVolumeInput.removeEventListener('change', this.previousVolumeUpdater);
         }
         if (this.previousDurationUpdater) {
             const clipDurationInput = document.getElementById('clipDuration');
@@ -564,10 +547,6 @@ class VideoEditor {
         // Add new event listeners
         clipBeginInput.addEventListener('input', this.currentVideoPreviewUpdater);
         clipBeginInput.addEventListener('change', this.currentVideoPreviewUpdater);
-        
-        // Add volume event listeners
-        clipVolumeInput.addEventListener('input', this.currentVolumeUpdater);
-        clipVolumeInput.addEventListener('change', this.currentVolumeUpdater);
         
         // Add duration event listeners to update duration limiting
         const clipDurationInput = document.getElementById('clipDuration');
@@ -591,8 +570,6 @@ class VideoEditor {
         // Add helper button functionality
         const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
         const previewClipBtn = document.getElementById('previewClipBtn');
-        const testVolumeBtn = document.getElementById('testVolumeBtn');
-        const muteUnmuteBtn = document.getElementById('muteUnmuteBtn');
         
         this.currentJumpToBeginHandler = () => {
             const beginTime = parseFloat(clipBeginInput.value) || 0;
@@ -616,34 +593,6 @@ class VideoEditor {
             }
         };
         
-        this.currentTestVolumeHandler = () => {
-            const volume = parseFloat(clipVolumeInput.value) || 100;
-            const beginTime = parseFloat(clipBeginInput.value) || 0;
-            if (video.readyState >= 2) {
-                video.currentTime = beginTime;
-                video.play();
-                // Play for 3 seconds to test volume
-                setTimeout(() => {
-                    video.pause();
-                    console.log(`🔊 Tested volume: ${volume}% for 3 seconds`);
-                }, 3000);
-            }
-        };
-        
-        this.currentMuteUnmuteHandler = () => {
-            if (video.muted) {
-                video.muted = false;
-                muteUnmuteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                muteUnmuteBtn.title = 'Mute video';
-                console.log('🔊 Video unmuted');
-            } else {
-                video.muted = true;
-                muteUnmuteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                muteUnmuteBtn.title = 'Unmute video';
-                console.log('🔇 Video muted');
-            }
-        };
-        
         // Remove existing handlers if any
         if (this.previousJumpToBeginHandler) {
             jumpToBeginBtn.removeEventListener('click', this.previousJumpToBeginHandler);
@@ -651,50 +600,23 @@ class VideoEditor {
         if (this.previousPreviewClipHandler) {
             previewClipBtn.removeEventListener('click', this.previousPreviewClipHandler);
         }
-        if (this.previousTestVolumeHandler) {
-            testVolumeBtn.removeEventListener('click', this.previousTestVolumeHandler);
-        }
-        if (this.previousMuteUnmuteHandler) {
-            muteUnmuteBtn.removeEventListener('click', this.previousMuteUnmuteHandler);
-        }
         
         // Add new handlers
         jumpToBeginBtn.addEventListener('click', this.currentJumpToBeginHandler);
         previewClipBtn.addEventListener('click', this.currentPreviewClipHandler);
-        testVolumeBtn.addEventListener('click', this.currentTestVolumeHandler);
-        muteUnmuteBtn.addEventListener('click', this.currentMuteUnmuteHandler);
         
         // Store references for cleanup
         this.previousVideoPreviewUpdater = this.currentVideoPreviewUpdater;
-        this.previousVolumeUpdater = this.currentVolumeUpdater;
         this.previousDurationUpdater = this.currentDurationUpdater;
         this.previousJumpToBeginHandler = this.currentJumpToBeginHandler;
         this.previousPreviewClipHandler = this.currentPreviewClipHandler;
-        this.previousTestVolumeHandler = this.currentTestVolumeHandler;
-        this.previousMuteUnmuteHandler = this.currentMuteUnmuteHandler;
         
         // Populate form fields
         document.getElementById('clipVideoUrl').value = videoUrl;
         document.getElementById('clipBegin').value = clip.begin || 0;
         document.getElementById('clipDuration').value = clip.duration || 5;
         document.getElementById('clipStart').value = clip.start || 0;
-        document.getElementById('clipVolume').value = clip.volume || 100;
         document.getElementById('clipDescription').value = clip.description || '';
-        
-        // Set initial volume and update indicator
-        const clipInitialVolume = clip.volume || 100;
-        const volumeIndicatorElement = document.getElementById('volumeIndicator');
-        volumeIndicatorElement.textContent = `Volume: ${clipInitialVolume}%`;
-        
-        // Set initial mute button state
-        const muteUnmuteBtnElement = document.getElementById('muteUnmuteBtn');
-        if (clipInitialVolume === 0) {
-            muteUnmuteBtnElement.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            muteUnmuteBtnElement.title = 'Unmute video';
-        } else {
-            muteUnmuteBtnElement.innerHTML = '<i class="fas fa-volume-up"></i>';
-            muteUnmuteBtnElement.title = 'Mute video';
-        }
         
         // Initialize clip timeline visualization
         this.updateClipTimeline();
@@ -910,14 +832,6 @@ class VideoEditor {
             this.currentVideoPreviewUpdater = null;
         }
         
-        // Clean up volume event listeners
-        const clipVolumeInput = document.getElementById('clipVolume');
-        if (this.currentVolumeUpdater) {
-            clipVolumeInput.removeEventListener('input', this.currentVolumeUpdater);
-            clipVolumeInput.removeEventListener('change', this.currentVolumeUpdater);
-            this.currentVolumeUpdater = null;
-        }
-        
         // Clean up duration event listeners
         const clipDurationInput = document.getElementById('clipDuration');
         if (this.currentDurationUpdater) {
@@ -929,8 +843,6 @@ class VideoEditor {
         // Clean up helper button listeners
         const jumpToBeginBtn = document.getElementById('jumpToBeginBtn');
         const previewClipBtn = document.getElementById('previewClipBtn');
-        const testVolumeBtn = document.getElementById('testVolumeBtn');
-        const muteUnmuteBtn = document.getElementById('muteUnmuteBtn');
         
         if (this.currentJumpToBeginHandler) {
             jumpToBeginBtn.removeEventListener('click', this.currentJumpToBeginHandler);
@@ -940,16 +852,6 @@ class VideoEditor {
         if (this.currentPreviewClipHandler) {
             previewClipBtn.removeEventListener('click', this.currentPreviewClipHandler);
             this.currentPreviewClipHandler = null;
-        }
-        
-        if (this.currentTestVolumeHandler) {
-            testVolumeBtn.removeEventListener('click', this.currentTestVolumeHandler);
-            this.currentTestVolumeHandler = null;
-        }
-        
-        if (this.currentMuteUnmuteHandler) {
-            muteUnmuteBtn.removeEventListener('click', this.currentMuteUnmuteHandler);
-            this.currentMuteUnmuteHandler = null;
         }
         
         // Clean up time update handler
@@ -991,7 +893,6 @@ class VideoEditor {
         const begin = parseFloat(document.getElementById('clipBegin').value) || 0;
         const duration = parseFloat(document.getElementById('clipDuration').value) || 5;
         const start = parseFloat(document.getElementById('clipStart').value) || 0;
-        const volume = parseInt(document.getElementById('clipVolume').value) || 100;
         const description = document.getElementById('clipDescription').value || '';
         
         // Validate values
@@ -1010,16 +911,10 @@ class VideoEditor {
             return;
         }
         
-        if (volume < 0 || volume > 200) {
-            this.showNotification('Volume must be between 0 and 200!', 'error');
-            return;
-        }
-        
         // Update the clip data
         clip.begin = begin;
         clip.duration = duration;
         clip.start = start;
-        clip.volume = volume;
         clip.description = description;
         
         // Recalculate timeline and refresh displays
@@ -2354,10 +2249,11 @@ class VideoEditor {
         clipEl.dataset.type = type;
         
         if (type === 'video') {
+            const volumeInfo = item.volume !== undefined ? ` 🔊${item.volume}%` : '';
             clipEl.innerHTML = `
                 <div class="timeline-clip-resize-handle left"></div>
                 <i class="fas fa-video"></i> 
-                <span>Clip ${index + 1} (${duration.toFixed(1)}s)</span>
+                <span>Clip ${index + 1} (${duration.toFixed(1)}s)${volumeInfo}</span>
                 <div class="timeline-clip-resize-handle right"></div>
             `;
         } else if (type === 'text') {
@@ -3081,8 +2977,8 @@ class VideoEditor {
                     </div>
                     ${!isImage ? `
                     <div class="clip-field">
-                        <label>Volume (%) <small style="color: #666;">- 0=mute, 100=normal</small></label>
-                        <input type="number" value="${clip.volume !== undefined ? clip.volume : 100}" min="0" max="100" step="1" onchange="videoEditor.updateClip(${index}, 'volume', parseInt(this.value))">
+                        <label>Volume (%) <small style="color: #666;">- 0=mute, 100=normal, 200=max boost</small></label>
+                        <input type="number" value="${clip.volume !== undefined ? clip.volume : 100}" min="0" max="200" step="1" onchange="videoEditor.updateClip(${index}, 'volume', parseInt(this.value))">
                     </div>
                     ` : ''}
                 </div>
