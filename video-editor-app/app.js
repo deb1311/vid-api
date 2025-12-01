@@ -561,9 +561,8 @@ class VideoEditor {
         const html = `
             <div class="video-grid">
                 ${videos.map(video => {
-                    const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
-                    const bucketName = 'stock-clips';
-                    const videoUrl = `${workerUrl}/${bucketName}/${encodeURIComponent(video.name)}`;
+                    // Use direct S3 URL for better compatibility with FFmpeg
+                    const videoUrl = video.url || video.s3Url;
                     const durationText = video.duration ? `${video.duration.toFixed(1)}s` : '';
                     
                     return `

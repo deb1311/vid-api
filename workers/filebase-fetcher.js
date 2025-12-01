@@ -22,6 +22,13 @@ async function handleRequest(request) {
 
   // Support HEAD requests (used by FFmpeg and other tools)
   const method = request.method === 'HEAD' ? 'GET' : request.method;
+  
+  // Log request for debugging (remove in production if needed)
+  console.log('Request:', {
+    method: request.method,
+    url: request.url,
+    userAgent: request.headers.get('User-Agent')
+  });
 
   try {
     const url = new URL(request.url);
@@ -55,7 +62,8 @@ async function handleRequest(request) {
     const fetchHeaders = {
       'Host': 's3.filebase.com',
       'x-amz-date': amzDate,
-      'x-amz-content-sha256': 'UNSIGNED-PAYLOAD'
+      'x-amz-content-sha256': 'UNSIGNED-PAYLOAD',
+      'User-Agent': 'Cloudflare-Worker/1.0'
     };
 
     const range = request.headers.get('Range');
@@ -123,9 +131,9 @@ async function handleRequest(request) {
     // Return the media file with CORS headers
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Range');
-    headers.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+    headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', '*');
+    headers.set('Access-Control-Expose-Headers', '*');
     
     if (!headers.has('Cache-Control')) {
       headers.set('Cache-Control', 'public, max-age=31536000');
@@ -556,8 +564,8 @@ function handleCORS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Range',
-      'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Expose-Headers': '*',
       'Access-Control-Max-Age': '86400'
     }
   });
