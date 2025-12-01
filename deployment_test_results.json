@@ -1,0 +1,90 @@
+{
+  "timestamp": "2025-11-30T19:38:43.214Z",
+  "baseUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app",
+  "summary": {
+    "total": 9,
+    "passed": 8,
+    "failed": 1,
+    "successRate": "88.9%"
+  },
+  "results": [
+    {
+      "test": "Health Check",
+      "success": true
+    },
+    {
+      "success": true,
+      "duration": "22.98",
+      "data": {
+        "success": true,
+        "videoUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app/video/65a60fe7-3925-4381-b7ee-0c4f094fc99b-video.mp4",
+        "message": "Style 1 video created successfully (Two-step approach with bottom text)",
+        "style": "Style 1"
+      }
+    },
+    {
+      "success": true,
+      "duration": "53.27",
+      "data": {
+        "success": true,
+        "videoUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app/video/1916c20d-4f8b-4fe4-a5a9-bd457f75bd03-video.mp4",
+        "message": "Style 2 video created successfully (Single-step approach with bottom text)",
+        "style": "Style 2"
+      }
+    },
+    {
+      "success": true,
+      "duration": "21.23",
+      "data": {
+        "success": true,
+        "videoUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app/video/546605d5-f09a-4fd6-9991-172944d7d45f-video.mp4",
+        "message": "Style 3 video created successfully (Two-step approach with top text)",
+        "style": "Style 3"
+      }
+    },
+    {
+      "success": true,
+      "duration": "53.39",
+      "data": {
+        "success": true,
+        "videoUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app/video/19ba4a88-ffa9-4f24-8899-861ad24d2ccc-video.mp4",
+        "message": "Style 4 video created successfully (Single-step approach with top text)",
+        "style": "Style 4"
+      }
+    },
+    {
+      "success": true,
+      "duration": "83.31",
+      "data": {
+        "success": true,
+        "videoUrl": "https://video-editor-api-mit2lwtyaq-uc.a.run.app/video/547e7705-c250-4825-9282-135e5e6ca281-video.mp4",
+        "message": "Vid-1.2 video created successfully (Multi-clip approach with multiple video sources, top text, no fade)",
+        "style": "Vid-1.2"
+      }
+    },
+    {
+      "success": false,
+      "error": "Request failed with status code 400"
+    },
+    {
+      "test": "Video Editor Interface",
+      "success": true
+    },
+    {
+      "success": true,
+      "duration": "0.70",
+      "data": {
+        "success": false,
+        "status": 404,
+        "data": {
+          "success": false,
+          "error": {
+            "message": "Token \"unique-id\" not found",
+            "id": ""
+          }
+        },
+        "message": "Webhook returned error status"
+      }
+    }
+  ]
+}

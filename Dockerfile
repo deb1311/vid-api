@@ -10,7 +10,18 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu-core \
     fonts-dejavu-extra \
     fontconfig \
+    wget \
+    cabextract \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Microsoft TrueType core fonts (includes Impact) manually
+RUN mkdir -p /usr/share/fonts/truetype/msttcorefonts \
+    && cd /tmp \
+    && wget -q http://downloads.sourceforge.net/corefonts/impact32.exe \
+    && cabextract -d /usr/share/fonts/truetype/msttcorefonts impact32.exe \
+    && fc-cache -f -v \
+    && rm -f /tmp/*.exe \
+    && chmod 644 /usr/share/fonts/truetype/msttcorefonts/*.TTF
 
 # Install yt-dlp using --break-system-packages flag for Debian 12
 RUN pip3 install --break-system-packages --upgrade yt-dlp

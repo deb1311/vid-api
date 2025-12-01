@@ -62,13 +62,20 @@ async function handleRequest(request) {
     const fetchHeaders = {
       'Host': 's3.filebase.com',
       'x-amz-date': amzDate,
-      'x-amz-content-sha256': 'UNSIGNED-PAYLOAD',
-      'User-Agent': 'Cloudflare-Worker/1.0'
+      'x-amz-content-sha256': 'UNSIGNED-PAYLOAD'
     };
 
     const range = request.headers.get('Range');
     if (range) {
       fetchHeaders['Range'] = range;
+    }
+    
+    // Forward User-Agent if present (helps with FFmpeg compatibility)
+    const userAgent = request.headers.get('User-Agent');
+    if (userAgent) {
+      fetchHeaders['User-Agent'] = userAgent;
+    } else {
+      fetchHeaders['User-Agent'] = 'Cloudflare-Worker/1.0';
     }
 
     // Create canonical request

@@ -15,7 +15,7 @@ const { downloadFile, downloadVideo, extractInstagramAudio } = require('./endpoi
 const { handleMasterRequest, upload: masterUpload } = require('./endpoints/master');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Helper function to construct full URL
 function getFullUrl(req, relativePath) {

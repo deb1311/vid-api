@@ -242,6 +242,9 @@ async function createVideo(imagePath, audioPath, quote, author, outputPath) {
 
       // Determine font path for Linux container with multiple fallbacks
       const fontPaths = [
+        '/usr/share/fonts/truetype/msttcorefonts/Impact.TTF',
+        '/usr/share/fonts/truetype/msttcorefonts/Impact.ttf',
+        '/usr/share/fonts/truetype/msttcorefonts/impact.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
         '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
@@ -267,14 +270,14 @@ async function createVideo(imagePath, audioPath, quote, author, outputPath) {
       if (quote && quote.trim()) {
         const quoteText = `"${quote.replace(/'/g, "\\'")}"`;
         videoFilters.push(
-          `drawtext=text='${quoteText}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:enable='between(t,0.5,${audioDuration})':shadowcolor=black:shadowx=3:shadowy=3:line_spacing=10`
+          `drawtext=text='${quoteText}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:enable='between(t,0.5,${audioDuration})':shadowcolor=black:shadowx=4:shadowy=4:borderw=2:bordercolor=black:line_spacing=10`
         );
       }
 
       // Add author attribution with drop shadow
       if (author) {
         videoFilters.push(
-          `drawtext=text='${author.replace(/'/g, "\\'")}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:enable='between(t,0.5,${audioDuration})':shadowcolor=black:shadowx=2:shadowy=2`
+          `drawtext=text='${author.replace(/'/g, "\\'")}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:enable='between(t,0.5,${audioDuration})':shadowcolor=black:shadowx=3:shadowy=3:borderw=2:bordercolor=black`
         );
       }
 
@@ -295,12 +298,12 @@ async function createVideo(imagePath, audioPath, quote, author, outputPath) {
       let textFilter = '';
       if (quote && quote.trim()) {
         const quoteText2 = `"${quote.replace(/'/g, "\\'").replace(/"/g, '\\"')}"`;
-        textFilter = `,drawtext=text='${quoteText2}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`;
+        textFilter = `,drawtext=text='${quoteText2}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=4:shadowy=4:borderw=2:bordercolor=black`;
       }
 
       let authorFilter = '';
       if (author) {
-        authorFilter = `,drawtext=text='${author.replace(/'/g, "\\'").replace(/"/g, '\\"')}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`;
+        authorFilter = `,drawtext=text='${author.replace(/'/g, "\\'").replace(/"/g, '\\"')}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=3:shadowy=3:borderw=2:bordercolor=black`;
       }
 
       const fullVideoFilter = videoFilterString + textFilter + authorFilter;
@@ -326,12 +329,12 @@ async function createVideo(imagePath, audioPath, quote, author, outputPath) {
       // Add quote text with Linux font path if quote exists
       if (quote && quote.trim()) {
         const quoteText3 = `"${quote.replace(/'/g, "\\'").replace(/"/g, '\\"')}"`;
-        videoFilter += `,drawtext=text='${quoteText3}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`;
+        videoFilter += `,drawtext=text='${quoteText3}':fontfile=${fontPath}:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=4:shadowy=4:borderw=2:bordercolor=black`;
       }
 
       // Add author if provided
       if (author) {
-        videoFilter += `,drawtext=text='${author.replace(/'/g, "\\'").replace(/"/g, '\\"')}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`;
+        videoFilter += `,drawtext=text='${author.replace(/'/g, "\\'").replace(/"/g, '\\"')}':fontfile=${fontPath}:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=3:shadowy=3:borderw=2:bordercolor=black`;
       }
 
       // Try using spawn instead of exec to avoid command parsing issues

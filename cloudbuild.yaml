@@ -1,11 +1,11 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/editor-476018/video-editor-api-fixed:latest', '.']
+    args: ['build', '-t', 'gcr.io/editor-476018/video-editor-api:latest', '.']
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/editor-476018/video-editor-api-fixed:latest']
+    args: ['push', 'gcr.io/editor-476018/video-editor-api:latest']
   
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -13,9 +13,9 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'video-editor-api-fixed'
+      - 'video-editor-api'
       - '--image'
-      - 'gcr.io/editor-476018/video-editor-api-fixed:latest'
+      - 'gcr.io/editor-476018/video-editor-api:latest'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -31,4 +31,4 @@ steps:
       - '10'
 
 images:
-  - 'gcr.io/editor-476018/video-editor-api-fixed:latest'
+  - 'gcr.io/editor-476018/video-editor-api:latest'
