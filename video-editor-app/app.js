@@ -4673,6 +4673,18 @@ class VideoEditor {
             return;
         }
         
+        // Auto-detect server URL based on current location
+        const serverUrlInput = document.getElementById('renderServerUrl');
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            // Running on deployed server - use current origin
+            const currentOrigin = window.location.origin;
+            serverUrlInput.value = currentOrigin;
+            console.log('🌐 Auto-detected server URL:', currentOrigin);
+        } else {
+            // Running locally - keep localhost
+            serverUrlInput.value = 'http://localhost:3000';
+        }
+        
         // Check if endpoint is loaded from Notion
         const endpointSelect = document.getElementById('renderEndpoint');
         const endpointSource = document.getElementById('endpointSource');

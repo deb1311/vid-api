@@ -240,13 +240,27 @@ async function createVideo(imagePath, audioPath, quote, author, outputPath) {
         `fade=in:0:${Math.round(fadeInDuration * 30)}`
       ];
 
-      // Determine font path for Linux container
-      let fontPath = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
-      if (!fs.existsSync(fontPath)) {
-        fontPath = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
-        if (!fs.existsSync(fontPath)) {
-          fontPath = 'arial'; // Fallback to system font
+      // Determine font path for Linux container with multiple fallbacks
+      const fontPaths = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'
+      ];
+      
+      let fontPath = 'arial'; // Default fallback
+      for (const path of fontPaths) {
+        if (fs.existsSync(path)) {
+          fontPath = path;
+          console.log('✅ Using font:', path);
+          break;
         }
+      }
+      
+      if (fontPath === 'arial') {
+        console.warn('⚠️ No TrueType fonts found, using system fallback');
       }
 
       // Add quote text with drop shadow if quote is provided
