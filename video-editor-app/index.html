@@ -279,6 +279,35 @@
         </div>
     </div>
 
+    <!-- Video Browser Modal -->
+    <div id="videoBrowserModal" class="modal video-browser-modal">
+        <div class="modal-content video-browser-content">
+            <div class="modal-header">
+                <h3>Browse Videos from Filebase</h3>
+                <button class="close-btn" id="closeVideoBrowserModal">&times;</button>
+            </div>
+            <div class="video-browser-filters">
+                <input type="text" id="videoBrowserSearch" placeholder="Search videos..." class="search-input">
+                <label class="preview-toggle">
+                    <input type="checkbox" id="enablePreviewToggle" checked>
+                    <span>Enable Hover Preview</span>
+                </label>
+                <button class="btn btn-load" id="refreshVideoBrowserBtn" title="Force refresh from server">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+                <span id="cacheIndicator" class="cache-indicator" style="display: none;">
+                    <i class="fas fa-clock"></i> <span id="cacheAge"></span>
+                </span>
+            </div>
+            <div class="modal-body video-browser-body" id="videoBrowserList">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading videos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Render Modal -->
     <div id="renderModal" class="modal">
         <div class="modal-content">

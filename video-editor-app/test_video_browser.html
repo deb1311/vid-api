@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Browser Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #e5e5e5;
+        }
+        .test-section {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 6px;
+            border: 1px solid #2a2a2a;
+        }
+        .success {
+            color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Video Browser Feature Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Cloudflare Worker Connection</h2>
+        <p>This tests if the Filebase worker can list videos from the bucket.</p>
+        <button class="btn" onclick="testWorkerConnection()">Test Worker</button>
+        <div id="workerResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Video Browser UI</h2>
+        <p>Open the main editor (index.html) and:</p>
+        <ol>
+            <li>Load a JSON file with clips</li>
+            <li>Look for the 📁 browse button next to video URL fields</li>
+            <li>Click the browse button to open the video browser</li>
+            <li>Videos should load with thumbnails</li>
+            <li>Hover over videos to preview them</li>
+            <li>Click a video to select it</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Expected Features</h2>
+        <ul>
+            <li>✅ Browse button appears next to video URL fields (not image fields)</li>
+            <li>✅ Modal opens with video grid</li>
+            <li>✅ Videos load lazily (only when scrolled into view)</li>
+            <li>✅ Search/filter functionality</li>
+            <li>✅ Hover to preview video</li>
+            <li>✅ Click to select and auto-fill URL</li>
+            <li>✅ Shows duration and file size</li>
+            <li>✅ Efficient memory usage (lazy loading)</li>
+        </ul>
+    </div>
+
+    <script>
+        async function testWorkerConnection() {
+            const resultDiv = document.getElementById('workerResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>⏳ Testing worker connection...</p>';
+
+            try {
+                const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+                const bucketName = 'stock-clips';
+                
+                console.log('Testing:', `${workerUrl}/${bucketName}?list`);
+                
+                const response = await fetch(`${workerUrl}/${bucketName}?list`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Filter for video files
+                const videoFiles = data.files.filter(file => 
+                    file.name.match(/\.(mp4|mov|avi|mkv|webm|m4v)$/i)
+                );
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Worker connection successful!</p>
+                    <p>Bucket: ${data.bucket}</p>
+                    <p>Total files: ${data.fileCount}</p>
+                    <p>Video files: ${videoFiles.length}</p>
+                    <details>
+                        <summary>Sample videos (first 5)</summary>
+                        <pre>${JSON.stringify(videoFiles.slice(0, 5), null, 2)}</pre>
+                    </details>
+                `;
+                
+                console.log('✅ Worker test successful:', data);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Worker connection failed!</p>
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure:</p>
+                    <ul>
+                        <li>The Cloudflare worker is deployed</li>
+                        <li>The bucket name is correct</li>
+                        <li>CORS is properly configured</li>
+                    </ul>
+                `;
+                console.error('❌ Worker test failed:', error);
+            }
+        }
+    </script>
+</body>
+</html>

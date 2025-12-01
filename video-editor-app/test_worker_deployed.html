@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Deployment Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #e5e5e5;
+        }
+        h1 { color: #10b981; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn:hover { background: #1d4ed8; }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .video-item {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ Worker Deployed Successfully!</h1>
+    
+    <div class="info">
+        <p><strong>Worker URL:</strong> https://filebase-media-fetcher.debabratamaitra898.workers.dev</p>
+        <p><strong>Bucket:</strong> stock-clips</p>
+    </div>
+
+    <button class="btn" onclick="testWorker()">Test Worker Connection</button>
+    <button class="btn" onclick="showVideos()">Show All Videos</button>
+
+    <div id="result"></div>
+
+    <script>
+        let allVideos = [];
+
+        async function testWorker() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p class="info">⏳ Testing worker...</p>';
+
+            try {
+                const response = await fetch('https://filebase-media-fetcher.debabratamaitra898.workers.dev/stock-clips?list');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Filter for video files
+                const videoFiles = data.files.filter(file => 
+                    file.name.match(/\.(mp4|mov|avi|mkv|webm|m4v)$/i)
+                );
+                
+                allVideos = videoFiles;
+                
+                resultDiv.innerHTML = `
+                    <h2 class="success">✅ Worker is working perfectly!</h2>
+                    <p><strong>Total files:</strong> ${data.fileCount}</p>
+                    <p><strong>Video files:</strong> ${videoFiles.length}</p>
+                    <p><strong>Bucket:</strong> ${data.bucket}</p>
+                    <details>
+                        <summary>Sample videos (first 5)</summary>
+                        <pre>${JSON.stringify(videoFiles.slice(0, 5), null, 2)}</pre>
+                    </details>
+                `;
+                
+                console.log('✅ Worker test successful:', data);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 class="error">❌ Worker test failed!</h2>
+                    <p>Error: ${error.message}</p>
+                `;
+                console.error('❌ Worker test failed:', error);
+            }
+        }
+
+        function showVideos() {
+            if (allVideos.length === 0) {
+                alert('Please test the worker first!');
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2>📹 All Videos (${allVideos.length})</h2>
+                <div class="video-grid">
+                    ${allVideos.map(video => `
+                        <div class="video-item">
+                            <strong>${video.name.substring(0, 30)}...</strong><br>
+                            Size: ${video.sizeFormatted}<br>
+                            ${video.duration ? `Duration: ${video.duration}s` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Auto-test on load
+        window.onload = () => testWorker();
+    </script>
+</body>
+</html>

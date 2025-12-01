@@ -51,6 +51,13 @@ class VideoEditor {
         // Clip duration lock state
         this.isDurationLocked = false;
         
+        // Video browser cache
+        this.videoBrowserCache = {
+            data: null,
+            timestamp: null,
+            expiryMinutes: 30 // Cache expires after 30 minutes
+        };
+        
         this.init();
     }
 
@@ -110,6 +117,16 @@ class VideoEditor {
         });
         
         document.getElementById('closeFullscreenModal').addEventListener('click', () => this.hideFullscreenModal());
+        
+        // Video Browser modal listeners
+        document.getElementById('videoBrowserModal').addEventListener('click', (e) => {
+            if (e.target.id === 'videoBrowserModal') this.hideVideoBrowser();
+        });
+        document.getElementById('closeVideoBrowserModal').addEventListener('click', () => this.hideVideoBrowser());
+        document.getElementById('refreshVideoBrowserBtn').addEventListener('click', () => {
+            this.showNotification('🔄 Refreshing video list...', 'info');
+            this.loadVideosFromFilebase(true); // Force refresh
+        });
         
         // Fullscreen playbar controls - use event delegation for better reliability
         document.addEventListener('click', (e) => {
@@ -349,6 +366,338 @@ class VideoEditor {
     hideFullscreenModal() {
         document.getElementById('fullscreenModal').classList.remove('active');
         console.log('🖥️ Closed fullscreen video preview');
+    }
+
+    // Video Browser Modal Methods
+    showVideoBrowser(clipIndex) {
+        this.currentBrowsingClipIndex = clipIndex;
+        document.getElementById('videoBrowserModal').classList.add('active');
+        this.loadVideosFromFilebase();
+        console.log('📁 Opened video browser for clip', clipIndex);
+    }
+
+    hideVideoBrowser() {
+        document.getElementById('videoBrowserModal').classList.remove('active');
+        this.currentBrowsingClipIndex = null;
+        
+        // Clean up observer and unload all videos to free memory
+        if (this.videoObserver) {
+            this.videoObserver.disconnect();
+            this.videoObserver = null;
+        }
+        
+        // Aggressively clean up all video elements
+        const videos = document.querySelectorAll('#videoBrowserList video');
+        videos.forEach(video => {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        });
+        
+        console.log('📁 Closed video browser and freed memory');
+    }
+
+    async loadVideosFromFilebase(forceRefresh = false) {
+        const listContainer = document.getElementById('videoBrowserList');
+        const searchInput = document.getElementById('videoBrowserSearch');
+        
+        // Check cache first (unless force refresh)
+        if (!forceRefresh && this.videoBrowserCache.data && this.videoBrowserCache.timestamp) {
+            const now = Date.now();
+            const cacheAge = (now - this.videoBrowserCache.timestamp) / 1000 / 60; // minutes
+            
+            if (cacheAge < this.videoBrowserCache.expiryMinutes) {
+                console.log(`📦 Using cached video list (${cacheAge.toFixed(1)} min old)`);
+                
+                // Use cached data
+                this.allVideos = this.videoBrowserCache.data;
+                this.renderVideoGrid(this.allVideos);
+                this.updateCacheIndicator();
+                
+                // Setup search filtering
+                searchInput.oninput = (e) => {
+                    const query = e.target.value.toLowerCase();
+                    const filtered = this.allVideos.filter(video => 
+                        video.name.toLowerCase().includes(query)
+                    );
+                    this.renderVideoGrid(filtered);
+                };
+                
+                // Show cache indicator
+                this.showNotification(`📦 Loaded ${this.allVideos.length} videos from cache`, 'info');
+                return;
+            } else {
+                console.log('🔄 Cache expired, fetching fresh data');
+            }
+        }
+        
+        // Show loading state
+        listContainer.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading videos from Filebase...</p>
+            </div>
+        `;
+
+        try {
+            // Use the Cloudflare worker to list files from the bucket
+            const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+            const bucketName = 'stock-clips'; // Change this to your bucket name
+            
+            const response = await fetch(`${workerUrl}/${bucketName}?list`);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch videos (${response.status})`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.files || data.files.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No videos found in bucket</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Filter for video files only
+            const videoFiles = data.files.filter(file => 
+                file.name.match(/\.(mp4|mov|avi|mkv|webm|m4v)$/i)
+            );
+
+            if (videoFiles.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No video files found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Store all videos for search filtering
+            this.allVideos = videoFiles;
+            
+            // Cache the results
+            this.videoBrowserCache.data = videoFiles;
+            this.videoBrowserCache.timestamp = Date.now();
+            
+            this.renderVideoGrid(videoFiles);
+            this.updateCacheIndicator();
+
+            // Setup search filtering
+            searchInput.oninput = (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = this.allVideos.filter(video => 
+                    video.name.toLowerCase().includes(query)
+                );
+                this.renderVideoGrid(filtered);
+            };
+
+            console.log('📁 Loaded', videoFiles.length, 'videos from Filebase (cached for', this.videoBrowserCache.expiryMinutes, 'minutes)');
+
+        } catch (error) {
+            console.error('❌ Error loading videos:', error);
+            listContainer.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading videos: ${error.message}</p>
+                    <small>Make sure the Cloudflare worker is deployed and accessible</small>
+                </div>
+            `;
+        }
+    }
+
+    renderVideoGrid(videos) {
+        const listContainer = document.getElementById('videoBrowserList');
+        
+        if (videos.length === 0) {
+            listContainer.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-search"></i>
+                    <p>No videos match your search</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Clean up previous observer if exists
+        if (this.videoObserver) {
+            this.videoObserver.disconnect();
+        }
+
+        // Track currently playing video to limit to one at a time
+        let currentlyPlayingVideo = null;
+
+        // Use Intersection Observer for lazy loading with aggressive unloading
+        this.videoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const videoElement = entry.target.querySelector('video');
+                
+                if (entry.isIntersecting) {
+                    // Load video when visible
+                    if (videoElement && !videoElement.src) {
+                        const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+                        const bucketName = 'stock-clips';
+                        videoElement.src = `${workerUrl}/${bucketName}/${encodeURIComponent(videoElement.dataset.filename)}`;
+                        videoElement.load();
+                    }
+                } else {
+                    // Aggressively unload video when not visible to save memory
+                    if (videoElement && videoElement.src) {
+                        videoElement.pause();
+                        videoElement.removeAttribute('src');
+                        videoElement.load(); // This releases the video from memory
+                    }
+                }
+            });
+        }, {
+            rootMargin: '100px', // Load slightly before visible
+            threshold: 0
+        });
+
+        const html = `
+            <div class="video-grid">
+                ${videos.map(video => {
+                    const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+                    const bucketName = 'stock-clips';
+                    const videoUrl = `${workerUrl}/${bucketName}/${encodeURIComponent(video.name)}`;
+                    const durationText = video.duration ? `${video.duration.toFixed(1)}s` : '';
+                    
+                    return `
+                        <div class="video-item" data-video-url="${videoUrl}" data-filename="${video.name}">
+                            <div class="video-thumbnail">
+                                <div class="video-placeholder">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <video 
+                                    data-filename="${video.name}"
+                                    muted 
+                                    preload="none"
+                                    playsinline
+                                    disablePictureInPicture
+                                    style="display: none;"
+                                ></video>
+                                ${durationText ? `<div class="video-duration-badge">${durationText}</div>` : ''}
+                            </div>
+                            <div class="video-info">
+                                <div class="video-name" title="${video.name}">${video.name}</div>
+                                <div class="video-meta">
+                                    <span>${video.sizeFormatted}</span>
+                                    ${durationText ? `<span>${durationText}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        listContainer.innerHTML = html;
+
+        // Attach click handlers and setup lazy loading
+        const videoItems = listContainer.querySelectorAll('.video-item');
+        videoItems.forEach(item => {
+            // Setup lazy loading
+            this.videoObserver.observe(item);
+            
+            // Click handler
+            item.addEventListener('click', () => {
+                const videoUrl = item.dataset.videoUrl;
+                this.selectVideoFromBrowser(videoUrl);
+            });
+
+            // Optimized hover preview - only one video plays at a time
+            const video = item.querySelector('video');
+            const placeholder = item.querySelector('.video-placeholder');
+            
+            if (video) {
+                let hoverTimeout;
+                
+                item.addEventListener('mouseenter', () => {
+                    // Check if preview is enabled
+                    const previewEnabled = document.getElementById('enablePreviewToggle')?.checked;
+                    if (!previewEnabled) return;
+                    
+                    // Stop any currently playing video
+                    if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
+                        currentlyPlayingVideo.pause();
+                        currentlyPlayingVideo.currentTime = 0;
+                        currentlyPlayingVideo.style.display = 'none';
+                        const prevPlaceholder = currentlyPlayingVideo.parentElement.querySelector('.video-placeholder');
+                        if (prevPlaceholder) prevPlaceholder.style.display = 'flex';
+                    }
+                    
+                    // Delay preview to avoid loading on quick mouse movements
+                    hoverTimeout = setTimeout(() => {
+                        if (video.src) {
+                            placeholder.style.display = 'none';
+                            video.style.display = 'block';
+                            video.currentTime = 0;
+                            video.play().catch(() => {});
+                            currentlyPlayingVideo = video;
+                        }
+                    }, 300); // 300ms delay before preview starts
+                });
+                
+                item.addEventListener('mouseleave', () => {
+                    clearTimeout(hoverTimeout);
+                    video.pause();
+                    video.currentTime = 0;
+                    video.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                    if (currentlyPlayingVideo === video) {
+                        currentlyPlayingVideo = null;
+                    }
+                });
+            }
+        });
+    }
+
+    updateCacheIndicator() {
+        const indicator = document.getElementById('cacheIndicator');
+        const ageSpan = document.getElementById('cacheAge');
+        
+        if (!this.videoBrowserCache.timestamp) {
+            indicator.style.display = 'none';
+            return;
+        }
+        
+        const now = Date.now();
+        const ageMinutes = (now - this.videoBrowserCache.timestamp) / 1000 / 60;
+        
+        if (ageMinutes < 1) {
+            ageSpan.textContent = 'Just now';
+        } else if (ageMinutes < 60) {
+            ageSpan.textContent = `${Math.floor(ageMinutes)} min ago`;
+        } else {
+            ageSpan.textContent = 'Expired';
+        }
+        
+        indicator.style.display = 'flex';
+    }
+
+    selectVideoFromBrowser(videoUrl) {
+        if (this.currentBrowsingClipIndex !== null && this.currentData.clips) {
+            const clip = this.currentData.clips[this.currentBrowsingClipIndex];
+            if (clip) {
+                // Update the clip's video URL
+                clip.videourl = videoUrl;
+                clip.videoUrl = videoUrl; // Support both formats
+                
+                // Refresh the properties panel
+                this.renderProperties();
+                this.preloadMedia();
+                this.autoSave();
+                
+                this.showNotification(`✅ Video selected for clip ${this.currentBrowsingClipIndex + 1}`, 'success');
+                console.log('📹 Selected video:', videoUrl);
+            }
+        }
+        
+        this.hideVideoBrowser();
     }
 
     setupFullscreenProgressBar() {
@@ -3187,7 +3536,14 @@ class VideoEditor {
                     </div>
                     <div class="clip-field">
                         <label>${clipType} URL</label>
-                        <input type="text" value="${mediaUrl}" onchange="videoEditor.updateClipUrl(${index}, this.value)">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" value="${mediaUrl}" onchange="videoEditor.updateClipUrl(${index}, this.value)" style="flex: 1;">
+                            ${!isImage ? `
+                            <button class="btn-browse" onclick="videoEditor.showVideoBrowser(${index})" title="Browse videos from Filebase">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
+                            ` : ''}
+                        </div>
                     </div>
                     <div class="clip-field">
                         <label>Description</label>
