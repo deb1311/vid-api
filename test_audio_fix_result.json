@@ -1,0 +1,7 @@
+{
+  "success": true,
+  "renderTime": "19.61s",
+  "videoUrl": "http://localhost:8080/video/8606f25b-e1d8-4c8f-ac8c-6a4e411c165e-video.mp4",
+  "timestamp": "2025-12-03T04:34:09.923Z",
+  "testCase": "vid-1.3 with multiple clips and background audio"
+}

@@ -118,40 +118,82 @@ async function createVideoWithoutFade(videoWithTextPath, audioPath, outputPath, 
       
       console.log(`Vid-1 (Step 1): Audio duration: ${audioDuration}s, Final duration: ${finalDuration}s, No fade effects`);
 
-      // Build FFmpeg command for final video without fade
-      const args = [
-        '-i', videoWithTextPath,
-        '-i', audioPath,
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-b:a', '128k',
-        '-t', finalDuration.toString(),
-        '-pix_fmt', 'yuv420p',
-        '-y', outputPath
-      ];
+      // Check if video has audio
+      const ffprobeAudio = spawn('ffprobe', [
+        '-v', 'quiet',
+        '-select_streams', 'a',
+        '-show_entries', 'stream=codec_type',
+        '-of', 'csv=p=0',
+        videoWithTextPath
+      ]);
 
-      console.log('Creating final video without fade effects...');
-      console.log('FFmpeg command:', 'ffmpeg', args.join(' '));
+      let hasAudio = false;
 
-      const ffmpeg = spawn('ffmpeg', args);
-      let stderr = '';
-
-      ffmpeg.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      ffmpeg.on('close', (code) => {
-        if (code === 0) {
-          console.log('Final video created successfully');
-          resolve(outputPath);
-        } else {
-          console.error('FFmpeg stderr:', stderr);
-          reject(new Error(`Video creation failed with code ${code}`));
+      ffprobeAudio.stdout.on('data', (data) => {
+        if (data.toString().trim() === 'audio') {
+          hasAudio = true;
         }
       });
 
-      ffmpeg.on('error', (error) => {
-        reject(new Error(`FFmpeg spawn error: ${error.message}`));
+      ffprobeAudio.on('close', () => {
+        let args;
+        
+        if (hasAudio) {
+          // Video has audio - mix both audio streams
+          console.log('🎵 Mixing video audio with background audio...');
+          args = [
+            '-i', videoWithTextPath,
+            '-i', audioPath,
+            '-filter_complex', '[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2',
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-b:a', '192k',
+            '-t', finalDuration.toString(),
+            '-y', outputPath
+          ];
+        } else {
+          // Video has no audio - just add the background audio
+          console.log('🎵 Adding background audio to silent video...');
+          args = [
+            '-i', videoWithTextPath,
+            '-i', audioPath,
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-b:a', '192k',
+            '-map', '0:v',
+            '-map', '1:a',
+            '-t', finalDuration.toString(),
+            '-y', outputPath
+          ];
+        }
+
+        console.log('Creating final video without fade effects...');
+        console.log('FFmpeg command:', 'ffmpeg', args.join(' '));
+
+        const ffmpeg = spawn('ffmpeg', args);
+        let stderr = '';
+
+        ffmpeg.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        ffmpeg.on('close', (code) => {
+          if (code === 0) {
+            console.log('Final video created successfully');
+            resolve(outputPath);
+          } else {
+            console.error('FFmpeg stderr:', stderr);
+            reject(new Error(`Video creation failed with code ${code}`));
+          }
+        });
+
+        ffmpeg.on('error', (error) => {
+          reject(new Error(`FFmpeg spawn error: ${error.message}`));
+        });
+      });
+
+      ffprobeAudio.on('error', (error) => {
+        reject(new Error(`FFprobe spawn error: ${error.message}`));
       });
     });
   });

@@ -480,36 +480,79 @@ async function addAudioToVideo(videoPath, audioPath, outputPath, duration) {
   return new Promise((resolve, reject) => {
     console.log('🎵 Adding audio to video...');
 
-    const args = [
-      '-i', videoPath,
-      '-i', audioPath,
-      '-c:v', 'libx264',
-      '-c:a', 'aac',
-      '-b:a', '128k',
-      '-t', duration.toString(),
-      '-pix_fmt', 'yuv420p',
-      '-y', outputPath
-    ];
+    // First check if video has audio
+    const ffprobe = spawn('ffprobe', [
+      '-v', 'quiet',
+      '-select_streams', 'a',
+      '-show_entries', 'stream=codec_type',
+      '-of', 'csv=p=0',
+      videoPath
+    ]);
 
-    const ffmpeg = spawn('ffmpeg', args);
-    let stderr = '';
+    let hasAudio = false;
 
-    ffmpeg.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ffmpeg.on('close', (code) => {
-      if (code === 0) {
-        console.log('✅ Final video created successfully');
-        resolve(outputPath);
-      } else {
-        console.error('❌ Final video creation failed:', stderr);
-        reject(new Error(`Final video creation failed with code ${code}`));
+    ffprobe.stdout.on('data', (data) => {
+      if (data.toString().trim() === 'audio') {
+        hasAudio = true;
       }
     });
 
-    ffmpeg.on('error', (error) => {
-      reject(new Error(`FFmpeg spawn error: ${error.message}`));
+    ffprobe.on('close', () => {
+      let args;
+      
+      if (hasAudio) {
+        // Video has audio - mix both audio streams
+        console.log('🎵 Mixing video audio with background audio...');
+        args = [
+          '-i', videoPath,
+          '-i', audioPath,
+          '-filter_complex', '[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2',
+          '-c:v', 'copy',
+          '-c:a', 'aac',
+          '-b:a', '192k',
+          '-t', duration.toString(),
+          '-y', outputPath
+        ];
+      } else {
+        // Video has no audio - just add the background audio
+        console.log('🎵 Adding background audio to silent video...');
+        args = [
+          '-i', videoPath,
+          '-i', audioPath,
+          '-c:v', 'copy',
+          '-c:a', 'aac',
+          '-b:a', '192k',
+          '-map', '0:v',
+          '-map', '1:a',
+          '-t', duration.toString(),
+          '-y', outputPath
+        ];
+      }
+
+      const ffmpeg = spawn('ffmpeg', args);
+      let stderr = '';
+
+      ffmpeg.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      ffmpeg.on('close', (code) => {
+        if (code === 0) {
+          console.log('✅ Final video created successfully');
+          resolve(outputPath);
+        } else {
+          console.error('❌ Final video creation failed:', stderr);
+          reject(new Error(`Final video creation failed with code ${code}`));
+        }
+      });
+
+      ffmpeg.on('error', (error) => {
+        reject(new Error(`FFmpeg spawn error: ${error.message}`));
+      });
+    });
+
+    ffprobe.on('error', (error) => {
+      reject(new Error(`FFprobe spawn error: ${error.message}`));
     });
   });
 }
