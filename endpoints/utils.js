@@ -264,11 +264,26 @@ function calculateTextLayout(quote, author) {
   };
 }
 
+// Escape text for FFmpeg drawtext filter
+// FFmpeg's drawtext filter uses special characters that need escaping
+function escapeDrawtext(text) {
+  if (!text) return '';
+  return text
+    .replace(/\\/g, '\\\\')   // Backslash (must be first)
+    .replace(/'/g, "\\'")      // Single quote
+    .replace(/:/g, '\\:')      // Colon (parameter separator)
+    .replace(/\[/g, '\\[')     // Left bracket
+    .replace(/\]/g, '\\]')     // Right bracket
+    .replace(/,/g, '\\,')      // Comma (filter separator)
+    .replace(/;/g, '\\;');     // Semicolon (filter chain separator)
+}
+
 module.exports = {
   downloadFile,
   downloadVideo,
   extractInstagramAudio,
   calculateTextLayout,
   handleFileSource,
-  handleVideoSource
+  handleVideoSource,
+  escapeDrawtext
 };

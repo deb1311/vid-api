@@ -4750,10 +4750,13 @@ class VideoEditor {
         document.getElementById('startRenderBtn').disabled = true;
         
         try {
-            // Prepare the payload
+            // Prepare the payload - remove endpoint field from data if it exists
+            const cleanData = { ...this.currentData };
+            delete cleanData.endpoint; // Remove endpoint from data to avoid conflicts
+            
             const payload = {
                 endpoint: endpoint,
-                data: this.currentData
+                data: cleanData
             };
             
             console.log('🎬 Starting render:', { endpoint, serverUrl, payload });

@@ -774,6 +774,14 @@ app.post('/vid-1.5', async (req, res) => {
   }
 });
 
+// Master endpoint - wrapper for all other endpoints
+const { handleMasterRequest, upload: masterUpload } = require('./endpoints/master');
+app.post('/master', masterUpload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'video', maxCount: 1 },
+  { name: 'audio', maxCount: 1 }
+]), handleMasterRequest);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Video Editor API is running' });

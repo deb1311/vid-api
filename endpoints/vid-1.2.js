@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource } = require('./utils');
+const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext } = require('./utils');
 
 /**
  * Vid-1.2: Multi-clip video creation with text overlays
@@ -285,7 +285,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
     if (quote && quote.trim() && layout.lines.length > 0) {
       for (let i = 0; i < layout.lines.length; i++) {
         const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
-        const cleanText = layout.lines[i].replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+        const cleanText = escapeDrawtext(layout.lines[i]);
         if (cleanText.trim() !== '') { // Only add non-empty lines
           textFilters.push(
             `drawtext=text='${cleanText}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
@@ -297,7 +297,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
     // Add author - use editor's positioning (65% down the screen)
     if (author && author.trim() !== '') {
       const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-      const cleanAuthor = author.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+      const cleanAuthor = escapeDrawtext(author);
       if (cleanAuthor.trim() !== '') { // Only add non-empty author
         textFilters.push(
           `drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
@@ -307,7 +307,7 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
 
     // Add watermark
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = watermark.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+      const cleanWatermark = escapeDrawtext(watermark);
       if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
         textFilters.push(
           `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`

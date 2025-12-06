@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { downloadFile, downloadVideo, calculateTextLayout, handleFileSource, handleVideoSource } = require('./utils');
+const { downloadFile, downloadVideo, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext } = require('./utils');
 
 /**
  * Vid-1.5: Multi-clip video creation with timed captions and cinematic overlay support
@@ -299,7 +299,7 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
           const caption = captions[i];
           if (!caption.text || caption.text.trim() === '') continue; // Skip empty captions
           
-          const cleanText = caption.text.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+          const cleanText = escapeDrawtext(caption.text);
           if (cleanText.trim() === '') continue; // Skip if cleaned text is empty
           
           const startTime = caption.start || 0;
@@ -317,7 +317,7 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
           // Add caption lines with timing
           for (let j = 0; j < captionLayout.lines.length; j++) {
             const lineY = textStartY + captionLayout.topPadding + (j * captionLayout.lineHeight);
-            const cleanLine = captionLayout.lines[j].replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+            const cleanLine = escapeDrawtext(captionLayout.lines[j]);
             
             if (cleanLine.trim() !== '') { // Only add non-empty lines
               textFilters.push(
@@ -330,7 +330,7 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
 
       // Add watermark
       if (watermark && watermark.trim() !== '') {
-        const cleanWatermark = watermark.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+        const cleanWatermark = escapeDrawtext(watermark);
         if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
           textFilters.push(
             `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
@@ -709,7 +709,7 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
     if (captions && captions.length > 0) {
       for (let i = 0; i < captions.length; i++) {
         const caption = captions[i];
-        const cleanText = caption.text.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+        const cleanText = escapeDrawtext(caption.text);
         const startTime = caption.start || 0;
         const endTime = startTime + (caption.duration || 3);
         
@@ -725,7 +725,7 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
         // Add caption lines with timing
         for (let j = 0; j < captionLayout.lines.length; j++) {
           const lineY = textStartY + captionLayout.topPadding + (j * captionLayout.lineHeight);
-          const cleanLine = captionLayout.lines[j].replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+          const cleanLine = escapeDrawtext(captionLayout.lines[j]);
           
           textFilters.push(
             `drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
@@ -736,7 +736,7 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
 
     // Add watermark
     if (watermark) {
-      const cleanWatermark = watermark.replace(/'/g, '').replace(/:/g, ' -').replace(/"/g, '');
+      const cleanWatermark = escapeDrawtext(watermark);
       textFilters.push(
         `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
       );

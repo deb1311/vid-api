@@ -6,7 +6,6 @@ const TEST_QUOTE = "POV: My lawyer on the phone telling me its best to leave the
 const TEST_VIDEO = "https://videos.pexels.com/video-files/6184758/6184758-hd_1080_2048_24fps.mp4";
 const TEST_IMAGE = "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg";
 const TEST_AUDIO = "https://vllxucytucjyflsenjmz.supabase.co/storage/v1/object/public/assets/599_audio.mp3";
-const TEST_AUTHOR = "Test Author: Name";
 const TEST_WATERMARK = "@e2";
 
 const results = [];
@@ -24,8 +23,7 @@ async function testEndpoint(name, endpoint, data) {
       data: data
     };
     
-    console.log(`📦 Endpoint: ${endpoint}`);
-    console.log(`📝 Quote: "${TEST_QUOTE.substring(0, 50)}..."`);
+    console.log('📦 Payload:', JSON.stringify(payload, null, 2));
     
     const response = await axios.post(`${BASE_URL}/master`, payload, {
       headers: {
@@ -37,6 +35,7 @@ async function testEndpoint(name, endpoint, data) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     
     console.log(`✅ SUCCESS (${duration}s)`);
+    console.log('Response:', JSON.stringify(response.data, null, 2));
     
     if (response.data.url) {
       console.log(`🎥 Video URL: ${response.data.url}`);
@@ -58,7 +57,7 @@ async function testEndpoint(name, endpoint, data) {
     console.error(`❌ FAILED (${duration}s)`);
     if (error.response) {
       console.error('Status:', error.response.status);
-      console.error('Error:', JSON.stringify(error.response.data, null, 2));
+      console.error('Data:', JSON.stringify(error.response.data, null, 2));
     } else {
       console.error('Error:', error.message);
     }
@@ -76,69 +75,9 @@ async function testEndpoint(name, endpoint, data) {
 }
 
 async function runAllTests() {
-  console.log('\n🚀 MASTER ENDPOINT COMPREHENSIVE TEST');
-  console.log('Testing all endpoints through /master with special characters\n');
+  console.log('\n🚀 Starting comprehensive endpoint tests...\n');
   
-  // Style Endpoints
-  console.log('\n📸 STYLE ENDPOINTS (Image-based)');
-  console.log('='.repeat(60));
-  
-  await testEndpoint(
-    'Style 1: Two-step with bottom text',
-    'style1',
-    {
-      quote: TEST_QUOTE,
-      author: TEST_AUTHOR,
-      watermark: TEST_WATERMARK,
-      imageUrl: TEST_IMAGE,
-      audioUrl: TEST_AUDIO,
-      duration: 6
-    }
-  );
-  
-  await testEndpoint(
-    'Style 2: Single-step with bottom text',
-    'style2',
-    {
-      quote: TEST_QUOTE,
-      author: TEST_AUTHOR,
-      watermark: TEST_WATERMARK,
-      imageUrl: TEST_IMAGE,
-      audioUrl: TEST_AUDIO,
-      duration: 6
-    }
-  );
-  
-  await testEndpoint(
-    'Style 3: Two-step with top text',
-    'style3',
-    {
-      quote: TEST_QUOTE,
-      author: TEST_AUTHOR,
-      watermark: TEST_WATERMARK,
-      imageUrl: TEST_IMAGE,
-      audioUrl: TEST_AUDIO,
-      duration: 6
-    }
-  );
-  
-  await testEndpoint(
-    'Style 4: Single-step with top text',
-    'style4',
-    {
-      quote: TEST_QUOTE,
-      author: TEST_AUTHOR,
-      watermark: TEST_WATERMARK,
-      imageUrl: TEST_IMAGE,
-      audioUrl: TEST_AUDIO,
-      duration: 6
-    }
-  );
-  
-  // Vid Endpoints
-  console.log('\n\n🎥 VID ENDPOINTS (Video-based)');
-  console.log('='.repeat(60));
-  
+  // Test 1: Vid-1 (Video background with text)
   await testEndpoint(
     'Vid-1: Video background with text',
     'vid-1',
@@ -151,6 +90,7 @@ async function runAllTests() {
     }
   );
   
+  // Test 2: Vid-1.2 (Multi-clip)
   await testEndpoint(
     'Vid-1.2: Multi-clip with transitions',
     'vid-1.2',
@@ -173,6 +113,7 @@ async function runAllTests() {
     }
   );
   
+  // Test 3: Vid-1.3 (Smart aspect ratio with quote)
   await testEndpoint(
     'Vid-1.3: Smart aspect ratio with quote',
     'vid-1.3',
@@ -194,6 +135,7 @@ async function runAllTests() {
     }
   );
   
+  // Test 4: Vid-1.3 with captions
   await testEndpoint(
     'Vid-1.3: Smart aspect ratio with captions',
     'vid-1.3',
@@ -219,8 +161,9 @@ async function runAllTests() {
     }
   );
   
+  // Test 5: Vid-1.4 (Timed captions only)
   await testEndpoint(
-    'Vid-1.4: Timed captions only',
+    'Vid-1.4: Timed captions (no quote)',
     'vid-1.4',
     {
       audioUrl: TEST_AUDIO,
@@ -244,6 +187,7 @@ async function runAllTests() {
     }
   );
   
+  // Test 6: Vid-1.5 (Cinematic overlay)
   await testEndpoint(
     'Vid-1.5: Cinematic overlay with captions',
     'vid-1.5',
@@ -271,25 +215,15 @@ async function runAllTests() {
   
   // Print summary
   console.log('\n\n' + '='.repeat(60));
-  console.log('📊 MASTER ENDPOINT TEST SUMMARY');
+  console.log('📊 TEST SUMMARY');
   console.log('='.repeat(60));
   
   const passed = results.filter(r => r.status === 'SUCCESS').length;
   const failed = results.filter(r => r.status === 'FAILED').length;
-  const totalDuration = results.reduce((sum, r) => sum + parseFloat(r.duration), 0).toFixed(2);
   
   console.log(`\nTotal Tests: ${results.length}`);
   console.log(`✅ Passed: ${passed}`);
   console.log(`❌ Failed: ${failed}`);
-  console.log(`⏱️  Total Duration: ${totalDuration}s`);
-  console.log(`📈 Success Rate: ${((passed / results.length) * 100).toFixed(1)}%`);
-  
-  // Group by category
-  const styleResults = results.filter(r => r.endpoint.startsWith('style'));
-  const vidResults = results.filter(r => r.endpoint.startsWith('vid'));
-  
-  console.log(`\n📸 Style Endpoints: ${styleResults.filter(r => r.status === 'SUCCESS').length}/${styleResults.length} passed`);
-  console.log(`🎥 Vid Endpoints: ${vidResults.filter(r => r.status === 'SUCCESS').length}/${vidResults.length} passed`);
   
   console.log('\n' + '-'.repeat(60));
   console.log('Detailed Results:');
@@ -310,28 +244,13 @@ async function runAllTests() {
   });
   
   // Save results to file
-  const report = {
-    timestamp: new Date().toISOString(),
-    summary: {
-      total: results.length,
-      passed,
-      failed,
-      successRate: `${((passed / results.length) * 100).toFixed(1)}%`,
-      totalDuration: `${totalDuration}s`
-    },
-    results
-  };
-  
-  fs.writeFileSync('test_master_results.json', JSON.stringify(report, null, 2));
-  console.log('\n📄 Results saved to test_master_results.json');
+  fs.writeFileSync('test_results.json', JSON.stringify(results, null, 2));
+  console.log('\n📄 Results saved to test_results.json');
   
   console.log('\n' + '='.repeat(60));
   
   if (failed > 0) {
-    console.log(`\n⚠️  ${failed} test(s) failed!`);
     process.exit(1);
-  } else {
-    console.log('\n🎉 All tests passed! Master endpoint is working perfectly!');
   }
 }
 

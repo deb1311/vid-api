@@ -96,7 +96,10 @@ async function handleMasterRequest(req, res) {
     };
 
     // Route to the appropriate endpoint
-    switch (endpoint.toLowerCase()) {
+    // Strip leading slash if present
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    
+    switch (cleanEndpoint.toLowerCase()) {
       case 'style1':
       case 'create-video-style1':
         await handleStyle1(mockReq, mockRes);

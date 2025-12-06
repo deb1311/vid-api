@@ -2,7 +2,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout } = require('./utils');
+const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, escapeDrawtext } = require('./utils');
 
 // Generate video with text overlays (TOP placement for Vid-1)
 async function generateVideoWithTextTop(videoPath, quote, author, watermark, audioDuration, outputVideoPath, maxDuration = null) {
@@ -31,7 +31,7 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
     if (quote && quote.trim() && layout.lines.length > 0) {
       for (let i = 0; i < layout.lines.length; i++) {
         const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
-        const cleanLine = layout.lines[i].replace(/'/g, "\\'");
+        const cleanLine = escapeDrawtext(layout.lines[i]);
         if (cleanLine.trim() !== '') { // Only add non-empty lines
           textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
         }
@@ -41,13 +41,13 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
     // Add author if provided and not empty - use editor's positioning (65% down the screen)
     if (author && author.trim() !== '') {
       const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-      const cleanAuthor = author.replace(/'/g, "\\'");
+      const cleanAuthor = escapeDrawtext(author);
       textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
     }
 
     // Add watermark if provided and not empty
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = watermark.replace(/'/g, "\\'");
+      const cleanWatermark = escapeDrawtext(watermark);
       textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
     }
 

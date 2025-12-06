@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { escapeDrawtext } = require('./utils');
 
 // Step 1: Generate image with text overlays (BOTTOM placement)
 async function generateImageWithText(imagePath, quote, author, watermark, outputImagePath) {
@@ -10,19 +11,19 @@ async function generateImageWithText(imagePath, quote, author, watermark, output
     
     // Add quote if provided and not empty
     if (quote && quote.trim() !== '') {
-      const cleanQuote = quote.replace(/'/g, "\\'");
+      const cleanQuote = escapeDrawtext(quote);
       textFilters.push(`drawtext=text='${cleanQuote}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
     }
     
     // Add author if provided and not empty
     if (author && author.trim() !== '') {
-      const cleanAuthor = author.replace(/'/g, "\\'");
+      const cleanAuthor = escapeDrawtext(author);
       textFilters.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
     }
 
     // Add watermark if provided and not empty
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = watermark.replace(/'/g, "\\'");
+      const cleanWatermark = escapeDrawtext(watermark);
       textFilters.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
     }
 

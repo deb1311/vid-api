@@ -10,6 +10,22 @@ node server-modular.js
 curl http://localhost:3000/health
 ```
 
+## ✨ Recent Updates
+
+### Text Escaping Fix (Latest)
+All endpoints now properly handle special characters in text fields (quotes, author names, watermarks):
+- ✅ **Colons** (`:`) - e.g., "POV: My story"
+- ✅ **Parentheses** (`()`) - e.g., "Text (with notes)"
+- ✅ **Commas** (`,`) - e.g., "Hello, world"
+- ✅ **Brackets** (`[]`) - e.g., "Text [optional]"
+- ✅ **Semicolons** (`;`) - e.g., "First; Second"
+
+**Technical Details:**
+- Implemented `escapeDrawtext()` function in `utils.js`
+- Applied across all 10 endpoints (Style 1-4, Vid-1, Vid-1.2, Vid-1.3, Vid-1.4, Vid-1.5)
+- Special characters are escaped for FFmpeg's drawtext filter
+- Original text is preserved and displayed correctly in videos
+
 ## Endpoints
 
 ### Style 1 - Bottom Text with Fade (Two-Step)
