@@ -647,6 +647,20 @@ All media URLs now support optional `description` parameters for better document
 - ✅ **Team Collaboration** - Clear communication about media choices
 - ✅ **Optional** - Completely backward compatible, no impact on processing
 
+### 📝 Alt Text Parameters (NEW)
+Text fields now support optional `alt` parameters for alternate/rewritten versions:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `alt` | string | No | Alternate version of quote text (e.g. rewritten or translated version) |
+| `captions[].alt` | string | No | Alternate version of caption text (e.g. rewritten or translated version) |
+
+**Benefits:**
+- ✅ **Content Variations** - Store alternate text versions for A/B testing or localization
+- ✅ **Documentation Only** - No effect on video rendering, purely for reference
+- ✅ **Flexible Use Cases** - Rewritten versions, translations, or simplified text
+- ✅ **Optional** - Completely backward compatible, no impact on processing
+
 ### Media Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -855,6 +869,7 @@ The `begin` parameter provides precise control over which part of the source vid
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `text` | string | Yes | Caption text to display |
+| `alt` | string | No | Alternate version of caption text (documentation only, no rendering effect) |
 | `start` | number | Yes | Start time in seconds when caption appears |
 | `duration` | number | No | How long caption is visible (auto-calculated if omitted) |
 
@@ -935,6 +950,7 @@ curl -X POST http://localhost:3000/create-video-vid-1.2 \
   -H "Content-Type: application/json" \
   -d '{
     "quote": "A journey through mixed media storytelling",
+    "alt": "Exploring the art of combining videos and images",
     "author": "Content Creator",
     "watermark": "@creator",
     "audioUrl": "temp/audio.mp3",
@@ -1025,21 +1041,25 @@ curl -X POST http://localhost:3000/vid-1.3 \
     "captions": [
       {
         "text": "Welcome to our story",
+        "alt": "Join us on this adventure",
         "start": 0,
         "duration": 2
       },
       {
         "text": "Chapter 1: The Beginning",
+        "alt": "Part 1: Where it all started",
         "start": 2,
         "duration": 3
       },
       {
         "text": "Chapter 2: The Journey",
+        "alt": "Part 2: The path forward",
         "start": 5,
         "duration": 3
       },
       {
         "text": "To be continued...",
+        "alt": "Stay tuned for more",
         "start": 8,
         "duration": 2
       }

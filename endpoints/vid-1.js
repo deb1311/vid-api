@@ -4,33 +4,29 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, escapeDrawtext } = require('./utils');
 
-// Generate video with text overlays (TOP placement for Vid-1)
+// Generate video with text overlays (TOP placement for Vid-1) - FULL SCREEN
 async function generateVideoWithTextTop(videoPath, quote, author, watermark, audioDuration, outputVideoPath, maxDuration = null) {
   return new Promise((resolve, reject) => {
     // Calculate text layout
     const layout = calculateTextLayout(quote, author);
     
-    // Calculate video dimensions to determine total group height
-    const maxVideoHeight = 800; // Reasonable max height for video
-    const videoHeight = Math.min(maxVideoHeight, 1920 - layout.totalTextHeight - 100); // Leave some margin
-    
-    // Calculate total group height (text + video)
+    // Use EXACT positioning logic from video editor preview (app.js)
+    // Match the editor's Vid-1.2 positioning logic exactly
+    const canvasHeight = 1920; // Full canvas height
+    const videoHeight = 800; // Match editor's videoHeight = 800
     const totalGroupHeight = layout.totalTextHeight + videoHeight;
+    const groupStartY = (canvasHeight - totalGroupHeight) / 2;
+    const textStartY = groupStartY + layout.topPadding;
     
-    // Center the entire group vertically (center of group at y=960)
-    const groupStartY = (1920 - totalGroupHeight) / 2;
-    const textStartY = groupStartY;
-    const videoStartY = groupStartY + layout.totalTextHeight;
+    console.log(`Editor-matched positioning: groupStartY=${groupStartY}, textStartY=${textStartY}, totalGroupHeight=${totalGroupHeight}`);
     
-    console.log(`Group height: ${totalGroupHeight}px, Group starts at: ${groupStartY}px, Text at: ${textStartY}px, Video at: ${videoStartY}px`);
-    
-    // Build text filters - center aligned with adjusted positions
+    // Build text filters - using EXACT editor positioning
     let textFilterArray = [];
     
-    // Add each line of the quote (center aligned) if quote exists
+    // Add each line of the quote (center aligned) - match editor exactly
     if (quote && quote.trim() && layout.lines.length > 0) {
       for (let i = 0; i < layout.lines.length; i++) {
-        const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
+        const lineY = textStartY + (i * layout.lineHeight);
         const cleanLine = escapeDrawtext(layout.lines[i]);
         if (cleanLine.trim() !== '') { // Only add non-empty lines
           textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
@@ -56,16 +52,17 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
 
     const finalDuration = maxDuration ? Math.min(maxDuration, audioDuration) : audioDuration;
     
+    // Use full-screen scaling like other endpoints
     const args = [
       '-i', videoPath,
       '-t', finalDuration.toString(),
-      '-vf', textFilter ? `scale=1080:${videoHeight}:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:${videoStartY}:black,${textFilter}` : `scale=1080:${videoHeight}:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:${videoStartY}:black`,
+      '-vf', textFilter ? `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,${textFilter}` : `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black`,
       '-c:v', 'libx264',
       '-an', // Remove audio from video
       '-y', outputVideoPath
     ];
 
-    console.log('Generating video with vertically centered text+video group...');
+    console.log('Generating full-screen video with text overlays...');
 
     const ffmpeg = spawn('ffmpeg', args);
     let stderr = '';
@@ -76,7 +73,7 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
 
     ffmpeg.on('close', (code) => {
       if (code === 0) {
-        console.log('Video with vertically centered group generated successfully');
+        console.log('Full-screen video with text overlays generated successfully');
         resolve(outputVideoPath);
       } else {
         console.error('FFmpeg stderr:', stderr);

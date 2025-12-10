@@ -1432,6 +1432,20 @@ class VideoEditor {
             });
         }
         
+        // Ensure quote has alt parameter
+        if (this.currentData.quote !== undefined && this.currentData.alt === undefined) {
+            this.currentData.alt = '';
+        }
+        
+        // Ensure all captions have alt parameter
+        if (this.currentData.captions && Array.isArray(this.currentData.captions)) {
+            this.currentData.captions.forEach(caption => {
+                if (caption.alt === undefined) {
+                    caption.alt = '';
+                }
+            });
+        }
+        
         document.getElementById('videoTitle').value = fileName.replace('.json', '').replace(/[_-]/g, ' ');
         
         this.currentTime = 0;
@@ -3334,6 +3348,9 @@ class VideoEditor {
         
         if (this.currentData.quote !== undefined) {
             html += this.createFormGroup('quote', 'Quote', this.currentData.quote, 'textarea');
+            if (this.currentData.alt !== undefined) {
+                html += this.createFormGroup('alt', 'Alt Text (alternate version)', this.currentData.alt, 'textarea');
+            }
         }
         
         if (this.currentData.author !== undefined) {
@@ -3603,6 +3620,10 @@ class VideoEditor {
                         <input type="text" value="${caption.text || ''}" onchange="videoEditor.updateCaption(${index}, 'text', this.value)">
                     </div>
                     <div class="clip-field">
+                        <label>Alt Text (alternate version)</label>
+                        <textarea rows="2" placeholder="Optional alternate version of caption text..." onchange="videoEditor.updateCaption(${index}, 'alt', this.value)">${caption.alt || ''}</textarea>
+                    </div>
+                    <div class="clip-field">
                         <label>Start Time (seconds)</label>
                         <input type="number" value="${caption.start || 0}" min="0" step="0.1" onchange="videoEditor.updateCaption(${index}, 'start', parseFloat(this.value))">
                     </div>
@@ -3843,6 +3864,7 @@ class VideoEditor {
         
         this.currentData.captions.push({
             text: 'New Caption',
+            alt: '',
             start: newStart,
             duration: 3
         });
