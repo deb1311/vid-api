@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text Position Test</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #222; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .box { background: #333; padding: 10px; border-radius: 8px; text-align: center; }
+        video { width: 100%; max-width: 200px; }
+        h4 { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Text Position Tests</h1>
+    <p>Each video should show text at different Y positions</p>
+    <div class="grid">
+        <div class="box">
+            <h4>Y=100 (top)</h4>
+            <video controls src="temp/pos_test_top.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Y=500 (upper-middle)</h4>
+            <video controls src="temp/pos_test_upper-middle.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Y=960 (center)</h4>
+            <video controls src="temp/pos_test_center.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Y=1400 (lower-middle)</h4>
+            <video controls src="temp/pos_test_lower-middle.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Y=1800 (bottom)</h4>
+            <video controls src="temp/pos_test_bottom.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>ID78 Result (FIXED)</h4>
+            <video controls src="temp/test_id78_vid13.mp4"></video>
+            <p style="color: lime;">Using textfile approach</p>
+        </div>
+    </div>
+    <h2>Spawn vs Exec Tests</h2>
+    <div class="grid">
+        <div class="box">
+            <h4>Spawn Test</h4>
+            <video controls src="temp/spawn_test.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Exec Test</h4>
+            <video controls src="temp/exec_test.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Direct FFmpeg Test</h4>
+            <video controls src="temp/direct_test.mp4"></video>
+        </div>
+    </div>
+    <h2>Pipeline Tests</h2>
+    <div class="grid">
+        <div class="box">
+            <h4>Pipeline Concat</h4>
+            <video controls src="temp/pipeline_concat.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Pipeline With Text</h4>
+            <video controls src="temp/pipeline_with_text.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Pipeline Final</h4>
+            <video controls src="temp/pipeline_final.mp4"></video>
+        </div>
+    </div>
+    <h2>Real Video Tests</h2>
+    <div class="grid">
+        <div class="box">
+            <h4>Real Video Segment</h4>
+            <video controls src="temp/real_video_segment.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Real Video With Text</h4>
+            <video controls src="temp/real_video_with_text.mp4"></video>
+        </div>
+        <div class="box">
+            <h4>Textfile Test</h4>
+            <video controls src="temp/textfile_test.mp4"></video>
+        </div>
+    </div>
+</body>
+</html>

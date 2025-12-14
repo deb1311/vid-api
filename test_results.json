@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Vid-1: Video background with text",
+    "endpoint": "vid-1",
+    "status": "SUCCESS",
+    "duration": "22.46s",
+    "url": "http://localhost:8080/video/3d56b725-094c-4cf4-a00d-831036b8363d-video.mp4"
+  },
+  {
+    "name": "Vid-1.2: Multi-clip with transitions",
+    "endpoint": "vid-1.2",
+    "status": "SUCCESS",
+    "duration": "43.39s",
+    "url": "http://localhost:8080/video/34670851-b79c-4008-a620-ccfb9e945e8b-video.mp4"
+  },
+  {
+    "name": "Vid-1.3: Smart aspect ratio with quote",
+    "endpoint": "vid-1.3",
+    "status": "FAILED",
+    "duration": "14.06s",
+    "error": {
+      "status": "error",
+      "error": "Master endpoint error (vid-1.3): read ECONNRESET"
+    }
+  },
+  {
+    "name": "Vid-1.3: Smart aspect ratio with captions",
+    "endpoint": "vid-1.3",
+    "status": "SUCCESS",
+    "duration": "42.96s",
+    "url": "http://localhost:8080/video/e263ef4c-b370-41f0-92d5-7979decb0d84-video.mp4"
+  },
+  {
+    "name": "Vid-1.4: Timed captions (no quote)",
+    "endpoint": "vid-1.4",
+    "status": "SUCCESS",
+    "duration": "42.00s",
+    "url": "http://localhost:8080/video/5aad7a65-df8c-41c1-aaec-e9f406da2491-video.mp4"
+  },
+  {
+    "name": "Vid-1.5: Cinematic overlay with captions",
+    "endpoint": "vid-1.5",
+    "status": "SUCCESS",
+    "duration": "45.90s",
+    "url": "http://localhost:8080/video/64f4d582-0987-40e6-a25a-97400644b098-video.mp4"
+  }
+]

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text Rendering Test</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #333; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .video-box { background: #222; padding: 15px; border-radius: 8px; }
+        video { width: 100%; max-width: 300px; }
+        h3 { margin: 0 0 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Text Rendering Tests</h1>
+    <div class="grid">
+        <div class="video-box">
+            <h3>Test 0: Current Escaping</h3>
+            <video controls src="temp/text_test_0.mp4"></video>
+        </div>
+        <div class="video-box">
+            <h3>Test 3: Simple Apostrophe</h3>
+            <video controls src="temp/text_test_3.mp4"></video>
+        </div>
+        <div class="video-box">
+            <h3>ID 78 Result</h3>
+            <video controls src="temp/test_id78_vid13.mp4"></video>
+        </div>
+        <div class="video-box">
+            <h3>Debug Vid13 Text</h3>
+            <video controls src="temp/debug_vid13_text.mp4"></video>
+        </div>
+    </div>
+</body>
+</html>

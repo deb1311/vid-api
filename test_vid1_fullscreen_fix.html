@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vid-1 Full Screen Fix Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            border: 2px solid #333;
+        }
+        .info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #222;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .loading { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Vid-1 Full Screen Fix Test</h1>
+        
+        <div class="info">
+            <h3>Test Details:</h3>
+            <p><strong>Endpoint:</strong> vid-1</p>
+            <p><strong>Fix:</strong> Changed from custom height calculation to full-screen scaling</p>
+            <p><strong>Expected:</strong> Video should fill the entire vertical space (1080x1920)</p>
+        </div>
+
+        <button onclick="testVid1()">🚀 Test Vid-1 Full Screen</button>
+        <button onclick="testWithJSON()">📄 Test with JSON File</button>
+        
+        <div id="status"></div>
+        <div id="videoContainer"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'loading') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testVid1() {
+            showStatus('🎬 Testing Vid-1 with full-screen fix...', 'loading');
+            
+            const payload = {
+                endpoint: 'vid-1',
+                data: {
+                    quote: "POV: My lawyer on the phone telling me its best to leave the country (I already left)",
+                    videoUrl: "https://videos.pexels.com/video-files/6184758/6184758-hd_1080_2048_24fps.mp4",
+                    audioUrl: "https://vllxucytucjyflsenjmz.supabase.co/storage/v1/object/public/assets/599_audio.mp3",
+                    watermark: "@e2",
+                    duration: 6
+                }
+            };
+
+            try {
+                const response = await fetch('/master', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus('✅ Video generated successfully! Check if it fills the full screen.', 'success');
+                    displayVideo(result.url);
+                } else {
+                    showStatus(`❌ Error: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWithJSON() {
+            showStatus('📄 Testing with JSON file payload...', 'loading');
+            
+            try {
+                // Load the JSON file
+                const jsonResponse = await fetch('/test_vid1_text_escape.json');
+                const jsonData = await jsonResponse.json();
+                
+                const payload = {
+                    endpoint: 'vid-1',
+                    data: jsonData
+                };
+
+                const response = await fetch('/master', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus('✅ JSON test successful! Video should be full-screen.', 'success');
+                    displayVideo(result.url);
+                } else {
+                    showStatus(`❌ Error: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayVideo(videoUrl) {
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = `
+                <div class="info">
+                    <h3>🎥 Generated Video:</h3>
+                    <p><strong>URL:</strong> <a href="${videoUrl}" target="_blank">${videoUrl}</a></p>
+                    <p><strong>Check:</strong> Video should fill entire vertical space without black bars</p>
+                </div>
+                <video controls autoplay muted>
+                    <source src="${videoUrl}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            `;
+        }
+    </script>
+</body>
+</html>

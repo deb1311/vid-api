@@ -1,30 +1,36 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { escapeDrawtext } = require('./utils');
+const { createTextFile, cleanupTextFiles } = require('./utils');
 
 // Step 1: Generate image with text overlays (BOTTOM placement)
 async function generateImageWithText(imagePath, quote, author, watermark, outputImagePath) {
   return new Promise((resolve, reject) => {
+    const sessionId = `style1-${Date.now()}`;
+    const textFiles = [];
+    
     // Build text overlay filters for BOTTOM placement
     let textFilters = [];
     
     // Add quote if provided and not empty
     if (quote && quote.trim() !== '') {
-      const cleanQuote = escapeDrawtext(quote);
-      textFilters.push(`drawtext=text='${cleanQuote}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
+      const quoteTextFile = createTextFile(quote, sessionId, 'quote');
+      textFiles.push(quoteTextFile);
+      textFilters.push(`drawtext=textfile='${quoteTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
     }
     
     // Add author if provided and not empty
     if (author && author.trim() !== '') {
-      const cleanAuthor = escapeDrawtext(author);
-      textFilters.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
+      const authorTextFile = createTextFile(author, sessionId, 'author');
+      textFiles.push(authorTextFile);
+      textFilters.push(`drawtext=textfile='${authorTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
     }
 
     // Add watermark if provided and not empty
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = escapeDrawtext(watermark);
-      textFilters.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+      const watermarkTextFile = createTextFile(watermark, sessionId, 'watermark');
+      textFiles.push(watermarkTextFile);
+      textFilters.push(`drawtext=textfile='${watermarkTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
     }
 
     // Build final text filter
@@ -54,6 +60,9 @@ async function generateImageWithText(imagePath, quote, author, watermark, output
     });
 
     ffmpeg.on('close', (code) => {
+      // Cleanup text files
+      cleanupTextFiles(textFiles);
+      
       if (code === 0) {
         console.log('Style 1: Image with BOTTOM text generated successfully');
         resolve(outputImagePath);
@@ -64,6 +73,7 @@ async function generateImageWithText(imagePath, quote, author, watermark, output
     });
 
     ffmpeg.on('error', (error) => {
+      cleanupTextFiles(textFiles);
       reject(new Error(`Style 1: FFmpeg spawn error: ${error.message}`));
     });
   });

@@ -1,0 +1,7 @@
+{
+  "quote": "Testing the new full-screen fix with proper text positioning",
+  "videoUrl": "http://localhost:8080/assets/test-video.mp4",
+  "audioUrl": "http://localhost:8080/assets/test-audio.mp3",
+  "watermark": "@test",
+  "duration": 5
+}

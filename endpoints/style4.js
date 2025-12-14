@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const { escapeDrawtext } = require('./utils');
+const { createTextFile, cleanupTextFiles } = require('./utils');
 
 // Helper function to calculate text layout matching the reference image
 function calculateTextLayout(quote, author) {
@@ -97,16 +97,20 @@ async function createVideoStyle4(imagePath, audioPath, quote, author, watermark,
       
       console.log(`Style 4 - Group height: ${totalGroupHeight}px, Group starts at: ${groupStartY}px, Text at: ${textStartY}px, Image at: ${imageStartY}px`);
       
-      // Build text filters - center aligned with adjusted positions
+      // Build text filters - center aligned with adjusted positions using textfile approach
+      const sessionId = `style4-${Date.now()}`;
+      const textFiles = [];
       let textFilterArray = [];
       
       // Add each line of the quote (center aligned) if quote exists
       if (quote && quote.trim() && layout.lines.length > 0) {
         for (let i = 0; i < layout.lines.length; i++) {
           const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
-          const cleanLine = escapeDrawtext(layout.lines[i]);
-          if (cleanLine.trim() !== '') { // Only add non-empty lines
-            textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
+          const lineText = layout.lines[i];
+          if (lineText.trim() !== '') { // Only add non-empty lines
+            const lineTextFile = createTextFile(lineText, sessionId, `quote-line-${i}`);
+            textFiles.push(lineTextFile);
+            textFilterArray.push(`drawtext=textfile='${lineTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
           }
         }
       }
@@ -114,14 +118,16 @@ async function createVideoStyle4(imagePath, audioPath, quote, author, watermark,
       // Add author if provided and not empty
       if (author && author.trim() !== '') {
         const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-        const cleanAuthor = escapeDrawtext(author);
-        textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
+        const authorTextFile = createTextFile(author, sessionId, 'author');
+        textFiles.push(authorTextFile);
+        textFilterArray.push(`drawtext=textfile='${authorTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
       }
 
       // Add watermark if provided and not empty
       if (watermark && watermark.trim() !== '') {
-        const cleanWatermark = escapeDrawtext(watermark);
-        textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+        const watermarkTextFile = createTextFile(watermark, sessionId, 'watermark');
+        textFiles.push(watermarkTextFile);
+        textFilterArray.push(`drawtext=textfile='${watermarkTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
       }
 
       // Build final text filter
@@ -152,6 +158,9 @@ async function createVideoStyle4(imagePath, audioPath, quote, author, watermark,
       });
 
       ffmpeg.on('close', (code) => {
+        // Cleanup text files
+        cleanupTextFiles(textFiles);
+        
         if (code === 0) {
           console.log('Style 4: Video created successfully');
           resolve(outputPath);
@@ -162,6 +171,7 @@ async function createVideoStyle4(imagePath, audioPath, quote, author, watermark,
       });
 
       ffmpeg.on('error', (error) => {
+        cleanupTextFiles(textFiles);
         reject(new Error(`Style 4: FFmpeg spawn error: ${error.message}`));
       });
     });

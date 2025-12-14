@@ -1,0 +1,22 @@
+{
+  "quote": "Success is not final, failure is not fatal",
+  "alt": "Keep going no matter what happens",
+  "author": "Winston Churchill",
+  "watermark": "@motivation",
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Motivational video clip with nature scenes",
+      "start": 10,
+      "duration": 5,
+      "volume": 50
+    },
+    {
+      "videoUrl": "https://picsum.photos/1080/1920?random=1",
+      "description": "Inspirational landscape image",
+      "start": 0,
+      "duration": 3
+    }
+  ]
+}

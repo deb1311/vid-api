@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext } = require('./utils');
+const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext, createTextFile, cleanupTextFiles } = require('./utils');
 
 /**
  * Vid-1.2: Multi-clip video creation with text overlays
@@ -278,41 +278,43 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
 
     console.log(`📐 Layout: Text at ${textStartY}px, Video at ${videoStartY}px`);
 
-    // Build text filters
+    // Build text filters using textfile approach (avoids escaping issues)
     let textFilters = [];
+    let textFiles = [];
+    const sessionId = path.basename(outputPath, '.mp4');
 
-    // Add quote lines if quote exists
+    // Add quote lines using textfile
     if (quote && quote.trim() && layout.lines.length > 0) {
       for (let i = 0; i < layout.lines.length; i++) {
         const lineY = textStartY + layout.topPadding + (i * layout.lineHeight);
-        const cleanText = escapeDrawtext(layout.lines[i]);
-        if (cleanText.trim() !== '') { // Only add non-empty lines
+        const lineText = layout.lines[i];
+        if (lineText.trim() !== '') {
+          const textFilePath = createTextFile(lineText, sessionId, `quote-${i}`);
+          textFiles.push(textFilePath);
           textFilters.push(
-            `drawtext=text='${cleanText}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
+            `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
           );
         }
       }
     }
 
-    // Add author - use editor's positioning (65% down the screen)
+    // Add author using textfile
     if (author && author.trim() !== '') {
-      const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-      const cleanAuthor = escapeDrawtext(author);
-      if (cleanAuthor.trim() !== '') { // Only add non-empty author
-        textFilters.push(
-          `drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
-        );
-      }
+      const authorY = 1920 * 0.65;
+      const textFilePath = createTextFile(author, sessionId, 'author');
+      textFiles.push(textFilePath);
+      textFilters.push(
+        `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
+      );
     }
 
-    // Add watermark
+    // Add watermark using textfile
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = escapeDrawtext(watermark);
-      if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
-        textFilters.push(
-          `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
-        );
-      }
+      const textFilePath = createTextFile(watermark, sessionId, 'watermark');
+      textFiles.push(textFilePath);
+      textFilters.push(
+        `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
+      );
     }
 
     // Build video filter with proper text handling
@@ -342,8 +344,12 @@ async function addTextOverlays(videoPath, quote, author, watermark, outputPath, 
     });
 
     ffmpeg.on('close', (code) => {
+      // Cleanup text files
+      cleanupTextFiles(textFiles);
+      
       if (code === 0) {
         console.log('✅ Text overlays added successfully');
+        console.log(`📝 Text filters applied: ${textFilters.length}`);
         resolve(outputPath);
       } else {
         console.error('❌ Text overlay failed:', stderr);

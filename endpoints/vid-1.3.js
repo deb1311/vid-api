@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext } = require('./utils');
+const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext, createTextFile, cleanupTextFiles } = require('./utils');
 
 /**
  * Vid-1.3: Multi-clip video creation with smart aspect ratio management
@@ -226,26 +226,25 @@ async function applySmartAspectRatioOverlayAndText(videoPath, quote, author, wat
       const dimensions = await getMediaDimensions(videoPath);
       console.log(`📐 Input video: ${dimensions.width}x${dimensions.height}, AR: ${dimensions.aspectRatio.toFixed(3)}`);
 
-      // Build text filters using Vid-1.2 positioning logic
+      // Build text filters using textfile approach (avoids escaping issues)
       let textFilters = [];
+      let textFiles = []; // Track text files for cleanup
+      const sessionId = path.basename(outputPath, '.mp4');
 
       // Check if captions are provided (they override quote)
       if (captions && captions.length > 0) {
         console.log(`📝 Using ${captions.length} timed captions instead of quote`);
         
-        // Add timed captions
+        // Add timed captions using textfile approach
         for (let i = 0; i < captions.length; i++) {
           const caption = captions[i];
-          if (!caption.text || caption.text.trim() === '') continue; // Skip empty captions
-          
-          const cleanText = escapeDrawtext(caption.text);
-          if (cleanText.trim() === '') continue; // Skip if cleaned text is empty
+          if (!caption.text || caption.text.trim() === '') continue;
           
           const startTime = caption.start || 0;
           const endTime = startTime + (caption.duration || 3);
           
           // Calculate text layout for this caption
-          const captionLayout = calculateTextLayout(cleanText, '');
+          const captionLayout = calculateTextLayout(caption.text, '');
           
           // Use Vid-1.2 positioning logic
           const videoHeight = 800;
@@ -253,14 +252,16 @@ async function applySmartAspectRatioOverlayAndText(videoPath, quote, author, wat
           const groupStartY = (1920 - totalGroupHeight) / 2;
           const textStartY = groupStartY;
           
-          // Add caption lines with timing
+          // Add caption lines with timing using textfile
           for (let j = 0; j < captionLayout.lines.length; j++) {
             const lineY = textStartY + captionLayout.topPadding + (j * captionLayout.lineHeight);
-            const cleanLine = escapeDrawtext(captionLayout.lines[j]);
+            const lineText = captionLayout.lines[j];
             
-            if (cleanLine.trim() !== '') { // Only add non-empty lines
+            if (lineText.trim() !== '') {
+              const textFilePath = createTextFile(lineText, sessionId, `caption-${i}-${j}`);
+              textFiles.push(textFilePath);
               textFilters.push(
-                `drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
+                `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
               );
             }
           }
@@ -271,46 +272,45 @@ async function applySmartAspectRatioOverlayAndText(videoPath, quote, author, wat
         // Calculate text layout for quote
         const textLayout = calculateTextLayout(quote, author);
         
-        // Use consistent Vid-1.2 positioning logic (matches editor exactly)
+        // Use consistent Vid-1.2 positioning logic
         const videoHeight = 800;
         const totalGroupHeight = textLayout.totalTextHeight + videoHeight;
         const groupStartY = (1920 - totalGroupHeight) / 2;
         const textStartY = groupStartY;
         console.log(`📐 Text positioning: groupStartY=${groupStartY}, textStartY=${textStartY}`);
 
-        // Add quote lines
+        // Add quote lines using textfile approach
         for (let i = 0; i < textLayout.lines.length; i++) {
           const lineY = textStartY + textLayout.topPadding + (i * textLayout.lineHeight);
-          const cleanText = escapeDrawtext(textLayout.lines[i]);
+          const lineText = textLayout.lines[i];
           
-          if (cleanText.trim() !== '') { // Only add non-empty lines
+          if (lineText.trim() !== '') {
+            const textFilePath = createTextFile(lineText, sessionId, `quote-${i}`);
+            textFiles.push(textFilePath);
             textFilters.push(
-              `drawtext=text='${cleanText}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${textLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
+              `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${textLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`
             );
           }
         }
 
-        // Add author - use editor's positioning (65% down the screen)
+        // Add author using textfile approach
         if (author && author.trim() !== '') {
-          const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-          const cleanAuthor = escapeDrawtext(author);
-          
-          if (cleanAuthor.trim() !== '') { // Only add non-empty author
-            textFilters.push(
-              `drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${textLayout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
-            );
-          }
+          const authorY = 1920 * 0.65;
+          const textFilePath = createTextFile(author, sessionId, 'author');
+          textFiles.push(textFilePath);
+          textFilters.push(
+            `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${textLayout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`
+          );
         }
       }
 
-      // Add watermark at bottom (fixed position to prevent overlapping)
+      // Add watermark using textfile approach
       if (watermark && watermark.trim() !== '') {
-        const cleanWatermark = escapeDrawtext(watermark);
-        if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
-          textFilters.push(
-            `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
-          );
-        }
+        const textFilePath = createTextFile(watermark, sessionId, 'watermark');
+        textFiles.push(textFilePath);
+        textFilters.push(
+          `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
+        );
       }
 
       const textFilter = textFilters.length > 0 ? textFilters.join(',') : null;
@@ -369,6 +369,7 @@ async function applySmartAspectRatioOverlayAndText(videoPath, quote, author, wat
       } else {
         // No overlay - use simple filter
         const videoFilter = textFilter ? `${baseVideoFilter},${textFilter}` : baseVideoFilter;
+        
         args = [
           '-i', videoPath,
           '-vf', videoFilter,
@@ -387,8 +388,12 @@ async function applySmartAspectRatioOverlayAndText(videoPath, quote, author, wat
       });
 
       ffmpeg.on('close', (code) => {
+        // Cleanup text files
+        cleanupTextFiles(textFiles);
+        
         if (code === 0) {
           console.log('✅ Smart aspect ratio and text overlays applied successfully');
+          console.log(`📝 Text filters applied: ${textFilters.length}`);
           resolve(outputPath);
         } else {
           console.error('❌ Smart aspect ratio application failed:', stderr);

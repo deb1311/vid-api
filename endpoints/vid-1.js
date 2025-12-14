@@ -2,7 +2,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, escapeDrawtext } = require('./utils');
+const { downloadFile, downloadVideo, extractInstagramAudio, calculateTextLayout, escapeDrawtext, createTextFile, cleanupTextFiles } = require('./utils');
 
 // Generate video with text overlays (TOP placement for Vid-1) - FULL SCREEN
 async function generateVideoWithTextTop(videoPath, quote, author, watermark, audioDuration, outputVideoPath, maxDuration = null) {
@@ -11,40 +11,45 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
     const layout = calculateTextLayout(quote, author);
     
     // Use EXACT positioning logic from video editor preview (app.js)
-    // Match the editor's Vid-1.2 positioning logic exactly
-    const canvasHeight = 1920; // Full canvas height
-    const videoHeight = 800; // Match editor's videoHeight = 800
+    const canvasHeight = 1920;
+    const videoHeight = 800;
     const totalGroupHeight = layout.totalTextHeight + videoHeight;
     const groupStartY = (canvasHeight - totalGroupHeight) / 2;
     const textStartY = groupStartY + layout.topPadding;
     
     console.log(`Editor-matched positioning: groupStartY=${groupStartY}, textStartY=${textStartY}, totalGroupHeight=${totalGroupHeight}`);
     
-    // Build text filters - using EXACT editor positioning
+    // Build text filters using textfile approach (avoids escaping issues)
     let textFilterArray = [];
+    let textFiles = [];
+    const sessionId = path.basename(outputVideoPath, '.mp4');
     
-    // Add each line of the quote (center aligned) - match editor exactly
+    // Add each line of the quote using textfile
     if (quote && quote.trim() && layout.lines.length > 0) {
       for (let i = 0; i < layout.lines.length; i++) {
         const lineY = textStartY + (i * layout.lineHeight);
-        const cleanLine = escapeDrawtext(layout.lines[i]);
-        if (cleanLine.trim() !== '') { // Only add non-empty lines
-          textFilterArray.push(`drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
+        const lineText = layout.lines[i];
+        if (lineText.trim() !== '') {
+          const textFilePath = createTextFile(lineText, sessionId, `quote-${i}`);
+          textFiles.push(textFilePath);
+          textFilterArray.push(`drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2`);
         }
       }
     }
     
-    // Add author if provided and not empty - use editor's positioning (65% down the screen)
+    // Add author using textfile
     if (author && author.trim() !== '') {
-      const authorY = 1920 * 0.65; // Match editor: canvasHeight * 0.65
-      const cleanAuthor = escapeDrawtext(author);
-      textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
+      const authorY = 1920 * 0.65;
+      const textFilePath = createTextFile(author, sessionId, 'author');
+      textFiles.push(textFilePath);
+      textFilterArray.push(`drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${layout.authorFontSize}:fontcolor=white:x=(w-text_w)/2:y=${authorY}:shadowcolor=black:shadowx=2:shadowy=2`);
     }
 
-    // Add watermark if provided and not empty
+    // Add watermark using textfile
     if (watermark && watermark.trim() !== '') {
-      const cleanWatermark = escapeDrawtext(watermark);
-      textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+      const textFilePath = createTextFile(watermark, sessionId, 'watermark');
+      textFiles.push(textFilePath);
+      textFilterArray.push(`drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
     }
 
     // Build final text filter
@@ -72,8 +77,12 @@ async function generateVideoWithTextTop(videoPath, quote, author, watermark, aud
     });
 
     ffmpeg.on('close', (code) => {
+      // Cleanup text files
+      cleanupTextFiles(textFiles);
+      
       if (code === 0) {
         console.log('Full-screen video with text overlays generated successfully');
+        console.log(`📝 Text filters applied: ${textFilterArray.length}`);
         resolve(outputVideoPath);
       } else {
         console.error('FFmpeg stderr:', stderr);

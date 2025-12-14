@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { downloadFile, downloadVideo, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext } = require('./utils');
+const { downloadFile, downloadVideo, calculateTextLayout, handleFileSource, handleVideoSource, escapeDrawtext, createTextFile, cleanupTextFiles } = require('./utils');
 
 /**
  * Vid-1.5: Multi-clip video creation with timed captions and cinematic overlay support
@@ -288,25 +288,24 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
     try {
       console.log('🎨 Applying overlay and captions...');
 
-      // Build text filters for captions
+      // Build text filters using textfile approach (avoids escaping issues)
       let textFilters = [];
+      let textFiles = [];
+      const sessionId = path.basename(outputPath, '.mp4');
 
       if (captions && captions.length > 0) {
         console.log(`📝 Adding ${captions.length} timed captions`);
         
-        // Add timed captions with proper text layout
+        // Add timed captions using textfile
         for (let i = 0; i < captions.length; i++) {
           const caption = captions[i];
-          if (!caption.text || caption.text.trim() === '') continue; // Skip empty captions
-          
-          const cleanText = escapeDrawtext(caption.text);
-          if (cleanText.trim() === '') continue; // Skip if cleaned text is empty
+          if (!caption.text || caption.text.trim() === '') continue;
           
           const startTime = caption.start || 0;
           const endTime = startTime + (caption.duration || 3);
           
           // Calculate text layout for this caption
-          const captionLayout = calculateTextLayout(cleanText, '');
+          const captionLayout = calculateTextLayout(caption.text, '');
           
           // Use Vid-1.2 positioning logic
           const videoHeight = 800;
@@ -314,28 +313,29 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
           const groupStartY = (1920 - totalGroupHeight) / 2;
           const textStartY = groupStartY;
           
-          // Add caption lines with timing
+          // Add caption lines with timing using textfile
           for (let j = 0; j < captionLayout.lines.length; j++) {
             const lineY = textStartY + captionLayout.topPadding + (j * captionLayout.lineHeight);
-            const cleanLine = escapeDrawtext(captionLayout.lines[j]);
+            const lineText = captionLayout.lines[j];
             
-            if (cleanLine.trim() !== '') { // Only add non-empty lines
+            if (lineText.trim() !== '') {
+              const textFilePath = createTextFile(lineText, sessionId, `caption-${i}-${j}`);
+              textFiles.push(textFilePath);
               textFilters.push(
-                `drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
+                `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
               );
             }
           }
         }
       }
 
-      // Add watermark
+      // Add watermark using textfile
       if (watermark && watermark.trim() !== '') {
-        const cleanWatermark = escapeDrawtext(watermark);
-        if (cleanWatermark.trim() !== '') { // Only add non-empty watermark
-          textFilters.push(
-            `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
-          );
-        }
+        const textFilePath = createTextFile(watermark, sessionId, 'watermark');
+        textFiles.push(textFilePath);
+        textFilters.push(
+          `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
+        );
       }
 
       let args;
@@ -424,8 +424,12 @@ async function applyOverlayAndCaptions(videoPath, captions, watermark, overlay, 
       });
 
       ffmpeg.on('close', (code) => {
+        // Cleanup text files
+        cleanupTextFiles(textFiles);
+        
         if (code === 0) {
           console.log('✅ Overlay and captions applied successfully');
+          console.log(`📝 Text filters applied: ${textFilters.length}`);
           resolve(outputPath);
         } else {
           console.error('❌ Overlay application failed:', stderr);
@@ -704,17 +708,20 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
     console.log('📝 Adding captions and watermark...');
 
     let textFilters = [];
+    let textFiles = [];
+    const sessionId = path.basename(outputPath, '.mp4') + '-simple';
 
-    // Add captions with proper text layout
+    // Add captions using textfile approach
     if (captions && captions.length > 0) {
       for (let i = 0; i < captions.length; i++) {
         const caption = captions[i];
-        const cleanText = escapeDrawtext(caption.text);
+        if (!caption.text || caption.text.trim() === '') continue;
+        
         const startTime = caption.start || 0;
         const endTime = startTime + (caption.duration || 3);
         
         // Calculate text layout for this caption
-        const captionLayout = calculateTextLayout(cleanText, '');
+        const captionLayout = calculateTextLayout(caption.text, '');
         
         // Use Vid-1.2 positioning logic
         const videoHeight = 800;
@@ -722,23 +729,28 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
         const groupStartY = (1920 - totalGroupHeight) / 2;
         const textStartY = groupStartY;
         
-        // Add caption lines with timing
+        // Add caption lines with timing using textfile
         for (let j = 0; j < captionLayout.lines.length; j++) {
           const lineY = textStartY + captionLayout.topPadding + (j * captionLayout.lineHeight);
-          const cleanLine = escapeDrawtext(captionLayout.lines[j]);
+          const lineText = captionLayout.lines[j];
           
-          textFilters.push(
-            `drawtext=text='${cleanLine}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
-          );
+          if (lineText.trim() !== '') {
+            const textFilePath = createTextFile(lineText, sessionId, `caption-${i}-${j}`);
+            textFiles.push(textFilePath);
+            textFilters.push(
+              `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=${captionLayout.fontSize}:fontcolor=white:x=(w-text_w)/2:y=${lineY}:shadowcolor=black:shadowx=2:shadowy=2:enable='between(t,${startTime},${endTime})'`
+            );
+          }
         }
       }
     }
 
-    // Add watermark
-    if (watermark) {
-      const cleanWatermark = escapeDrawtext(watermark);
+    // Add watermark using textfile
+    if (watermark && watermark.trim() !== '') {
+      const textFilePath = createTextFile(watermark, sessionId, 'watermark');
+      textFiles.push(textFilePath);
       textFilters.push(
-        `drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
+        `drawtext=textfile='${textFilePath}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`
       );
     }
 
@@ -766,8 +778,12 @@ async function applySimpleText(videoPath, captions, watermark, outputPath, maxDu
     });
 
     ffmpeg.on('close', (code) => {
+      // Cleanup text files
+      cleanupTextFiles(textFiles);
+      
       if (code === 0) {
         console.log('✅ Text applied successfully');
+        console.log(`📝 Text filters applied: ${textFilters.length}`);
         resolve(outputPath);
       } else {
         console.error('❌ Text application failed:', stderr);

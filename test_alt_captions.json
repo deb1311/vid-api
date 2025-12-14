@@ -1,0 +1,39 @@
+{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@storyteller",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Animated story sequence",
+      "start": 15,
+      "duration": 10,
+      "volume": 60
+    }
+  ],
+  "captions": [
+    {
+      "text": "Once upon a time...",
+      "alt": "The story begins",
+      "start": 0,
+      "duration": 2
+    },
+    {
+      "text": "In a land far away",
+      "alt": "A distant magical place",
+      "start": 2,
+      "duration": 3
+    },
+    {
+      "text": "Heroes were born",
+      "alt": "Brave warriors emerged",
+      "start": 5,
+      "duration": 3
+    },
+    {
+      "text": "The end... or is it?",
+      "alt": "To be continued",
+      "start": 8,
+      "duration": 2
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Alt Parameter - Video Editor</title>
+</head>
+<body>
+    <h1>Test Alt Parameter in Video Editor</h1>
+    
+    <h2>Test Case 1: Quote with Alt</h2>
+    <p>Load this in the editor to test alt parameter for quote:</p>
+    <pre>{
+  "quote": "Success is not final, failure is not fatal",
+  "alt": "Keep going no matter what happens",
+  "author": "Winston Churchill",
+  "watermark": "@motivation",
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Motivational video clip",
+      "start": 10,
+      "duration": 5
+    }
+  ]
+}</pre>
+
+    <h2>Test Case 2: Captions with Alt</h2>
+    <p>Load this in the editor to test alt parameter for captions:</p>
+    <pre>{
+  "audioUrl": "temp/test_instagram_audio.mp3",
+  "watermark": "@storyteller",
+  "clips": [
+    {
+      "videoUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "description": "Story sequence",
+      "start": 15,
+      "duration": 10
+    }
+  ],
+  "captions": [
+    {
+      "text": "Once upon a time...",
+      "alt": "The story begins",
+      "start": 0,
+      "duration": 2
+    },
+    {
+      "text": "In a land far away",
+      "alt": "A distant magical place",
+      "start": 2,
+      "duration": 3
+    },
+    {
+      "text": "Heroes were born",
+      "alt": "Brave warriors emerged",
+      "start": 5,
+      "duration": 3
+    }
+  ]
+}</pre>
+
+    <h2>Expected Behavior:</h2>
+    <ul>
+        <li>✅ Alt field should appear below the Quote field in properties panel</li>
+        <li>✅ Alt field should appear for each caption in the captions list</li>
+        <li>✅ Alt text should be editable and save with the project</li>
+        <li>✅ Alt text should NOT affect video rendering (display only)</li>
+        <li>✅ Alt field should work exactly like description fields</li>
+    </ul>
+
+    <h2>How to Test:</h2>
+    <ol>
+        <li>Open the Video Editor (index.html)</li>
+        <li>Copy one of the JSON examples above</li>
+        <li>Use "Load from JSON" or paste into a .json file and load it</li>
+        <li>Check that the Alt field appears in the properties panel</li>
+        <li>Edit the alt text and verify it saves</li>
+        <li>Export the JSON and verify alt field is included</li>
+    </ol>
+</body>
+</html>

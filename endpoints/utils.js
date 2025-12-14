@@ -1,6 +1,29 @@
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 const { spawn } = require('child_process');
+
+// Helper function to create a text file for FFmpeg drawtext filter
+// This avoids escaping issues with special characters in text
+function createTextFile(text, sessionId, suffix) {
+  const textFilePath = path.join('temp', `${sessionId}-text-${suffix}.txt`);
+  fs.writeFileSync(textFilePath, text, 'utf8');
+  return textFilePath.replace(/\\/g, '/'); // Use forward slashes for FFmpeg
+}
+
+// Helper function to cleanup text files after FFmpeg processing
+function cleanupTextFiles(textFiles) {
+  textFiles.forEach(filePath => {
+    try {
+      const fullPath = filePath.replace(/\//g, path.sep);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (e) {
+      console.warn(`⚠️  Could not cleanup text file: ${filePath}`);
+    }
+  });
+}
 
 // Download file from URL
 async function downloadFile(url, filepath) {
@@ -285,5 +308,7 @@ module.exports = {
   calculateTextLayout,
   handleFileSource,
   handleVideoSource,
-  escapeDrawtext
+  escapeDrawtext,
+  createTextFile,
+  cleanupTextFiles
 };

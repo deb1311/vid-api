@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Text Rendering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .video-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Text Rendering Test Results</h1>
+    
+    <div class="video-container">
+        <h2>Test 1: Quote and Author Rendering</h2>
+        <video controls>
+            <source src="temp/test_text_rendering.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="info">
+            Expected: "This is a test quote to verify text rendering" with author "Test Author" and watermark "Test Watermark"
+        </div>
+    </div>
+    
+    <div class="video-container">
+        <h2>Test 2: Timed Captions Rendering</h2>
+        <video controls>
+            <source src="temp/test_caption_rendering.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="info">
+            Expected: Three timed captions appearing at different times with watermark "Caption Test"
+        </div>
+    </div>
+    
+    <div class="video-container">
+        <h2>Test 3: Vid-1 Text Rendering</h2>
+        <video controls>
+            <source src="temp/test_vid1_text.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="info">
+            Expected: "This is a test quote for vid-1" with author "Test Author Vid-1" and watermark "Vid-1 Watermark"
+        </div>
+    </div>
+    
+    <div class="video-container">
+        <h2>Test 4: Direct FFmpeg Text Test</h2>
+        <video controls>
+            <source src="temp/test_ffmpeg_text.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="info">
+            Expected: Simple "TEST TEXT" on black background
+        </div>
+    </div>
+    
+    <div class="video-container">
+        <h2>Test 5: Actual Filter Test</h2>
+        <video controls>
+            <source src="temp/test_actual_filter.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="info">
+            Expected: Test image with full text overlay (quote, author, watermark)
+        </div>
+    </div>
+    
+    <script>
+        // Auto-play videos when they come into view
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            video.addEventListener('loadeddata', () => {
+                console.log(`Video loaded: ${video.src}`);
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.error(`Video error: ${video.src}`, e);
+            });
+        });
+    </script>
+</body>
+</html>

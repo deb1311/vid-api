@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Style 1: Two-step with bottom text",
+    "endpoint": "style1",
+    "status": "SUCCESS",
+    "duration": "18.61s",
+    "url": "http://localhost:8080/video/608f8c31-2434-4623-9b15-ffa2a408057f-video.mp4"
+  },
+  {
+    "name": "Style 2: Single-step with bottom text",
+    "endpoint": "style2",
+    "status": "SUCCESS",
+    "duration": "12.11s",
+    "url": "http://localhost:8080/video/ecb3f85c-ceac-44c9-ab82-21c069e5374e-video.mp4"
+  },
+  {
+    "name": "Style 3: Two-step with top text",
+    "endpoint": "style3",
+    "status": "SUCCESS",
+    "duration": "7.33s",
+    "url": "http://localhost:8080/video/5d14b032-e8d8-4a61-a50b-7158c24fcc81-video.mp4"
+  },
+  {
+    "name": "Style 4: Single-step with top text",
+    "endpoint": "style4",
+    "status": "SUCCESS",
+    "duration": "11.21s",
+    "url": "http://localhost:8080/video/33c51051-92dd-4c36-b019-10482838d97a-video.mp4"
+  }
+]

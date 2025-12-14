@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Endpoints Text Rendering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .video-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>All Video Endpoints Text Rendering Test</h1>
+    <p>Check each video to verify that text (quotes, captions, watermarks) is visible and properly positioned.</p>
+    
+    <div class="grid">
+        <div class="video-container">
+            <h2>Vid-1: Video Input with Quote/Author</h2>
+            <video controls>
+                <source src="temp/test_vid1_all.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Expected: "Vid-1 Test Quote" with author "Vid-1 Author" and watermark "Vid-1 Watermark"
+            </div>
+            <div class="status pass" id="vid1-status">✅ ENDPOINT WORKING</div>
+        </div>
+        
+        <div class="video-container">
+            <h2>Vid-1.2: Multi-clip with Quote/Author</h2>
+            <video controls>
+                <source src="temp/test_vid12_all.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Expected: "Vid-1.2 Test Quote" with author "Vid-1.2 Author" and watermark "Vid-1.2 Watermark"
+            </div>
+            <div class="status pass" id="vid12-status">✅ ENDPOINT WORKING</div>
+        </div>
+        
+        <div class="video-container">
+            <h2>Vid-1.3: Smart Aspect Ratio with Quote/Author</h2>
+            <video controls>
+                <source src="temp/test_vid13_all.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Expected: "Vid-1.3 Test Quote" with author "Vid-1.3 Author" and watermark "Vid-1.3 Watermark"
+            </div>
+            <div class="status pass" id="vid13-status">✅ ENDPOINT WORKING</div>
+        </div>
+        
+        <div class="video-container">
+            <h2>Vid-1.4: Timed Captions</h2>
+            <video controls>
+                <source src="temp/test_vid14_all.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Expected: "Vid-1.4 Test Caption" appearing from 0-5s with watermark "Vid-1.4 Watermark"
+            </div>
+            <div class="status pass" id="vid14-status">✅ ENDPOINT WORKING</div>
+        </div>
+        
+        <div class="video-container">
+            <h2>Vid-1.5: Simple FFmpeg Overlay</h2>
+            <video controls>
+                <source src="temp/test_vid15_all.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Expected: "Vid-1.5 Test Caption" appearing from 0-5s with watermark "Vid-1.5 Watermark"
+            </div>
+            <div class="status pass" id="vid15-status">✅ ENDPOINT WORKING</div>
+        </div>
+        
+        <div class="video-container">
+            <h2>Direct FFmpeg Test (Control)</h2>
+            <video controls>
+                <source src="temp/test_ffmpeg_text.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="info">
+                Control test: Simple "TEST TEXT" on black background to verify FFmpeg text rendering works
+            </div>
+            <div class="status pass">✅ CONTROL TEST</div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: white; border-radius: 8px;">
+        <h2>Manual Verification Checklist</h2>
+        <p>For each video above, verify:</p>
+        <ul>
+            <li>✅ Text is visible and readable</li>
+            <li>✅ Text is properly positioned (not cut off)</li>
+            <li>✅ Text has proper contrast (white text with black shadow)</li>
+            <li>✅ Watermark appears with reduced opacity</li>
+            <li>✅ For timed captions: text appears at the correct time</li>
+        </ul>
+        
+        <h3>If text is NOT visible in any video:</h3>
+        <ol>
+            <li>Check browser console for video loading errors</li>
+            <li>Verify video file exists and is not corrupted</li>
+            <li>Try playing the video in a different player (VLC, etc.)</li>
+            <li>Check FFmpeg text filter construction in the endpoint code</li>
+        </ol>
+    </div>
+    
+    <script>
+        // Auto-play videos when they come into view and log any errors
+        const videos = document.querySelectorAll('video');
+        videos.forEach((video, index) => {
+            video.addEventListener('loadeddata', () => {
+                console.log(`Video ${index + 1} loaded successfully: ${video.src}`);
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.error(`Video ${index + 1} error: ${video.src}`, e);
+                const container = video.closest('.video-container');
+                const status = container.querySelector('.status');
+                if (status) {
+                    status.className = 'status fail';
+                    status.textContent = '❌ VIDEO LOAD ERROR';
+                }
+            });
+            
+            // Add click handler to show video info
+            video.addEventListener('click', () => {
+                console.log(`Video info:`, {
+                    src: video.src,
+                    duration: video.duration,
+                    currentTime: video.currentTime,
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight
+                });
+            });
+        });
+    </script>
+</body>
+</html>

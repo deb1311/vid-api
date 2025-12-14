@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Positioning Match Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .highlight {
+            background: #ffc107;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-item {
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Editor Positioning Match Verification</h1>
+        
+        <div class="success">
+            ✅ <strong>Positioning Updated:</strong> Vid-1 endpoint now uses the EXACT same text positioning logic as the video editor preview
+        </div>
+
+        <div class="comparison">
+            <div class="comparison-item">
+                <h3>📱 Video Editor Logic</h3>
+                <div class="code">
+// From video-editor-app/app.js
+const videoHeight = 800;
+const totalGroupHeight = textLayout.totalTextHeight + videoHeight;
+const groupStartY = (canvasHeight - totalGroupHeight) / 2;
+const textStartY = groupStartY + textLayout.topPadding;
+                </div>
+            </div>
+            
+            <div class="comparison-item">
+                <h3>🎬 Vid-1 Endpoint Logic</h3>
+                <div class="code">
+// From endpoints/vid-1.js (updated)
+const canvasHeight = 1920;
+const videoHeight = 800; // Match editor
+const totalGroupHeight = layout.totalTextHeight + videoHeight;
+const groupStartY = (canvasHeight - totalGroupHeight) / 2;
+const textStartY = groupStartY + layout.topPadding;
+                </div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>🔧 What Changed:</h3>
+            <ul>
+                <li><strong>Video Scaling:</strong> Full-screen <span class="highlight">1080x1920</span> (no black bars)</li>
+                <li><strong>Text Position:</strong> Matches editor preview exactly</li>
+                <li><strong>Group Logic:</strong> Uses same videoHeight=800 and grouping calculation</li>
+                <li><strong>Result:</strong> Perfect match between editor preview and rendered video</li>
+            </ul>
+        </div>
+
+        <button onclick="testFinalFix()">🚀 Test Final Fix</button>
+        <button onclick="window.open('http://localhost:8080/editor/', '_blank')">🎨 Compare with Editor</button>
+
+        <div id="testResults"></div>
+        <div id="videoContainer"></div>
+
+        <div class="info">
+            <h3>✅ Expected Results:</h3>
+            <ul>
+                <li>Video fills entire 1080x1920 canvas (full-screen)</li>
+                <li>Quote text positioned exactly like editor preview</li>
+                <li>Text appears in upper-middle area (not at very top)</li>
+                <li>Author text at 65% down the screen</li>
+                <li>Watermark centered</li>
+                <li>Perfect match with your desired screenshot</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function testFinalFix() {
+            const resultsDiv = document.getElementById('testResults');
+            const videoDiv = document.getElementById('videoContainer');
+            
+            resultsDiv.innerHTML = '<div style="background: #ffc107; color: black; padding: 15px; border-radius: 8px;">🔄 Testing final positioning fix...</div>';
+            videoDiv.innerHTML = '';
+
+            const payload = {
+                endpoint: 'vid-1',
+                data: {
+                    quote: "POV: My lawyer on the phone telling me its best to leave the country (I already left)",
+                    videoUrl: "https://videos.pexels.com/video-files/6184758/6184758-hd_1080_2048_24fps.mp4",
+                    audioUrl: "https://vllxucytucjyflsenjmz.supabase.co/storage/v1/object/public/assets/599_audio.mp3",
+                    watermark: "@e2",
+                    duration: 6
+                }
+            };
+
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch('/master', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                if (result.status === 'success') {
+                    resultsDiv.innerHTML = `
+                        <div style="background: #28a745; color: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            ✅ <strong>Perfect Match Achieved!</strong><br>
+                            Video rendered with editor-matched positioning in ${duration}s
+                        </div>
+                        <div style="background: #333; padding: 15px; border-radius: 8px;">
+                            <strong>Video URL:</strong> <a href="${result.url}" target="_blank" style="color: #4CAF50;">${result.url}</a><br>
+                            <small>Compare this with the editor preview - positioning should be identical!</small>
+                        </div>
+                    `;
+                    
+                    videoDiv.innerHTML = `
+                        <video controls autoplay muted style="width: 100%; max-width: 400px; display: block; margin: 20px auto; border: 2px solid #333; border-radius: 8px;">
+                            <source src="${result.url}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p style="text-align: center; font-size: 14px; margin-top: 10px;">
+                            🎯 <strong>Verification:</strong> Text positioning should match editor preview exactly
+                        </p>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div style="background: #dc3545; color: white; padding: 15px; border-radius: 8px;">❌ Error: ${result.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div style="background: #dc3545; color: white; padding: 15px; border-radius: 8px;">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

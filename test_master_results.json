@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-12-06T10:20:31.930Z",
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "successRate": "100.0%",
+    "totalDuration": "240.12s"
+  },
+  "results": [
+    {
+      "name": "Style 1: Two-step with bottom text",
+      "endpoint": "style1",
+      "status": "SUCCESS",
+      "duration": "7.38s",
+      "url": "http://localhost:8080/video/32649f71-ccb6-4867-acde-8e70905616ff-video.mp4"
+    },
+    {
+      "name": "Style 2: Single-step with bottom text",
+      "endpoint": "style2",
+      "status": "SUCCESS",
+      "duration": "12.55s",
+      "url": "http://localhost:8080/video/d4e7de98-ba8c-40ae-a7f4-688cf50b7f23-video.mp4"
+    },
+    {
+      "name": "Style 3: Two-step with top text",
+      "endpoint": "style3",
+      "status": "SUCCESS",
+      "duration": "4.39s",
+      "url": "http://localhost:8080/video/9daa6632-0e99-42d1-b064-17645e3b9c20-video.mp4"
+    },
+    {
+      "name": "Style 4: Single-step with top text",
+      "endpoint": "style4",
+      "status": "SUCCESS",
+      "duration": "8.23s",
+      "url": "http://localhost:8080/video/f5a5f5fd-998c-4e5e-9552-50984d947b68-video.mp4"
+    },
+    {
+      "name": "Vid-1: Video background with text",
+      "endpoint": "vid-1",
+      "status": "SUCCESS",
+      "duration": "24.43s",
+      "url": "http://localhost:8080/video/3125c4f4-1b0f-4339-b1e3-4d6261884728-video.mp4"
+    },
+    {
+      "name": "Vid-1.2: Multi-clip with transitions",
+      "endpoint": "vid-1.2",
+      "status": "SUCCESS",
+      "duration": "21.34s",
+      "url": "http://localhost:8080/video/651abfda-fc6b-4ae6-8e61-1911cb90f977-video.mp4"
+    },
+    {
+      "name": "Vid-1.3: Smart aspect ratio with quote",
+      "endpoint": "vid-1.3",
+      "status": "SUCCESS",
+      "duration": "19.82s",
+      "url": "http://localhost:8080/video/0cff57e0-3bcb-442e-bf5d-5599b1224ec9-video.mp4"
+    },
+    {
+      "name": "Vid-1.3: Smart aspect ratio with captions",
+      "endpoint": "vid-1.3",
+      "status": "SUCCESS",
+      "duration": "46.64s",
+      "url": "http://localhost:8080/video/2a97264d-1df6-41a8-9528-46a41c725298-video.mp4"
+    },
+    {
+      "name": "Vid-1.4: Timed captions only",
+      "endpoint": "vid-1.4",
+      "status": "SUCCESS",
+      "duration": "62.63s",
+      "url": "http://localhost:8080/video/a1988bd1-355a-40ae-bcef-d0d423cb3777-video.mp4"
+    },
+    {
+      "name": "Vid-1.5: Cinematic overlay with captions",
+      "endpoint": "vid-1.5",
+      "status": "SUCCESS",
+      "duration": "32.71s",
+      "url": "http://localhost:8080/video/429d8263-fe3b-4ab5-b897-d9142187add2-video.mp4"
+    }
+  ]
+}

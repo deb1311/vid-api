@@ -1,9 +1,12 @@
 const { spawn } = require('child_process');
-const { escapeDrawtext } = require('./utils');
+const { createTextFile, cleanupTextFiles } = require('./utils');
 
 // Style 2: Single-step approach (text + fade in one command)
 async function createVideoStyle2(imagePath, audioPath, quote, author, watermark, outputPath, maxDuration = null) {
   return new Promise((resolve, reject) => {
+    const sessionId = `style2-${Date.now()}`;
+    const textFiles = [];
+    
     // First get audio duration
     const ffprobe = spawn('ffprobe', [
       '-v', 'quiet',
@@ -30,25 +33,28 @@ async function createVideoStyle2(imagePath, audioPath, quote, author, watermark,
       
       console.log(`Style 2 - Audio duration: ${audioDuration}s, Final duration: ${finalDuration}s, Fade in: ${fadeInDuration}s`);
 
-      // Build text filters for BOTTOM placement
+      // Build text filters for BOTTOM placement using textfile approach
       let textFilterArray = [];
       
       // Add quote if provided and not empty
       if (quote && quote.trim() !== '') {
-        const cleanQuote = escapeDrawtext(quote);
-        textFilterArray.push(`drawtext=text='${cleanQuote}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
+        const quoteTextFile = createTextFile(quote, sessionId, 'quote');
+        textFiles.push(quoteTextFile);
+        textFilterArray.push(`drawtext=textfile='${quoteTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=56:fontcolor=white:x=(w-text_w)/2:y=h-400:shadowcolor=black:shadowx=3:shadowy=3`);
       }
       
       // Add author if provided and not empty
       if (author && author.trim() !== '') {
-        const cleanAuthor = escapeDrawtext(author);
-        textFilterArray.push(`drawtext=text='${cleanAuthor}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
+        const authorTextFile = createTextFile(author, sessionId, 'author');
+        textFiles.push(authorTextFile);
+        textFilterArray.push(`drawtext=textfile='${authorTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white:x=(w-text_w)/2:y=h-280:shadowcolor=black:shadowx=2:shadowy=2`);
       }
 
       // Add watermark if provided and not empty
       if (watermark && watermark.trim() !== '') {
-        const cleanWatermark = escapeDrawtext(watermark);
-        textFilterArray.push(`drawtext=text='${cleanWatermark}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
+        const watermarkTextFile = createTextFile(watermark, sessionId, 'watermark');
+        textFiles.push(watermarkTextFile);
+        textFilterArray.push(`drawtext=textfile='${watermarkTextFile}':fontfile=C\\\\:/Windows/Fonts/arialbd.ttf:fontsize=40:fontcolor=white@0.4:x=(w-text_w)/2:y=${(1920 - 40) / 2}:shadowcolor=black@0.8:shadowx=3:shadowy=3`);
       }
 
       // Build final text filter
@@ -79,6 +85,9 @@ async function createVideoStyle2(imagePath, audioPath, quote, author, watermark,
       });
 
       ffmpeg.on('close', (code) => {
+        // Cleanup text files
+        cleanupTextFiles(textFiles);
+        
         if (code === 0) {
           console.log('Style 2: Video created successfully');
           resolve(outputPath);
@@ -89,6 +98,7 @@ async function createVideoStyle2(imagePath, audioPath, quote, author, watermark,
       });
 
       ffmpeg.on('error', (error) => {
+        cleanupTextFiles(textFiles);
         reject(new Error(`Style 2: FFmpeg spawn error: ${error.message}`));
       });
     });
