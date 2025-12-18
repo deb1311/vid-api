@@ -3162,6 +3162,9 @@ class VideoEditor {
         clipEl.dataset.index = index;
         clipEl.dataset.type = type;
         
+        // Add drag-and-drop attributes for clip swapping
+        clipEl.draggable = true;
+        
         if (type === 'video') {
             const volumeInfo = item.volume !== undefined ? ` 🔊${item.volume}%` : '';
             clipEl.innerHTML = `
@@ -3181,7 +3184,118 @@ class VideoEditor {
         }
         
         this.setupClipInteractions(clipEl, item, index, type);
+        this.setupTimelineClipDragDrop(clipEl, index, type);
         return clipEl;
+    }
+    
+    setupTimelineClipDragDrop(clipEl, index, type) {
+        clipEl.addEventListener('dragstart', (e) => {
+            // Store the dragged clip info
+            this.draggedTimelineClip = { index, type };
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify({ index, type }));
+            
+            // Add visual feedback
+            setTimeout(() => {
+                clipEl.classList.add('timeline-dragging');
+            }, 0);
+            
+            console.log(`🎬 Started dragging timeline ${type} clip ${index + 1}`);
+        });
+        
+        clipEl.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        clipEl.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            // Only highlight if same type and different clip
+            if (this.draggedTimelineClip && 
+                this.draggedTimelineClip.type === type && 
+                this.draggedTimelineClip.index !== index) {
+                clipEl.classList.add('timeline-drag-over');
+            }
+        });
+        
+        clipEl.addEventListener('dragleave', (e) => {
+            clipEl.classList.remove('timeline-drag-over');
+        });
+        
+        clipEl.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clipEl.classList.remove('timeline-drag-over');
+            
+            if (!this.draggedTimelineClip) return;
+            
+            const sourceIndex = this.draggedTimelineClip.index;
+            const sourceType = this.draggedTimelineClip.type;
+            const targetIndex = index;
+            const targetType = type;
+            
+            // Only swap if same type and different clips
+            if (sourceType === targetType && sourceIndex !== targetIndex) {
+                if (sourceType === 'video') {
+                    this.swapClips(sourceIndex, targetIndex);
+                } else if (sourceType === 'text') {
+                    this.swapCaptions(sourceIndex, targetIndex);
+                }
+            }
+            
+            this.draggedTimelineClip = null;
+        });
+        
+        clipEl.addEventListener('dragend', (e) => {
+            clipEl.classList.remove('timeline-dragging');
+            
+            // Remove drag-over class from all timeline clips
+            document.querySelectorAll('.timeline-clip.timeline-drag-over').forEach(el => {
+                el.classList.remove('timeline-drag-over');
+            });
+            
+            this.draggedTimelineClip = null;
+        });
+    }
+    
+    swapCaptions(sourceIndex, targetIndex) {
+        if (!this.currentData.captions) return;
+        
+        const captions = this.currentData.captions;
+        
+        if (sourceIndex < 0 || sourceIndex >= captions.length || 
+            targetIndex < 0 || targetIndex >= captions.length) {
+            return;
+        }
+        
+        this.saveToHistory();
+        
+        // Swap the captions in the array
+        const temp = captions[sourceIndex];
+        captions[sourceIndex] = captions[targetIndex];
+        captions[targetIndex] = temp;
+        
+        // Recalculate start times to maintain timeline order
+        this.recalculateCaptionStartTimes();
+        
+        // Re-render everything
+        this.calculateTotalDuration();
+        this.renderProperties();
+        this.renderTimeline();
+        this.autoSave();
+        
+        this.showNotification(`✅ Swapped Caption ${sourceIndex + 1} with Caption ${targetIndex + 1}`, 'success');
+        console.log(`🔄 Swapped captions: ${sourceIndex + 1} ↔ ${targetIndex + 1}`);
+    }
+    
+    recalculateCaptionStartTimes() {
+        if (!this.currentData.captions) return;
+        
+        let currentStart = 0;
+        this.currentData.captions.forEach((caption, index) => {
+            caption.start = currentStart;
+            currentStart += caption.duration || 3;
+        });
     }
 
     setupClipInteractions(clipEl, item, index, type) {

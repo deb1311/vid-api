@@ -797,6 +797,28 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
+/* Timeline clip drag-and-drop for swapping */
+.timeline-clip.timeline-dragging {
+    opacity: 0.5;
+    border: 2px dashed #fff;
+    cursor: grabbing;
+}
+
+.timeline-clip.timeline-drag-over {
+    border: 2px solid #10b981;
+    background: rgba(16, 185, 129, 0.3) !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.timeline-clip[draggable="true"] {
+    cursor: grab;
+}
+
+.timeline-clip[draggable="true"]:active {
+    cursor: grabbing;
+}
+
 .timeline-clip.resizing {
     opacity: 0.9;
     z-index: 1000;
