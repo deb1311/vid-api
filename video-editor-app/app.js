@@ -3189,72 +3189,9 @@ class VideoEditor {
     }
     
     setupTimelineClipDragDrop(clipEl, index, type) {
+        // Disable native HTML5 drag since we use mouse events for better control
         clipEl.addEventListener('dragstart', (e) => {
-            // Store the dragged clip info
-            this.draggedTimelineClip = { index, type };
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify({ index, type }));
-            
-            // Add visual feedback
-            setTimeout(() => {
-                clipEl.classList.add('timeline-dragging');
-            }, 0);
-            
-            console.log(`🎬 Started dragging timeline ${type} clip ${index + 1}`);
-        });
-        
-        clipEl.addEventListener('dragover', (e) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        });
-        
-        clipEl.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            // Only highlight if same type and different clip
-            if (this.draggedTimelineClip && 
-                this.draggedTimelineClip.type === type && 
-                this.draggedTimelineClip.index !== index) {
-                clipEl.classList.add('timeline-drag-over');
-            }
-        });
-        
-        clipEl.addEventListener('dragleave', (e) => {
-            clipEl.classList.remove('timeline-drag-over');
-        });
-        
-        clipEl.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clipEl.classList.remove('timeline-drag-over');
-            
-            if (!this.draggedTimelineClip) return;
-            
-            const sourceIndex = this.draggedTimelineClip.index;
-            const sourceType = this.draggedTimelineClip.type;
-            const targetIndex = index;
-            const targetType = type;
-            
-            // Only swap if same type and different clips
-            if (sourceType === targetType && sourceIndex !== targetIndex) {
-                if (sourceType === 'video') {
-                    this.swapClips(sourceIndex, targetIndex);
-                } else if (sourceType === 'text') {
-                    this.swapCaptions(sourceIndex, targetIndex);
-                }
-            }
-            
-            this.draggedTimelineClip = null;
-        });
-        
-        clipEl.addEventListener('dragend', (e) => {
-            clipEl.classList.remove('timeline-dragging');
-            
-            // Remove drag-over class from all timeline clips
-            document.querySelectorAll('.timeline-clip.timeline-drag-over').forEach(el => {
-                el.classList.remove('timeline-drag-over');
-            });
-            
-            this.draggedTimelineClip = null;
         });
     }
     
@@ -3296,6 +3233,28 @@ class VideoEditor {
             caption.start = currentStart;
             currentStart += caption.duration || 3;
         });
+    }
+    
+    getTimelineClipAtPosition(clientX, clientY, excludeIndex, clipType) {
+        // Get all timeline clips of the same type
+        const containerSelector = clipType === 'video' ? '#videoTimeline' : '#textTimeline';
+        const container = document.querySelector(containerSelector);
+        if (!container) return null;
+        
+        const clips = container.querySelectorAll('.timeline-clip');
+        
+        for (const clip of clips) {
+            const clipIndex = parseInt(clip.dataset.index);
+            if (clipIndex === excludeIndex) continue; // Skip the clip being dragged
+            
+            const rect = clip.getBoundingClientRect();
+            if (clientX >= rect.left && clientX <= rect.right &&
+                clientY >= rect.top && clientY <= rect.bottom) {
+                return clip;
+            }
+        }
+        
+        return null;
     }
 
     setupClipInteractions(clipEl, item, index, type) {
@@ -3405,6 +3364,10 @@ class VideoEditor {
             startLeft = originalStart * this.timelineZoom;
             clipEl.classList.add('dragging');
             document.body.style.cursor = 'grabbing';
+            
+            // Store dragging info for potential swap detection
+            this.currentDraggingClip = { clipEl, item, index, type };
+            
             e.preventDefault();
             e.stopPropagation();
         };
@@ -3416,6 +3379,22 @@ class VideoEditor {
             const deltaX = e.clientX - startX;
             let newLeft = Math.max(0, startLeft + deltaX);
             let newStart = newLeft / this.timelineZoom;
+            
+            // Check if hovering over another clip (for swap preview)
+            const hoverTarget = this.getTimelineClipAtPosition(e.clientX, e.clientY, index, type);
+            
+            // Clear previous swap target highlights
+            document.querySelectorAll('.timeline-clip.swap-target').forEach(el => {
+                el.classList.remove('swap-target');
+            });
+            
+            if (hoverTarget) {
+                // Show swap preview
+                hoverTarget.classList.add('swap-target');
+                clipEl.classList.add('swap-source');
+            } else {
+                clipEl.classList.remove('swap-source');
+            }
             
             const snapResult = this.checkSnapping(newStart, item.duration || 5, index, type);
             if (snapResult.snapped) {
@@ -3436,11 +3415,33 @@ class VideoEditor {
             }
         };
 
-        const onMouseUp = () => {
+        const onMouseUp = (e) => {
             if (isDragging) {
                 isDragging = false;
-                clipEl.classList.remove('dragging', 'snapping', 'collision-warning');
+                clipEl.classList.remove('dragging', 'snapping', 'collision-warning', 'swap-source');
                 document.body.style.cursor = '';
+                
+                // Clear swap target highlights
+                document.querySelectorAll('.timeline-clip.swap-target').forEach(el => {
+                    el.classList.remove('swap-target');
+                });
+                
+                // Check if we're dropping on another clip (for swapping)
+                const dropTarget = this.getTimelineClipAtPosition(e.clientX, e.clientY, index, type);
+                if (dropTarget) {
+                    // Swap clips instead of repositioning
+                    item.start = originalStart; // Reset position
+                    clipEl.style.left = `${originalStart * this.timelineZoom}px`;
+                    
+                    const targetIndex = parseInt(dropTarget.dataset.index);
+                    if (type === 'video') {
+                        this.swapClips(index, targetIndex);
+                    } else if (type === 'text') {
+                        this.swapCaptions(index, targetIndex);
+                    }
+                    this.currentDraggingClip = null;
+                    return;
+                }
                 
                 const hasCollision = this.checkCollision(item.start, item.duration || 5, index, type);
                 if (hasCollision) {
@@ -3452,6 +3453,8 @@ class VideoEditor {
                     this.renderProperties();
                     this.autoSave();
                 }
+                
+                this.currentDraggingClip = null;
             }
         };
 
