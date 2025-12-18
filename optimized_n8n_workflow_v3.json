@@ -1,0 +1,264 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "38017c55-034d-4644-baec-0a57b0c05764", "leftValue": "={{ $json.niche }}", "rightValue": "entrepreneur", "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-928, -224],
+      "id": "38a960e0-423b-4578-a21c-a206be917649",
+      "name": "Entrepreneur"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "c3e78911-b79a-4e5f-8ea2-2835f9edb6a8", "leftValue": "={{ $json.niche }}", "rightValue": "fitness", "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-752, -16],
+      "id": "f035a857-d53d-4f0d-9bd4-6e486fee34ff",
+      "name": "Fitness"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "7a3a9a65-62a5-45af-9223-b448b4cb1ff8", "leftValue": "={{ $json.niche }}", "rightValue": "general motivation", "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-480, 144],
+      "id": "41e565cc-57ca-47fa-b0e9-640f6c490b41",
+      "name": "General Motivation"
+    },
+    {
+      "parameters": {"inputSource": "passthrough"},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-1344, -224],
+      "id": "9b1303ea-b683-41bd-9aa3-0af1c0b13cdd",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract variant data - handles ALL endpoint types\nconst baseJson = $('When Executed by Another Workflow').first().json;\nconst req = baseJson.request_json;\n\n// Determine endpoint type\nconst endpoint = baseJson.endpoint;\nconst isStyleEndpoint = endpoint.includes('style');\nconst isVid1Single = endpoint === '/create-video-vid-1';\nconst isMultiClip = endpoint.includes('vid-1.2') || endpoint.includes('vid-1.3') || endpoint.includes('vid-1.4') || endpoint.includes('vid-1.5');\n\n// Get the main description as fallback - this contains the actual video content description\nconst mainDescription = baseJson.description || 'Motivational video content';\n\n// Build media descriptions based on endpoint type\nlet mediaDescriptions = [];\nlet mediaType = 'unknown';\n\nif (isStyleEndpoint) {\n  mediaType = 'image';\n  mediaDescriptions = [req.imageDescription || mainDescription];\n} else if (isVid1Single) {\n  mediaType = 'video';\n  mediaDescriptions = [req.videoDescription || mainDescription];\n} else if (isMultiClip && req.clips?.length > 0) {\n  mediaType = 'clips';\n  mediaDescriptions = req.clips.map(clip => clip.description || mainDescription);\n}\n\nreturn [{\n  json: {\n    endpointType: {\n      endpoint: endpoint,\n      isStyleEndpoint: isStyleEndpoint,\n      isVid1Single: isVid1Single,\n      isMultiClip: isMultiClip,\n      mediaType: mediaType\n    },\n    baseStructure: {\n      endpoint: endpoint,\n      audioUrl: req.audioUrl,\n      instagramUrl: req.instagramUrl,\n      original: req.original,\n      quote: req.quote,\n      author: req.author,\n      duration: req.duration,\n      overlay: req.overlay,\n      description: baseJson.description,\n      niche: baseJson.niche,\n      transcription: baseJson.transcription,\n      caption: baseJson.caption,\n      imageUrl: req.imageUrl,\n      imageDescription: req.imageDescription,\n      videoUrl: req.videoUrl,\n      videoDescription: req.videoDescription,\n      clips: req.clips?.map(clip => ({\n        start: clip.start,\n        duration: clip.duration,\n        volume: clip.volume,\n        begin: clip.begin\n      })) || [],\n      captions: req.captions?.map(caption => ({\n        text: caption.text,\n        start: caption.start,\n        duration: caption.duration\n      })) || []\n    },\n    variableData: {\n      mediaDescriptions: mediaDescriptions,\n      mediaType: mediaType,\n      captionTexts: req.captions?.map(caption => caption.text) || [],\n      mainCaption: baseJson.caption,\n      transcriptionRequired: baseJson.transcription,\n      audioUrl: req.audioUrl\n    },\n    usernames: $input.first().json.usernames\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, -192],
+      "id": "extract-variant-data",
+      "name": "Extract Variant Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a media asset generator. Find Pexels media that MATCHES the video content description.\n\n## Input:\n- Usernames: {{ $json.usernames }}\n- Media Type: {{ $json.variableData.mediaType }}\n- VIDEO CONTENT DESCRIPTION: {{ $json.variableData.mediaDescriptions[0] }}\n\n## TASK:\nSearch Pexels for videos that match the content description above.\n\nFor example, if description is \"A motivational video promoting early financial success to enable extensive travel and exploration\"\n→ Search for: \"travel adventure\" or \"luxury lifestyle\" or \"city exploration\" or \"financial success\"\n→ Find videos showing: travel scenes, cityscapes, adventure, lifestyle content\n\n## Steps:\n1. Extract key themes from the description (travel, success, adventure, etc.)\n2. Call Pexels Videos tool with relevant search terms\n3. Review results and pick videos that match the theme\n4. For EACH username, select a DIFFERENT video URL\n\n## Output Format (JSON array only):\n[\n  {\n    \"username\": \"@username1\",\n    \"mediaAssets\": [\n      {\"url\": \"<pexels_video_url>\", \"description\": \"<what_the_video_shows>\"}\n    ],\n    \"captionAlts\": [],\n    \"captionVariant\": null,\n    \"timingAdjustments\": null\n  }\n]\n\n## Rules:\n- Search for videos matching the THEME of the description\n- Use DIFFERENT video URLs for each username\n- DO NOT use abstract/generic backgrounds\n- Return ONLY valid JSON array, no markdown\n\nSearch Pexels now and generate:",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [672, -192],
+      "id": "745e5837-e0b1-4bdf-b24b-330f03d60967",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {"options": {}},
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [656, 160],
+      "id": "18c1bc7b-dc87-4778-9b59-c1fcf173e892",
+      "name": "Google Gemini Chat Model",
+      "credentials": {"googlePalmApi": {"id": "0Y3IITMeiDyvu2zW", "name": "Gemini Free"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI output and reconstruct full variants\nconst raw = $json.output;\nconst cleaned = raw.replace(/^```json\\s*/i, '').replace(/```$/i, '').trim();\n\nlet assetVariants;\ntry {\n  assetVariants = JSON.parse(cleaned);\n} catch (error) {\n  throw new Error('Failed to parse AI output: ' + error.message + ' | Raw: ' + cleaned);\n}\n\nconst extractData = $('Extract Variant Data').first().json;\nconst { baseStructure, variableData, endpointType } = extractData;\n\nconst variants = assetVariants.map(assets => {\n  const variant = {\n    endpoint: baseStructure.endpoint,\n    request_json: {\n      audioUrl: baseStructure.audioUrl,\n      original: baseStructure.original,\n      watermark: assets.username\n    },\n    caption: assets.captionVariant || baseStructure.caption,\n    description: baseStructure.description,\n    niche: baseStructure.niche,\n    transcription: baseStructure.transcription\n  };\n  \n  if (baseStructure.quote) variant.request_json.quote = baseStructure.quote;\n  if (baseStructure.author) variant.request_json.author = baseStructure.author;\n  if (baseStructure.instagramUrl) variant.request_json.instagramUrl = baseStructure.instagramUrl;\n  if (baseStructure.duration) variant.request_json.duration = baseStructure.duration;\n  if (baseStructure.overlay !== undefined) variant.request_json.overlay = baseStructure.overlay;\n  \n  if (endpointType.isStyleEndpoint) {\n    variant.request_json.imageUrl = assets.mediaAssets?.[0]?.url || baseStructure.imageUrl;\n    variant.request_json.imageDescription = assets.mediaAssets?.[0]?.description || baseStructure.imageDescription;\n  } else if (endpointType.isVid1Single) {\n    variant.request_json.videoUrl = assets.mediaAssets?.[0]?.url || baseStructure.videoUrl;\n    variant.request_json.videoDescription = assets.mediaAssets?.[0]?.description || baseStructure.videoDescription;\n  } else if (endpointType.isMultiClip) {\n    variant.request_json.clips = baseStructure.clips.map((clipTiming, i) => {\n      const newAsset = assets.mediaAssets?.[i];\n      return {\n        ...clipTiming,\n        videoUrl: newAsset?.url || variableData.mediaDescriptions[i],\n        description: newAsset?.description || variableData.mediaDescriptions[i]\n      };\n    });\n  }\n  \n  if (baseStructure.captions?.length > 0) {\n    variant.request_json.captions = baseStructure.captions.map((captionTiming, i) => ({\n      ...captionTiming,\n      alt: assets.captionAlts?.[i]?.alt\n    }));\n  }\n  \n  if (assets.timingAdjustments && variant.request_json.clips) {\n    assets.timingAdjustments.forEach((adj, i) => {\n      if (variant.request_json.clips[i]) {\n        if (adj.start !== undefined) variant.request_json.clips[i].start = adj.start;\n        if (adj.duration !== undefined) variant.request_json.clips[i].duration = adj.duration;\n      }\n    });\n  }\n  \n  return variant;\n});\n\nreturn variants.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, -176],
+      "id": "8d20f6ac-e3c5-455a-b9ae-8179a2033d01",
+      "name": "Reconstruct Variants"
+    },
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "6Xc0iVUUnEutpnpq", "mode": "list", "cachedResultUrl": "/workflow/6Xc0iVUUnEutpnpq", "cachedResultName": "Transcription"},
+        "workflowInputs": {"mappingMode": "defineBelow", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": false}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [1344, 160],
+      "id": "a57d47ad-dfcc-447c-9528-71abafe74376",
+      "name": "Transcription"
+    },
+    {
+      "parameters": {
+        "url": "https://api.pexels.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {"parameters": [{"name": "query", "value": "={{ $fromAI('query', '', 'string') }}"}, {"name": "per_page", "value": "={{ $fromAI('per_page', '5', 'string') }}"}, {"name": "page", "value": "1"}]},
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "BPTelSvr7cxNsU51XT1G9QthMZA3rlOvvvQ24XErrFxCHxT5vgJej7LD"}]},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [1216, 144],
+      "id": "931c9ed7-74cd-4593-bbc0-84065aa5f92a",
+      "name": "Pexels Images"
+    },
+    {
+      "parameters": {
+        "url": "https://api.pexels.com/videos/search",
+        "sendQuery": true,
+        "queryParameters": {"parameters": [{"name": "query", "value": "={{ $fromAI('query', '', 'string') }}"}, {"name": "per_page", "value": "={{ $fromAI('per_page', '5', 'string') }}"}, {"name": "page", "value": "1"}]},
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "BPTelSvr7cxNsU51XT1G9QthMZA3rlOvvvQ24XErrFxCHxT5vgJej7LD"}]},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [1088, 160],
+      "id": "4ee80aad-d8bc-411f-a07f-08d05051a142",
+      "name": "Pexels Videos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [{"id": "193486d8-9dd4-432f-adce-974541fd86ac", "leftValue": "={{ $json.output }}", "rightValue": "\"\"", "operator": {"type": "string", "operation": "empty", "singleValue": true}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1088, -192],
+      "id": "a40f38c6-ccf2-422a-8146-e818bff87dc4",
+      "name": "If"
+    },
+    {
+      "parameters": {"model": "openai/gpt-oss-20b", "options": {}},
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [480, 160],
+      "id": "90088bcd-3171-409f-889a-a77661ba2625",
+      "name": "Groq Chat Model",
+      "credentials": {"groqApi": {"id": "4ZEZ83UlO38Ss7tT", "name": "Groq account"}}
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {"__rl": true, "value": "2c751a6d-097f-80d7-9366-e12aae2f619c", "mode": "list", "cachedResultName": "Accounts", "cachedResultUrl": "https://www.notion.so/2c751a6d097f80d79366e12aae2f619c"},
+        "filterType": "manual",
+        "filters": {"conditions": [{"key": "Niche|rich_text", "condition": "contains", "richTextValue": "=entrepreneur"}]},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [-592, -336],
+      "id": "d4a1d500-ddb4-4f71-8bc8-55971aae4844",
+      "name": "Get many database pages",
+      "credentials": {"notionApi": {"id": "NsYBQ9PiZRbvlVC9", "name": "Notion account"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst usernames = items.map(item => item.json.name);\nreturn [{ json: { usernames: usernames } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-320, -336],
+      "id": "8d224b92-574c-45b5-98c8-3fc52f9dccfb",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {"__rl": true, "value": "2c751a6d-097f-80d7-9366-e12aae2f619c", "mode": "list", "cachedResultName": "Accounts", "cachedResultUrl": "https://www.notion.so/2c751a6d097f80d79366e12aae2f619c"},
+        "filterType": "manual",
+        "filters": {"conditions": [{"key": "Niche|rich_text", "condition": "contains", "richTextValue": "=fitness"}]},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [-496, -144],
+      "id": "7653f246-b2b8-45cd-a277-a2b23216f131",
+      "name": "Get many database pages1",
+      "credentials": {"notionApi": {"id": "NsYBQ9PiZRbvlVC9", "name": "Notion account"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst usernames = items.map(item => item.json.name);\nreturn [{ json: { usernames: usernames } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-240, -144],
+      "id": "14c33afc-571d-4763-a68d-b0bef28a83c4",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {"__rl": true, "value": "2c751a6d-097f-80d7-9366-e12aae2f619c", "mode": "list", "cachedResultName": "Accounts", "cachedResultUrl": "https://www.notion.so/2c751a6d097f80d79366e12aae2f619c"},
+        "filterType": "manual",
+        "filters": {"conditions": [{"key": "Niche|rich_text", "condition": "contains", "richTextValue": "=motivation"}]},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [-144, 128],
+      "id": "735435ef-acd4-4e5f-b782-ad3d0cc04005",
+      "name": "Get many database pages2",
+      "credentials": {"notionApi": {"id": "NsYBQ9PiZRbvlVC9", "name": "Notion account"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst usernames = items.map(item => item.json.name);\nreturn [{ json: { usernames: usernames } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [112, 128],
+      "id": "6dff632b-fecd-48fb-9e7c-9f1f8da36316",
+      "name": "Code in JavaScript3"
+    }
+  ],
+  "connections": {
+    "Entrepreneur": {"main": [[{"node": "Get many database pages", "type": "main", "index": 0}], [{"node": "Fitness", "type": "main", "index": 0}]]},
+    "Fitness": {"main": [[{"node": "Get many database pages1", "type": "main", "index": 0}], [{"node": "General Motivation", "type": "main", "index": 0}]]},
+    "General Motivation": {"main": [[{"node": "Get many database pages2", "type": "main", "index": 0}]]},
+    "When Executed by Another Workflow": {"main": [[{"node": "Entrepreneur", "type": "main", "index": 0}]]},
+    "Extract Variant Data": {"main": [[{"node": "AI Agent", "type": "main", "index": 0}]]},
+    "AI Agent": {"main": [[{"node": "If", "type": "main", "index": 0}]]},
+    "Google Gemini Chat Model": {"ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 1}]]},
+    "Transcription": {"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]},
+    "Pexels Images": {"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]},
+    "Pexels Videos": {"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]},
+    "If": {"main": [[{"node": "AI Agent", "type": "main", "index": 0}], [{"node": "Reconstruct Variants", "type": "main", "index": 0}]]},
+    "Groq Chat Model": {"ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 0}]]},
+    "Get many database pages": {"main": [[{"node": "Code in JavaScript1", "type": "main", "index": 0}]]},
+    "Code in JavaScript1": {"main": [[{"node": "Extract Variant Data", "type": "main", "index": 0}]]},
+    "Get many database pages1": {"main": [[{"node": "Code in JavaScript2", "type": "main", "index": 0}]]},
+    "Code in JavaScript2": {"main": [[{"node": "Extract Variant Data", "type": "main", "index": 0}]]},
+    "Get many database pages2": {"main": [[{"node": "Code in JavaScript3", "type": "main", "index": 0}]]},
+    "Code in JavaScript3": {"main": [[{"node": "Extract Variant Data", "type": "main", "index": 0}]]}
+  },
+  "pinData": {},
+  "meta": {"templateCredsSetupCompleted": true, "instanceId": "38bd46a40e2e682c89bb9033f43f8660384738cc003e0dbb5f5c23ef2781c596"}
+}

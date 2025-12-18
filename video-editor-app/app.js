@@ -156,6 +156,7 @@ class VideoEditor {
         document.getElementById('applyClipChanges').addEventListener('click', () => this.applyClipChanges());
         document.getElementById('cancelClipChanges').addEventListener('click', () => this.hideVideoEditModal());
         document.getElementById('lockDurationBtn').addEventListener('click', () => this.toggleDurationLock());
+        document.getElementById('clipVideoBrowseBtn').addEventListener('click', () => this.browseVideoForEditModal());
         
         // Render modal handlers
         document.getElementById('startRenderBtn').addEventListener('click', () => this.startRender());
@@ -527,34 +528,45 @@ class VideoEditor {
         if (this.videoObserver) {
             this.videoObserver.disconnect();
         }
+        
+        // Initialize thumbnail cache if not exists
+        if (!this.thumbnailCache) {
+            this.thumbnailCache = new Map();
+            this.loadThumbnailCacheFromStorage();
+        }
 
         // Track currently playing video to limit to one at a time
         let currentlyPlayingVideo = null;
+        
+        // Queue for thumbnail generation (process one at a time)
+        this.thumbnailQueue = [];
+        this.isProcessingThumbnails = false;
 
-        // Use Intersection Observer for lazy loading with aggressive unloading
+        // Use Intersection Observer for lazy thumbnail loading
         this.videoObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                const videoElement = entry.target.querySelector('video');
+                const item = entry.target;
+                const filename = item.dataset.filename;
+                const thumbnailImg = item.querySelector('.thumbnail-img');
+                const placeholder = item.querySelector('.video-placeholder');
                 
                 if (entry.isIntersecting) {
-                    // Load video when visible
-                    if (videoElement && !videoElement.src) {
-                        const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
-                        const bucketName = 'stock-clips';
-                        videoElement.src = `${workerUrl}/${bucketName}/${encodeURIComponent(videoElement.dataset.filename)}`;
-                        videoElement.load();
-                    }
-                } else {
-                    // Aggressively unload video when not visible to save memory
-                    if (videoElement && videoElement.src) {
-                        videoElement.pause();
-                        videoElement.removeAttribute('src');
-                        videoElement.load(); // This releases the video from memory
+                    // Check if we already have a cached thumbnail
+                    if (this.thumbnailCache.has(filename)) {
+                        if (thumbnailImg && placeholder) {
+                            thumbnailImg.src = this.thumbnailCache.get(filename);
+                            thumbnailImg.style.display = 'block';
+                            placeholder.style.display = 'none';
+                        }
+                    } else if (!item.dataset.thumbnailQueued) {
+                        // Queue thumbnail generation
+                        item.dataset.thumbnailQueued = 'true';
+                        this.queueThumbnailGeneration(item, filename);
                     }
                 }
             });
         }, {
-            rootMargin: '100px', // Load slightly before visible
+            rootMargin: '200px', // Start loading thumbnails before they're visible
             threshold: 0
         });
 
@@ -566,19 +578,28 @@ class VideoEditor {
                     const bucketName = 'stock-clips';
                     const videoUrl = `${workerUrl}/${bucketName}/${encodeURIComponent(video.name)}`;
                     const durationText = video.duration ? `${video.duration.toFixed(1)}s` : '';
+                    const cachedThumb = this.thumbnailCache.get(video.name);
                     
                     return `
                         <div class="video-item" data-video-url="${videoUrl}" data-filename="${video.name}">
                             <div class="video-thumbnail">
-                                <div class="video-placeholder">
+                                <div class="video-placeholder" style="${cachedThumb ? 'display: none;' : ''}">
                                     <i class="fas fa-video"></i>
+                                    <div class="thumbnail-loader" style="display: none;">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
                                 </div>
+                                <img class="thumbnail-img" 
+                                     src="${cachedThumb || ''}" 
+                                     style="display: ${cachedThumb ? 'block' : 'none'}; width: 100%; height: 100%; object-fit: cover;"
+                                     alt="${video.name}">
                                 <video 
                                     data-filename="${video.name}"
                                     muted 
                                     preload="none"
                                     playsinline
                                     disablePictureInPicture
+                                    crossorigin="anonymous"
                                     style="display: none;"
                                 ></video>
                                 ${durationText ? `<div class="video-duration-badge">${durationText}</div>` : ''}
@@ -601,7 +622,7 @@ class VideoEditor {
         // Attach click handlers and setup lazy loading
         const videoItems = listContainer.querySelectorAll('.video-item');
         videoItems.forEach(item => {
-            // Setup lazy loading
+            // Setup lazy thumbnail loading
             this.videoObserver.observe(item);
             
             // Click handler
@@ -613,6 +634,7 @@ class VideoEditor {
             // Optimized hover preview - only one video plays at a time
             const video = item.querySelector('video');
             const placeholder = item.querySelector('.video-placeholder');
+            const thumbnailImg = item.querySelector('.thumbnail-img');
             
             if (video) {
                 let hoverTimeout;
@@ -627,18 +649,42 @@ class VideoEditor {
                         currentlyPlayingVideo.pause();
                         currentlyPlayingVideo.currentTime = 0;
                         currentlyPlayingVideo.style.display = 'none';
-                        const prevPlaceholder = currentlyPlayingVideo.parentElement.querySelector('.video-placeholder');
-                        if (prevPlaceholder) prevPlaceholder.style.display = 'flex';
+                        const prevItem = currentlyPlayingVideo.closest('.video-item');
+                        if (prevItem) {
+                            const prevThumb = prevItem.querySelector('.thumbnail-img');
+                            const prevPlaceholder = prevItem.querySelector('.video-placeholder');
+                            if (prevThumb && prevThumb.src) {
+                                prevThumb.style.display = 'block';
+                            } else if (prevPlaceholder) {
+                                prevPlaceholder.style.display = 'flex';
+                            }
+                        }
                     }
                     
                     // Delay preview to avoid loading on quick mouse movements
                     hoverTimeout = setTimeout(() => {
-                        if (video.src) {
+                        // Load video for preview if not loaded
+                        if (!video.src) {
+                            const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+                            const bucketName = 'stock-clips';
+                            video.src = `${workerUrl}/${bucketName}/${encodeURIComponent(video.dataset.filename)}`;
+                            video.load();
+                        }
+                        
+                        // Wait for video to be ready
+                        const playVideo = () => {
                             placeholder.style.display = 'none';
+                            thumbnailImg.style.display = 'none';
                             video.style.display = 'block';
                             video.currentTime = 0;
                             video.play().catch(() => {});
                             currentlyPlayingVideo = video;
+                        };
+                        
+                        if (video.readyState >= 2) {
+                            playVideo();
+                        } else {
+                            video.addEventListener('loadeddata', playVideo, { once: true });
                         }
                     }, 300); // 300ms delay before preview starts
                 });
@@ -648,12 +694,200 @@ class VideoEditor {
                     video.pause();
                     video.currentTime = 0;
                     video.style.display = 'none';
-                    placeholder.style.display = 'flex';
+                    
+                    // Show thumbnail or placeholder
+                    if (thumbnailImg && thumbnailImg.src) {
+                        thumbnailImg.style.display = 'block';
+                    } else {
+                        placeholder.style.display = 'flex';
+                    }
+                    
+                    // Unload video to save memory
+                    video.removeAttribute('src');
+                    video.load();
+                    
                     if (currentlyPlayingVideo === video) {
                         currentlyPlayingVideo = null;
                     }
                 });
             }
+        });
+    }
+    
+    queueThumbnailGeneration(item, filename) {
+        this.thumbnailQueue.push({ item, filename });
+        this.processThumbnailQueue();
+    }
+    
+    async processThumbnailQueue() {
+        if (this.isProcessingThumbnails || this.thumbnailQueue.length === 0) {
+            return;
+        }
+        
+        this.isProcessingThumbnails = true;
+        
+        while (this.thumbnailQueue.length > 0) {
+            const { item, filename } = this.thumbnailQueue.shift();
+            
+            // Skip if already cached (might have been loaded while waiting)
+            if (this.thumbnailCache.has(filename)) {
+                const thumbnailImg = item.querySelector('.thumbnail-img');
+                const placeholder = item.querySelector('.video-placeholder');
+                if (thumbnailImg && placeholder) {
+                    thumbnailImg.src = this.thumbnailCache.get(filename);
+                    thumbnailImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                continue;
+            }
+            
+            // Show loading indicator
+            const loader = item.querySelector('.thumbnail-loader');
+            if (loader) loader.style.display = 'block';
+            
+            try {
+                const thumbnail = await this.generateThumbnail(filename);
+                if (thumbnail) {
+                    // Cache the thumbnail
+                    this.thumbnailCache.set(filename, thumbnail);
+                    this.saveThumbnailToStorage(filename, thumbnail);
+                    
+                    // Update the UI
+                    const thumbnailImg = item.querySelector('.thumbnail-img');
+                    const placeholder = item.querySelector('.video-placeholder');
+                    if (thumbnailImg && placeholder) {
+                        thumbnailImg.src = thumbnail;
+                        thumbnailImg.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to generate thumbnail for ${filename}:`, error.message);
+            }
+            
+            // Hide loading indicator
+            if (loader) loader.style.display = 'none';
+            
+            // Small delay between thumbnails to prevent overwhelming the browser
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        this.isProcessingThumbnails = false;
+    }
+    
+    generateThumbnail(filename) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            video.crossOrigin = 'anonymous';
+            video.muted = true;
+            video.preload = 'metadata';
+            
+            const workerUrl = 'https://filebase-media-fetcher.debabratamaitra898.workers.dev';
+            const bucketName = 'stock-clips';
+            video.src = `${workerUrl}/${bucketName}/${encodeURIComponent(filename)}`;
+            
+            const timeout = setTimeout(() => {
+                video.removeAttribute('src');
+                video.load();
+                reject(new Error('Thumbnail generation timeout'));
+            }, 10000); // 10 second timeout
+            
+            video.addEventListener('loadeddata', () => {
+                // Seek to 1 second or 10% of duration, whichever is smaller
+                const seekTime = Math.min(1, video.duration * 0.1);
+                video.currentTime = seekTime;
+            }, { once: true });
+            
+            video.addEventListener('seeked', () => {
+                clearTimeout(timeout);
+                
+                try {
+                    // Create canvas and extract frame
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Use smaller dimensions for thumbnails (160x90 for 16:9, or 90x160 for 9:16)
+                    const aspectRatio = video.videoWidth / video.videoHeight;
+                    if (aspectRatio > 1) {
+                        canvas.width = 160;
+                        canvas.height = Math.round(160 / aspectRatio);
+                    } else {
+                        canvas.height = 160;
+                        canvas.width = Math.round(160 * aspectRatio);
+                    }
+                    
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convert to data URL with compression
+                    const thumbnail = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Clean up video element
+                    video.removeAttribute('src');
+                    video.load();
+                    
+                    resolve(thumbnail);
+                } catch (error) {
+                    video.removeAttribute('src');
+                    video.load();
+                    reject(error);
+                }
+            }, { once: true });
+            
+            video.addEventListener('error', () => {
+                clearTimeout(timeout);
+                video.removeAttribute('src');
+                video.load();
+                reject(new Error('Video load error'));
+            }, { once: true });
+            
+            video.load();
+        });
+    }
+    
+    // IndexedDB for persistent thumbnail storage
+    async loadThumbnailCacheFromStorage() {
+        try {
+            const db = await this.openThumbnailDB();
+            const transaction = db.transaction(['thumbnails'], 'readonly');
+            const store = transaction.objectStore('thumbnails');
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                const items = request.result;
+                items.forEach(item => {
+                    this.thumbnailCache.set(item.filename, item.thumbnail);
+                });
+                console.log(`📷 Loaded ${items.length} cached thumbnails from IndexedDB`);
+            };
+        } catch (error) {
+            console.warn('Could not load thumbnail cache:', error.message);
+        }
+    }
+    
+    async saveThumbnailToStorage(filename, thumbnail) {
+        try {
+            const db = await this.openThumbnailDB();
+            const transaction = db.transaction(['thumbnails'], 'readwrite');
+            const store = transaction.objectStore('thumbnails');
+            store.put({ filename, thumbnail, timestamp: Date.now() });
+        } catch (error) {
+            console.warn('Could not save thumbnail to cache:', error.message);
+        }
+    }
+    
+    openThumbnailDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('VideoThumbnailCache', 1);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('thumbnails')) {
+                    db.createObjectStore('thumbnails', { keyPath: 'filename' });
+                }
+            };
         });
     }
 
@@ -681,6 +915,18 @@ class VideoEditor {
     }
 
     selectVideoFromBrowser(videoUrl) {
+        // Check if we're browsing from the Video Edit Modal
+        if (this.browsingFromEditModal) {
+            this.selectVideoFromBrowserForEditModal(videoUrl);
+            return;
+        }
+        
+        // Check if we're browsing for the top-level videoUrl field
+        if (this.browsingForTopLevel) {
+            this.selectVideoFromBrowserForTopLevel(videoUrl);
+            return;
+        }
+        
         if (this.currentBrowsingClipIndex !== null && this.currentData.clips) {
             const clip = this.currentData.clips[this.currentBrowsingClipIndex];
             if (clip) {
@@ -698,6 +944,78 @@ class VideoEditor {
             }
         }
         
+        this.hideVideoBrowser();
+    }
+
+    browseVideoForEditModal() {
+        // Open video browser for the currently editing clip in the Video Edit Modal
+        if (!this.currentEditingClip) {
+            this.showNotification('No clip is being edited!', 'error');
+            return;
+        }
+        
+        const index = this.currentEditingClip.index;
+        
+        // Store a flag to indicate we're browsing from the edit modal
+        this.browsingFromEditModal = true;
+        
+        // Show the video browser
+        this.showVideoBrowser(index);
+    }
+
+    selectVideoFromBrowserForEditModal(videoUrl) {
+        // Update the clip URL in the edit modal
+        const clipVideoUrlInput = document.getElementById('clipVideoUrl');
+        if (clipVideoUrlInput) {
+            clipVideoUrlInput.value = videoUrl;
+        }
+        
+        // Update the video player in the edit modal
+        const video = document.getElementById('videoEditPlayer');
+        const source = document.getElementById('videoEditSource');
+        if (video && source) {
+            source.src = videoUrl;
+            video.load();
+        }
+        
+        // Update the actual clip data
+        if (this.currentEditingClip && this.currentData.clips) {
+            const clip = this.currentData.clips[this.currentEditingClip.index];
+            if (clip) {
+                clip.videourl = videoUrl;
+                clip.videoUrl = videoUrl;
+            }
+        }
+        
+        this.showNotification(`✅ Video updated for clip ${this.currentEditingClip.index + 1}`, 'success');
+        this.browsingFromEditModal = false;
+        this.hideVideoBrowser();
+    }
+
+    browseVideoForTopLevel() {
+        // Open video browser for the top-level videoUrl field
+        this.browsingForTopLevel = true;
+        this.showVideoBrowser(null);
+    }
+
+    selectVideoFromBrowserForTopLevel(videoUrl) {
+        // Update the top-level videoUrl input
+        const videoUrlInput = document.getElementById('videoUrl');
+        if (videoUrlInput) {
+            videoUrlInput.value = videoUrl;
+        }
+        
+        // Update the data
+        if (this.currentData) {
+            this.currentData.videoUrl = videoUrl;
+        }
+        
+        // Refresh preview and save
+        this.preloadMedia();
+        this.autoSave();
+        
+        this.showNotification('✅ Video URL updated', 'success');
+        this.browsingForTopLevel = false;
         this.hideVideoBrowser();
     }
 
@@ -3369,7 +3687,7 @@ class VideoEditor {
         }
         
         if (this.currentData.videoUrl !== undefined) {
-            html += this.createFormGroup('videoUrl', 'Video URL', this.currentData.videoUrl, 'url');
+            html += this.createVideoUrlFormGroup('videoUrl', 'Video URL', this.currentData.videoUrl);
             if (this.currentData.videoDescription !== undefined) {
                 html += this.createFormGroup('videoDescription', 'Video Description', this.currentData.videoDescription, 'textarea');
             }
@@ -3447,6 +3765,23 @@ class VideoEditor {
                         title="Open original Instagram URL in new tab">
                         <i class="fas fa-external-link-alt"></i>
                         Open
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    createVideoUrlFormGroup(id, label, value) {
+        return `
+            <div class="form-group">
+                <label for="${id}">${label}</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="url" id="${id}" value="${value || ''}" style="flex: 1;">
+                    <button 
+                        class="btn-browse"
+                        onclick="videoEditor.browseVideoForTopLevel()" 
+                        title="Browse videos from Filebase">
+                        <i class="fas fa-folder-open"></i>
                     </button>
                 </div>
             </div>
@@ -3535,9 +3870,18 @@ class VideoEditor {
             const clipTypeClass = isImage ? 'image-clip' : 'video-clip';
             
             html += `
-                <div class="clip-item ${clipTypeClass}" onclick="videoEditor.jumpToClip(${index}, 'video', event)">
+                <div class="clip-item ${clipTypeClass}" 
+                     data-clip-index="${index}"
+                     draggable="true"
+                     ondragstart="videoEditor.handleClipDragStart(event, ${index})"
+                     ondragover="videoEditor.handleClipDragOver(event)"
+                     ondragenter="videoEditor.handleClipDragEnter(event)"
+                     ondragleave="videoEditor.handleClipDragLeave(event)"
+                     ondrop="videoEditor.handleClipDrop(event, ${index})"
+                     ondragend="videoEditor.handleClipDragEnd(event)"
+                     onclick="videoEditor.jumpToClip(${index}, 'video', event)">
                     <div class="clip-item-header">
-                        <span><i class="${clipIcon}"></i> ${clipType} Clip ${index + 1}</span>
+                        <span><i class="fas fa-grip-vertical drag-handle"></i> <i class="${clipIcon}"></i> ${clipType} Clip ${index + 1}</span>
                         <div class="clip-header-actions">
                             ${!isImage && mediaUrl ? `
                             <button class="btn-icon edit-video" onclick="videoEditor.editVideoClip(${index})" title="Edit Video Clip">
@@ -3852,6 +4196,111 @@ class VideoEditor {
             this.renderTimeline();
             this.autoSave();
         }
+    }
+
+    // Drag and Drop handlers for clip reordering
+    handleClipDragStart(event, index) {
+        event.stopPropagation();
+        this.draggedClipIndex = index;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', index.toString());
+        
+        // Add dragging class for visual feedback
+        setTimeout(() => {
+            event.target.classList.add('dragging');
+        }, 0);
+        
+        console.log('🎬 Started dragging clip', index + 1);
+    }
+
+    handleClipDragOver(event) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
+
+    handleClipDragEnter(event) {
+        event.preventDefault();
+        const clipItem = event.target.closest('.clip-item');
+        if (clipItem && !clipItem.classList.contains('dragging')) {
+            clipItem.classList.add('drag-over');
+        }
+    }
+
+    handleClipDragLeave(event) {
+        const clipItem = event.target.closest('.clip-item');
+        if (clipItem) {
+            clipItem.classList.remove('drag-over');
+        }
+    }
+
+    handleClipDrop(event, targetIndex) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const clipItem = event.target.closest('.clip-item');
+        if (clipItem) {
+            clipItem.classList.remove('drag-over');
+        }
+        
+        const sourceIndex = this.draggedClipIndex;
+        
+        if (sourceIndex === undefined || sourceIndex === targetIndex) {
+            return;
+        }
+        
+        // Swap the clips
+        this.swapClips(sourceIndex, targetIndex);
+    }
+
+    handleClipDragEnd(event) {
+        event.target.classList.remove('dragging');
+        
+        // Remove drag-over class from all clip items
+        document.querySelectorAll('.clip-item.drag-over').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+        
+        this.draggedClipIndex = undefined;
+    }
+
+    swapClips(sourceIndex, targetIndex) {
+        if (!this.currentData.clips) return;
+        
+        const clips = this.currentData.clips;
+        
+        if (sourceIndex < 0 || sourceIndex >= clips.length || 
+            targetIndex < 0 || targetIndex >= clips.length) {
+            return;
+        }
+        
+        this.saveToHistory();
+        
+        // Swap the clips in the array
+        const temp = clips[sourceIndex];
+        clips[sourceIndex] = clips[targetIndex];
+        clips[targetIndex] = temp;
+        
+        // Recalculate start times to maintain timeline order
+        this.recalculateClipStartTimes();
+        
+        // Re-render everything
+        this.calculateTotalDuration();
+        this.renderProperties();
+        this.renderTimeline();
+        this.autoSave();
+        
+        this.showNotification(`✅ Swapped Clip ${sourceIndex + 1} with Clip ${targetIndex + 1}`, 'success');
+        console.log(`🔄 Swapped clips: ${sourceIndex + 1} ↔ ${targetIndex + 1}`);
+    }
+
+    recalculateClipStartTimes() {
+        if (!this.currentData.clips) return;
+        
+        let currentStart = 0;
+        this.currentData.clips.forEach((clip, index) => {
+            clip.start = currentStart;
+            currentStart += clip.duration || 5;
+        });
     }
 
     addCaption() {

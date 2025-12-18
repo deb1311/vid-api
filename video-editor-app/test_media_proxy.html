@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Proxy Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: #fff; }
+        h1 { color: #00d4ff; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #333; border-radius: 4px; background: #0f0f23; color: #fff; }
+        button { background: #00d4ff; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #00a8cc; }
+        .result { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 8px; }
+        video { max-width: 100%; max-height: 400px; border-radius: 4px; }
+        .status { padding: 8px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #1b4332; color: #95d5b2; }
+        .error { background: #4a1515; color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Media Proxy Test</h1>
+    <p>Paste any video URL (like Pexels download links) and it will load via proxy</p>
+
+    <input type="text" id="testUrl" placeholder="Paste video/image URL here" 
+           value="https://www.pexels.com/download/video/1093661/">
+    
+    <div>
+        <button onclick="loadVideo()">Load Video</button>
+        <button onclick="setUrl('https://www.pexels.com/download/video/1093661/')">Pexels Video 1</button>
+        <button onclick="setUrl('https://www.pexels.com/download/video/3571264/')">Pexels Video 2</button>
+        <button onclick="setUrl('https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg')">Pexels Image</button>
+    </div>
+
+    <div id="status" class="status" style="display:none;"></div>
+
+    <div class="result">
+        <h3>Result:</h3>
+        <div id="mediaContainer">
+            <p style="color:#888;">Click "Load Video" to test</p>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_URL = 'https://media-proxy.debabratamaitra898.workers.dev';
+
+        function setUrl(url) {
+            document.getElementById('testUrl').value = url;
+        }
+
+        function showStatus(msg, isError) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + (isError ? 'error' : 'success');
+            el.style.display = 'block';
+        }
+
+        function isImageUrl(url) {
+            return /\.(jpg|jpeg|png|gif|webp)/i.test(url);
+        }
+
+        function loadVideo() {
+            const url = document.getElementById('testUrl').value.trim();
+            if (!url) return;
+
+            const proxyUrl = `${PROXY_URL}/?url=${encodeURIComponent(url)}`;
+            const container = document.getElementById('mediaContainer');
+            
+            showStatus('Loading via proxy...', false);
+            container.innerHTML = '<p style="color:#888;">Loading...</p>';
+
+            if (isImageUrl(url)) {
+                container.innerHTML = `<img src="${proxyUrl}" onload="showStatus('✅ Image loaded!', false)" onerror="showStatus('❌ Failed to load', true)">`;
+            } else {
+                container.innerHTML = `
+                    <video controls autoplay muted style="width:100%">
+                        <source src="${proxyUrl}" type="video/mp4">
+                    </video>
+                `;
+                const video = container.querySelector('video');
+                video.onloadeddata = () => showStatus('✅ Video loaded!', false);
+                video.onerror = () => showStatus('❌ Failed to load video', true);
+            }
+        }
+    </script>
+</body>
+</html>

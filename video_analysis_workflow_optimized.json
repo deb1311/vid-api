@@ -1,0 +1,65 @@
+{
+  "nodes": [
+    {
+      "parameters": {"inputSource": "passthrough"},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-400, 0],
+      "id": "trigger",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "yYUHNorM5skZ00YO", "mode": "list", "cachedResultName": "audio extraction"},
+        "workflowInputs": {"mappingMode": "defineBelow", "value": {}},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [-100, 0],
+      "id": "audio-extract",
+      "name": "Audio Extraction"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "analyze",
+        "modelId": {"__rl": true, "value": "models/gemini-2.5-flash", "mode": "list", "cachedResultName": "models/gemini-2.5-flash"},
+        "text": "=Analyze this video and return API-ready JSON.\n\n## URLS:\n- audioUrl: \"{{ $('Audio Extraction').item.json.audioURL }}\"\n- videoUrl/imageUrl/original: \"{{ $('When Executed by Another Workflow').item.json.body.entry[0].messaging[0].message.attachments[0].payload.url }}\"\n\n## ENDPOINT SELECTION:\n- Single static image with text → `/create-video-style2`\n- Single video + text overlay → `/create-video-vid-1`\n- Multiple clips or scenes → `/vid-1.3`\n- Timed captions only (no static quote) → `/vid-1.4`\n- Cinematic/professional effects → `/vid-1.5`\n\n## OUTPUT SCHEMAS:\n\n### Style Endpoints (single image):\n{\"endpoint\":\"/create-video-style2\",\"request_json\":{\"quote\":\"<main_text>\",\"author\":\"<author_or_null>\",\"watermark\":\"@username\",\"imageUrl\":\"<video_url>\",\"audioUrl\":\"<audio_url>\",\"original\":\"<video_url>\",\"duration\":<total_seconds>},\"caption\":\"<10-15 word social caption with hashtags>\",\"description\":\"<detailed: theme, vibe, meaning, quotes>\",\"niche\":\"entrepreneur|fitness|general motivation\",\"transcription\":false}\n\n### Vid-1 (single video):\n{\"endpoint\":\"/create-video-vid-1\",\"request_json\":{\"quote\":\"<main_text>\",\"author\":\"<author_or_null>\",\"watermark\":\"@username\",\"videoUrl\":\"<video_url>\",\"audioUrl\":\"<audio_url>\",\"original\":\"<video_url>\",\"duration\":<total_seconds>},\"caption\":\"<social caption>\",\"description\":\"<detailed description>\",\"niche\":\"<niche>\",\"transcription\":false}\n\n### Vid-1.3 (multi-clip with optional captions):\n{\"endpoint\":\"/vid-1.3\",\"request_json\":{\"quote\":\"<main_text_or_null>\",\"watermark\":\"@username\",\"audioUrl\":\"<audio_url>\",\"original\":\"<video_url>\",\"clips\":[{\"videoUrl\":\"<video_url>\",\"begin\":<source_start>,\"start\":<timeline_pos>,\"duration\":<clip_length>,\"volume\":100,\"description\":\"<clip_desc>\"}],\"captions\":[{\"text\":\"<timed_caption>\",\"start\":<when_appears>,\"duration\":<how_long>}]},\"caption\":\"<social caption>\",\"description\":\"<detailed description>\",\"niche\":\"<niche>\",\"transcription\":false}\n\n### Vid-1.4 (captions only, no static quote):\n{\"endpoint\":\"/vid-1.4\",\"request_json\":{\"watermark\":\"@username\",\"audioUrl\":\"<audio_url>\",\"original\":\"<video_url>\",\"clips\":[{\"videoUrl\":\"<video_url>\",\"begin\":0,\"start\":0,\"duration\":<clip_length>,\"volume\":100,\"description\":\"<clip_desc>\"}],\"captions\":[{\"text\":\"<caption>\",\"start\":<sec>,\"duration\":<sec>}]},\"caption\":\"<social caption>\",\"description\":\"<detailed description>\",\"niche\":\"<niche>\",\"transcription\":false}\n\n### Vid-1.5 (with overlay effects):\n{\"endpoint\":\"/vid-1.5\",\"request_json\":{\"watermark\":\"@username\",\"audioUrl\":\"<audio_url>\",\"original\":\"<video_url>\",\"overlay\":true,\"clips\":[{\"videoUrl\":\"<video_url>\",\"begin\":0,\"start\":0,\"duration\":<clip_length>,\"volume\":100,\"description\":\"<clip_desc>\"}],\"captions\":[{\"text\":\"<caption>\",\"start\":<sec>,\"duration\":<sec>}]},\"caption\":\"<social caption>\",\"description\":\"<detailed description>\",\"niche\":\"<niche>\",\"transcription\":false}\n\n## RULES:\n- `transcription`: true ONLY if spoken words appear as on-screen text\n- `begin`: timestamp in source video to start from\n- `start`: position in final output timeline\n- `description`: DETAILED - theme, vibe, meaning, mood, quotes\n- Use the EXACT URLs provided above\n- Return ONLY valid JSON, no markdown",
+        "videoUrls": "={{ $('When Executed by Another Workflow').item.json.body.entry[0].messaging[0].message.attachments[0].payload.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [200, 0],
+      "id": "analyze-video",
+      "name": "Analyze Video",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {"googlePalmApi": {"id": "0Y3IITMeiDyvu2zW", "name": "Gemini Free"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst text = item.content.parts[0].text;\nconst cleaned = text.replace(/```json\\n?/gi, '').replace(/```\\n?/gi, '').trim();\nconst data = JSON.parse(cleaned);\nreturn { json: data };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0],
+      "id": "parse-json",
+      "name": "Parse JSON"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [[{"node": "Audio Extraction", "type": "main", "index": 0}]]
+    },
+    "Audio Extraction": {
+      "main": [[{"node": "Analyze Video", "type": "main", "index": 0}]]
+    },
+    "Analyze Video": {
+      "main": [[{"node": "Parse JSON", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {"templateCredsSetupCompleted": true}
+}
